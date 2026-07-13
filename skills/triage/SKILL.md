@@ -13,6 +13,7 @@ Turn an unready issue or external pull request into a verified tracker outcome. 
 2. If the repository has no contract, use the contract exposed by `work-github-issue` when it is installed.
 3. Keep category and state separate. With the default vocabulary, use exactly one category (`bug` or `enhancement`) and exactly one state (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, or `wontfix`). Repository mappings override these names.
 4. Do not acquire an implementation lease during triage. If a requested verification would change code or shared artifacts, stop at a reproducible verification plan or route the work through `work-github-issue` first.
+5. Treat the issue or pull request as the authoritative home of its agent brief. Use `documenting-work` only when repository policy requires a durable decision document or a pointer; never copy the full brief into a second file.
 
 When the user asks only for an assessment, remain read-only. Apply labels, comments, closure, or other tracker changes only when that mutation is explicitly requested or approved. Before the first authorized mutation, have `work-github-issue` acquire a `planning` lease keyed to this issue. Check that lease before each mutation batch and release it only after labels, comments, state, and closure have been read back from the tracker with no unknown result.
 
@@ -58,7 +59,7 @@ Classify the result as `confirmed`, `not reproduced`, or `insufficient informati
 - `ready-for-agent`: require a complete brief using [the agent brief contract](references/agent-brief.md). Every acceptance criterion must be independently observable and blockers must already be represented by the tracker contract.
 - `ready-for-human`: use the same brief and state the specific judgment, access, or manual action that prevents autonomous work.
 - `needs-info`: preserve established facts and ask only concrete, answerable questions.
-- `wontfix`: state whether the request is already implemented, a duplicate, or rejected. Follow repository policy for durable rejected-decision records.
+- `wontfix`: state whether the request is already implemented, a duplicate, or rejected. Follow repository policy for durable rejected-decision records; if none exists and a durable enhancement rejection is required, resolve one `decision` document through `documenting-work` and link it from the issue.
 - `needs-triage`: preserve the partial evidence and the next decision required.
 
 Never mark an item ready merely because the user requested that label. If the brief or verification is incomplete, explain the missing readiness evidence and use the appropriate non-ready state unless the repository contract provides an explicit override mechanism.

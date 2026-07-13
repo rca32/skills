@@ -1,0 +1,4 @@
+interface:
+  display_name: "Document Development Work"
+  short_description: "Place durable development documents consistently"
+  default_prompt: "Use $documenting-work to choose the authoritative location and name for this development document."

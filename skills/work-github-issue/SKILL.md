@@ -16,6 +16,11 @@ tracker write. If none exists, use
 already `ready-for-agent`, belongs to a Wayfinder map, or must be split,
 triaged, handed off, or resolved into a parent.
 
+Use `documenting-work` whenever a workflow proposes a durable file, report, or
+artifact outside the tracker. The issue comment remains authoritative for agent
+briefs, implementation evidence, and issue-backed handoffs unless the consuming
+repository explicitly assigns that authority elsewhere.
+
 ## 0. Preflight and serialize planning writes
 
 Before the first real lease in a repository, verify that Git is available, the
@@ -131,6 +136,8 @@ The real-issue claim authorizes its required tracker projection and evidence
 writes; if tracker writes are prohibited, remain read-only and do not claim.
 
 Post the configured tracker document's structured evidence comment.
+Link any repository document or artifact selected by `documenting-work`; do not
+copy its full body into the evidence comment.
 
 Completion criterion: the issue comment names the exact local or published
 commit, commands and results, evidence paths, limitations, and safety outcome;

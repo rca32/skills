@@ -18,6 +18,8 @@ If the request is ambiguous, default to diagnose only. Under diagnose-only autho
 
 Do not write issue-backed repository files until the authoritative `work-github-issue` lifecycle holds a valid implementation lease. This inner skill never claims or releases an issue, changes tracker state, commits, pushes, or publishes evidence.
 
+Keep the diagnosis in the response by default. When the user or repository requires a durable diagnosis, use `documenting-work` to resolve whether the issue comment or one `diagnosis` repository document is authoritative. This skill may recommend the destination, but tracker publication remains owned by the outer workflow.
+
 ## 1. Define the exact symptom
 
 Record the expected behavior, actual behavior, smallest known trigger, environment, and when it began. Discover missing details from existing logs, tests, configuration, and history first; ask only when the missing fact prevents a safe or discriminating experiment. Read repository instructions, nearby tests, domain documents, and relevant recent history without disturbing unrelated user changes.
@@ -86,4 +88,4 @@ If no correct test seam exists, document that architectural limitation instead o
 
 Remove tagged instrumentation and disposable probes, while preserving an authorized regression test. Verify no debug artifacts or unexpected working-tree changes remain.
 
-Diagnosis is complete only when the exact symptom is reproducible, the cause is supported by a falsifying experiment, and the diagnose-only report or authorized fix path has met its exit criteria. A fix is complete only when both the minimized regression and original scenario are green and relevant surrounding checks pass.
+Diagnosis is complete only when the exact symptom is reproducible, the cause is supported by a falsifying experiment, the report has one declared authority if persisted, and the diagnose-only report or authorized fix path has met its exit criteria. A fix is complete only when both the minimized regression and original scenario are green and relevant surrounding checks pass.

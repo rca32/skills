@@ -14,6 +14,7 @@ Turn an approved source into small, verifiable tracer bullets. This skill may cr
 3. Read repository tracker instructions and domain documentation. The repository contract overrides all label and dependency examples here.
 4. Draft only unless the user explicitly requested tracker publication.
 5. Before authorized publication, have `work-github-issue` acquire a `planning` lease keyed to the source/parent issue. Check it before every mutation batch, renew around long publication, and release only after all tracker writes have been read back with no unknown result.
+6. Treat the tracker graph as authoritative. If the user requests a local export or pointer, resolve it with `documenting-work`; never maintain a second editable ticket body.
 
 ## Design the graph
 
@@ -81,4 +82,4 @@ If any Phase 1 write fails or returns an ambiguous result, stop further writes. 
 
 ## Completion check
 
-Return the source revision fingerprint, source-to-ticket traceability, dependency graph, initial frontier, published links if any, and validation result. Do not claim a ticket, commit code, publish implementation evidence, or close the parent from this skill.
+Return the authoritative source pointer, source revision fingerprint, source-to-ticket traceability, dependency graph, initial frontier, published links if any, and validation result. Do not claim a ticket, commit code, publish implementation evidence, close the parent, or create an unindexed duplicate ticket document from this skill.

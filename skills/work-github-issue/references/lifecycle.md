@@ -9,6 +9,7 @@ otherwise apply the invariant in the final column directly.
 | Incoming bug or request | `triage` | Verify before briefing; exactly one category and state role |
 | Settled conversation needs a durable PRD | `to-spec` | Domain vocabulary, testing seams, decisions, out-of-scope |
 | Approved plan spans sessions | `to-tickets` | Tracer-bullet slices with genuine blocking edges |
+| A spec, decision, report, handoff, or artifact may be persisted | `documenting-work` | One authority, repository override, stable identity/path, index and pointers |
 | Destination is larger than the visible route | `wayfinder` | Shared map, named tickets, frontier, fog, one ticket per session |
 | Ready ticket is being built | Skill's execution step | Test seam, focused implementation, regular checks, final suite |
 | Diff is ready to judge | `code-review` | Standards and Spec stay separate |

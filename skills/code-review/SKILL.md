@@ -12,6 +12,11 @@ behavior, and correct behavior cannot hide a standards violation.
 This is a read-only workflow. Do not edit files, mutate an issue or pull request,
 claim a lease, commit, or push.
 
+Return the report in the conversation or PR review surface. If the caller requests
+a durable repository report, use `documenting-work` to resolve and report the
+recommended `review` path and authority, but leave the actual write to an
+authorized outer workflow so this review remains read-only.
+
 ## Inputs
 
 Accept these from the caller when supplied:
@@ -163,6 +168,7 @@ Return:
 - Reviewed: commits + staged + unstaged + untracked ...
 - Standards sources: ...
 - Spec source: ...
+- Report authority: conversation | PR | recommended repository path ...
 
 ## Standards
 ### [severity] Short title
