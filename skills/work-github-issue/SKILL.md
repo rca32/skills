@@ -1,6 +1,6 @@
 ---
 name: work-github-issue
-description: Work GitHub issues through readiness, dependency, collision-safe lease, implementation, review, evidence, and resolution. Use when Codex is about to start, resume, hand off, or finish an issue-backed task, or when another workflow needs a same-account-safe claim.
+description: Coordinate collision-safe GitHub issue implementation and planning mutations through readiness, remote session leases, review, evidence, and resolution. Use before starting, resuming, publishing planning state, handing off, or finishing issue-backed work when agents may share one account.
 ---
 
 # Work GitHub Issue
@@ -15,6 +15,41 @@ tracker write. If none exists, use
 [references/lifecycle.md](references/lifecycle.md) only when the issue is not
 already `ready-for-agent`, belongs to a Wayfinder map, or must be split,
 triaged, handed off, or resolved into a parent.
+
+## 0. Preflight and serialize planning writes
+
+Before the first real lease in a repository, verify that Git is available, the
+configured remote resolves to the intended canonical GitHub `owner/name`, `gh`
+is authenticated to the expected account, the tracker contract and state-label
+mapping are known, and the account may push atomic refs to the remote. A claim
+fails closed when these prerequisites are absent.
+
+Read-only triage, drafting, and graph design need no lease. Before `triage`,
+`to-spec`, or `to-tickets` performs authorized tracker writes, acquire a short
+planning lease through this skill. Use the source or parent issue as the key; use
+key `0` only when creating a repository-level planning item with no source issue:
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_lease.py" \
+  claim <issue-or-0> --purpose planning --ttl-minutes 10
+```
+
+Capture the returned session, run `check <key> --session <session>` before each
+mutation batch, and renew around long publication. The planning lease uses the
+same atomic issue/session refs as implementation, so planning and implementation
+cannot race on one key. It does not assign or comment on the issue.
+
+After every external write has an operation-specific readback and no result is
+unknown, release without an implementation outcome or evidence:
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_lease.py" \
+  release <issue-or-0> --session <session>
+```
+
+Do not release while a write result is unknown. Preserve the session/key and
+reconcile tracker state first; an expired planning lease may be taken over only
+after inspecting markers and partial tracker state.
 
 ## 1. Establish readiness
 
@@ -32,7 +67,7 @@ Completion criterion: the issue snapshot satisfies the tracker contract and its
 requested outcome plus acceptance criteria are present in the body or an
 identified brief/spec.
 
-## 2. Acquire the lease
+## 2. Acquire the implementation lease
 
 Run the claim before implementation exploration or any implementation-related
 local/external write. Read-only investigation required to triage, verify,
@@ -41,7 +76,7 @@ lease:
 
 ```bash
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_lease.py" \
-  claim <issue> --ttl-minutes 30
+  claim <issue> --purpose implementation --ttl-minutes 30
 ```
 
 Capture the returned `session` value in the working context. The command
@@ -120,6 +155,8 @@ parent map, publication state, and evidence match the tracker-defined outcome.
 ## Lease guardrails
 
 - Use the remote ref as session authority; assignee and comments are projections.
+- Use one ref namespace for both `planning` and `implementation`; purpose changes
+  require release and reacquisition, never an in-place interpretation change.
 - Treat the session id as an ownership token, not a secret or user identity.
 - Renew by compare-and-swap; release only the exact SHA this session observed.
 - Take over only an expired lease after inspecting durable work evidence.

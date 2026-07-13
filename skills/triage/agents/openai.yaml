@@ -1,0 +1,6 @@
+interface:
+  display_name: "Issue Triage"
+  short_description: "Turn raw issues into verified, agent-ready or human-ready work"
+  default_prompt: "Use $triage to verify this issue and produce a complete readiness brief."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Conversation to Spec"
+  short_description: "Synthesize settled discussion into a decomposition-ready spec"
+  default_prompt: "Use $to-spec to turn this settled discussion into a precise spec without inventing requirements."
+policy:
+  allow_implicit_invocation: false

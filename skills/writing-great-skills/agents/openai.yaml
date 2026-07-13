@@ -1,0 +1,6 @@
+interface:
+  display_name: "Write Great Skills"
+  short_description: "Design predictable skills with clear triggers and completion"
+  default_prompt: "Use $writing-great-skills to design or improve this skill for predictable behavior."
+policy:
+  allow_implicit_invocation: false

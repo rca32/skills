@@ -116,6 +116,38 @@ class IssueLeaseTest(unittest.TestCase):
         _, status = self.lease("status", "42")
         self.assertEqual(status["status"], "unclaimed")
 
+    def test_planning_claim_serializes_tracker_writes_without_evidence(self) -> None:
+        _, claimed = self.lease(
+            "claim",
+            "0",
+            "--purpose",
+            "planning",
+            "--session",
+            "session-plan-a",
+        )
+        self.assertEqual(claimed["status"], "acquired")
+        self.assertEqual(claimed["lease"]["purpose"], "planning")
+
+        conflict, payload = self.lease(
+            "claim",
+            "0",
+            "--purpose",
+            "planning",
+            "--session",
+            "session-plan-b",
+            check=False,
+        )
+        self.assertEqual(conflict.returncode, 3)
+        self.assertEqual(payload["lease"]["session"], "session-plan-a")
+
+        _, checked = self.lease("check", "0", "--session", "session-plan-a")
+        self.assertEqual(checked["status"], "owned")
+        _, released = self.lease("release", "0", "--session", "session-plan-a")
+        self.assertEqual(released["status"], "released")
+        self.assertEqual(released["purpose"], "planning")
+        _, status = self.lease("status", "0")
+        self.assertEqual(status["status"], "unclaimed")
+
     def test_expired_lease_requires_explicit_takeover(self) -> None:
         self.lease(
             "claim",
@@ -178,6 +210,82 @@ class IssueLeaseTest(unittest.TestCase):
         _, status = self.lease("status", "44")
         self.assertEqual(status["lease"]["session"], winner["lease"]["session"])
 
+    def test_concurrent_planning_claim_has_one_winner(self) -> None:
+        def contender(session: str) -> subprocess.CompletedProcess[str]:
+            return command(
+                [
+                    "python3",
+                    str(SCRIPT),
+                    "claim",
+                    "55",
+                    "--purpose",
+                    "planning",
+                    "--session",
+                    session,
+                    "--no-github-sync",
+                    "--actor",
+                    "test-agent",
+                ],
+                self.repo,
+                check=False,
+            )
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            results = list(
+                executor.map(contender, ("session-plan-race-a", "session-plan-race-b"))
+            )
+        self.assertEqual(sorted(result.returncode for result in results), [0, 3])
+        winner = json.loads(
+            next(result.stdout for result in results if result.returncode == 0)
+        )
+        self.assertEqual(winner["lease"]["purpose"], "planning")
+
+    def test_concurrent_planning_and_implementation_claim_have_one_winner(self) -> None:
+        def contender(purpose: str) -> subprocess.CompletedProcess[str]:
+            command_args = [
+                "python3",
+                str(SCRIPT),
+                "claim",
+                "56",
+                "--purpose",
+                purpose,
+                "--session",
+                f"session-mixed-{purpose}",
+                "--no-github-sync",
+                "--actor",
+                "test-agent",
+            ]
+            return command(command_args, self.repo, check=False)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            results = list(executor.map(contender, ("planning", "implementation")))
+        self.assertEqual(sorted(result.returncode for result in results), [0, 3])
+        winner = json.loads(
+            next(result.stdout for result in results if result.returncode == 0)
+        )
+        self.assertIn(winner["lease"]["purpose"], {"planning", "implementation"})
+
+    def test_active_session_cannot_change_lease_purpose(self) -> None:
+        self.lease(
+            "claim",
+            "57",
+            "--purpose",
+            "planning",
+            "--session",
+            "session-purpose",
+        )
+        conflict, payload = self.lease(
+            "claim",
+            "57",
+            "--purpose",
+            "implementation",
+            "--session",
+            "session-purpose",
+            check=False,
+        )
+        self.assertEqual(conflict.returncode, 3)
+        self.assertEqual(payload["lease"]["purpose"], "planning")
+
     def test_one_session_cannot_claim_two_issues(self) -> None:
         self.lease("claim", "45", "--session", "session-single")
         conflict, payload = self.lease(
@@ -232,22 +340,23 @@ class IssueLeaseTest(unittest.TestCase):
 class GitHubContractTest(unittest.TestCase):
     def test_remote_url_binds_repository_identity(self) -> None:
         urls = (
-            "https://github.com/rca32/rca_script.git",
-            "git@github.com:rca32/rca_script.git",
-            "ssh://git@github.com/rca32/rca_script.git",
+            "https://github.com/octo-org/example-repo.git",
+            "git@github.com:octo-org/example-repo.git",
+            "ssh://git@github.com/octo-org/example-repo.git",
         )
         for url in urls:
             completed = subprocess.CompletedProcess([], 0, f"{url}\n", "")
             with mock.patch.object(issue_lease, "run", return_value=completed):
                 self.assertEqual(
-                    issue_lease.github_repo_from_remote("origin"), "rca32/rca_script"
+                    issue_lease.github_repo_from_remote("origin"),
+                    "octo-org/example-repo",
                 )
 
         args = issue_lease.argparse.Namespace(
             no_github_sync=False, remote="origin", repo="other/repository"
         )
         completed = subprocess.CompletedProcess(
-            [], 0, "https://github.com/rca32/rca_script.git\n", ""
+            [], 0, "https://github.com/octo-org/example-repo.git\n", ""
         )
         with mock.patch.object(issue_lease, "run", return_value=completed):
             with self.assertRaises(issue_lease.LeaseFailure):
@@ -257,7 +366,7 @@ class GitHubContractTest(unittest.TestCase):
         args = issue_lease.argparse.Namespace(
             no_github_sync=False,
             issue=50,
-            repo="rca32/rca_script",
+            repo="octo-org/example-repo",
             allow_unready=False,
             allow_shared_assignee=False,
             takeover_expired=False,
@@ -265,7 +374,7 @@ class GitHubContractTest(unittest.TestCase):
         base = {
             "state": "OPEN",
             "assignees": [],
-            "url": "https://github.com/rca32/rca_script/issues/50",
+            "url": "https://github.com/octo-org/example-repo/issues/50",
             "labels": [],
             "blockedBy": [],
             "comments": [],
@@ -273,7 +382,7 @@ class GitHubContractTest(unittest.TestCase):
         }
         with mock.patch.object(issue_lease, "github_issue_snapshot", return_value=base):
             with self.assertRaises(issue_lease.LeaseFailure):
-                issue_lease.github_precheck(args, "rca32")
+                issue_lease.github_precheck(args, "octocat")
 
         blocked = dict(base)
         blocked["labels"] = [{"name": "ready-for-agent"}]
@@ -281,22 +390,58 @@ class GitHubContractTest(unittest.TestCase):
             {
                 "number": 49,
                 "title": "Open prerequisite",
-                "url": "https://github.com/rca32/rca_script/issues/49",
+                "url": "https://github.com/octo-org/example-repo/issues/49",
                 "state": "OPEN",
             }
         ]
         with mock.patch.object(issue_lease, "github_issue_snapshot", return_value=blocked):
             with self.assertRaises(issue_lease.LeaseFailure):
-                issue_lease.github_precheck(args, "rca32")
+                issue_lease.github_precheck(args, "octocat")
+
+    def test_planning_precheck_and_reconcile_do_not_project_a_claim(self) -> None:
+        args = issue_lease.argparse.Namespace(
+            no_github_sync=False,
+            issue=50,
+            repo="octo-org/example-repo",
+            purpose="planning",
+            allow_unready=False,
+            allow_shared_assignee=False,
+            takeover_expired=False,
+        )
+        snapshot = {
+            "state": "OPEN",
+            "assignees": [{"login": "another-account"}],
+            "url": "https://github.com/octo-org/example-repo/issues/50",
+            "labels": [{"name": "needs-triage"}],
+            "blockedBy": [{"number": 49, "state": "OPEN"}],
+            "comments": [],
+            "parent": None,
+        }
+        metadata = {
+            "purpose": "planning",
+            "session": "session-plan-c",
+            "actor": "octocat",
+        }
+        with (
+            mock.patch.object(
+                issue_lease,
+                "github_issue_snapshot",
+                side_effect=[snapshot, snapshot],
+            ),
+            mock.patch.object(issue_lease, "run") as invoked,
+        ):
+            self.assertEqual(issue_lease.github_precheck(args, "octocat"), snapshot)
+            issue_lease.github_reconcile_claim(args, metadata, False)
+        invoked.assert_not_called()
 
     def test_missing_projection_is_repaired(self) -> None:
         args = issue_lease.argparse.Namespace(
-            no_github_sync=False, issue=51, repo="rca32/rca_script"
+            no_github_sync=False, issue=51, repo="octo-org/example-repo"
         )
         snapshot = {
             "state": "OPEN",
             "assignees": [],
-            "url": "https://github.com/rca32/rca_script/issues/51",
+            "url": "https://github.com/octo-org/example-repo/issues/51",
             "labels": [{"name": "ready-for-agent"}],
             "blockedBy": [],
             "comments": [],
@@ -304,13 +449,13 @@ class GitHubContractTest(unittest.TestCase):
         }
         metadata = {
             "session": "session-repair",
-            "actor": "rca32",
+            "actor": "octocat",
             "branch": "agent/repair",
             "headSha": "a" * 40,
             "expiresAt": "2030-01-01T00:00:00Z",
         }
         projected = dict(snapshot)
-        projected["assignees"] = [{"login": "rca32"}]
+        projected["assignees"] = [{"login": "octocat"}]
         projected["comments"] = [
             {"body": issue_lease.claim_marker("session-repair")}
         ]
@@ -337,12 +482,12 @@ class GitHubContractTest(unittest.TestCase):
 
     def test_post_claim_gate_drift_is_rejected(self) -> None:
         args = issue_lease.argparse.Namespace(
-            no_github_sync=False, issue=52, repo="rca32/rca_script"
+            no_github_sync=False, issue=52, repo="octo-org/example-repo"
         )
         ready = {
             "state": "OPEN",
-            "assignees": [{"login": "rca32"}],
-            "url": "https://github.com/rca32/rca_script/issues/52",
+            "assignees": [{"login": "octocat"}],
+            "url": "https://github.com/octo-org/example-repo/issues/52",
             "labels": [{"name": "ready-for-agent"}],
             "blockedBy": [],
             "comments": [],
@@ -356,13 +501,13 @@ class GitHubContractTest(unittest.TestCase):
             {
                 "number": 51,
                 "title": "New blocker",
-                "url": "https://github.com/rca32/rca_script/issues/51",
+                "url": "https://github.com/octo-org/example-repo/issues/51",
                 "state": "OPEN",
             }
         ]
         metadata = {
             "session": "session-drift",
-            "actor": "rca32",
+            "actor": "octocat",
             "branch": "agent/drift",
             "headSha": "b" * 40,
             "expiresAt": "2030-01-01T00:00:00Z",
@@ -384,13 +529,13 @@ class GitHubContractTest(unittest.TestCase):
         args = issue_lease.argparse.Namespace(
             no_github_sync=False,
             issue=53,
-            repo="rca32/rca_script",
+            repo="octo-org/example-repo",
             outcome="completed",
         )
         opened = {
             "state": "OPEN",
-            "assignees": [{"login": "rca32"}],
-            "url": "https://github.com/rca32/rca_script/issues/53",
+            "assignees": [{"login": "octocat"}],
+            "url": "https://github.com/octo-org/example-repo/issues/53",
             "labels": [{"name": "ready-for-agent"}],
             "blockedBy": [],
             "comments": [],
@@ -425,17 +570,17 @@ class GitHubContractTest(unittest.TestCase):
 
     def test_production_evidence_must_be_existing_issue_comment(self) -> None:
         args = issue_lease.argparse.Namespace(
-            no_github_sync=False, issue=54, repo="rca32/rca_script"
+            no_github_sync=False, issue=54, repo="octo-org/example-repo"
         )
         with self.assertRaises(issue_lease.LeaseFailure):
             issue_lease.validate_evidence(
                 args, "not-durable", "session-evidence", "completed"
             )
 
-        url = "https://github.com/rca32/rca_script/issues/54#issuecomment-12345"
+        url = "https://github.com/octo-org/example-repo/issues/54#issuecomment-12345"
         comment = {
             "html_url": url,
-            "issue_url": "https://api.github.com/repos/rca32/rca_script/issues/54",
+            "issue_url": "https://api.github.com/repos/octo-org/example-repo/issues/54",
             "body": "\n".join(
                 [
                     "<!-- rca-issue-evidence:v1 session=session-evidence outcome=completed -->",

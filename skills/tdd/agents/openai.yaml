@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test-Driven Development"
+  short_description: "Build behavior changes through focused red-green-refactor cycles"
+  default_prompt: "Use $tdd to implement this change test-first through an observable public seam."

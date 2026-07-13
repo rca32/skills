@@ -1,0 +1,4 @@
+interface:
+  display_name: "Diagnose Bugs"
+  short_description: "Find root causes with a tight, evidence-driven debugging loop"
+  default_prompt: "Use $diagnosing-bugs to investigate this failure and stop at the requested authorization boundary."

@@ -1,27 +1,114 @@
-# Codex Skills
+# Codex 개발 스킬 모음
 
-Personal, reusable Codex skills maintained as the source of truth for daily
-work. Each installable skill lives under `skills/<skill-name>/`.
+이 저장소는 제가 여러 프로젝트에서 반복해서 사용하는 Codex 업무 방식을 모아 둔 곳입니다.
 
-## Available skills
+여기서 **스킬(skill)**은 Codex에게 “이 종류의 일은 어떤 순서로, 무엇을 확인하며, 어디까지 해야 하는지” 알려 주는 작은 업무 매뉴얼입니다. 스킬을 설치하면 매번 긴 지시를 다시 쓰지 않아도 같은 품질과 안전 규칙으로 일을 시작할 수 있습니다.
 
-| Skill | Purpose |
-| --- | --- |
-| `work-github-issue` | Collision-safe GitHub issue lifecycle for agents sharing one account |
+## 이 저장소가 해결하는 문제
 
-## Install
+- 막연한 요청을 바로 코딩하지 않고 먼저 확인하고 정리합니다.
+- 큰 기능을 한 번에 만들지 않고 검증 가능한 작은 작업으로 나눕니다.
+- 버그의 원인을 추측으로 고치지 않고 재현과 증거로 찾습니다.
+- 테스트를 먼저 작성해 새 기능과 버그 수정을 안전하게 진행합니다.
+- 구현이 요구사항과 저장소 규칙을 모두 만족하는지 따로 검토합니다.
+- 같은 GitHub 계정을 공유하는 여러 에이전트 세션이 같은 이슈를 동시에 수정하지 못하게 막습니다.
 
-Ask Codex to install `skills/work-github-issue` from `rca32/skills`, or run the
-installed `skill-installer` workflow with that repository and path. Restart the
-session after installation so the skill catalog refreshes.
+## 어떤 스킬을 언제 쓰나요?
 
-Treat `$CODEX_HOME/skills` as installed output. Make changes in this repository,
-validate them, publish them, and reinstall the affected skill.
+| 스킬 | 이런 때 사용합니다 | 하는 일 |
+| --- | --- | --- |
+| `triage` | 새 이슈가 모호하거나 정말 작업할 준비가 됐는지 모르겠을 때 | 버그인지 기능 요청인지 분류하고, 실제 문제인지 확인한 뒤 작업 설명을 완성합니다. |
+| `to-spec` | 대화에서 결정한 내용을 문서로 정리하고 싶을 때 | 이미 합의된 내용만 모아 제품·개발 명세를 만듭니다. 모르는 요구사항을 임의로 만들지 않습니다. |
+| `to-tickets` | 하나의 명세가 커서 여러 작업으로 나눠야 할 때 | 각각 완성 결과를 확인할 수 있는 작은 이슈로 나누고, 먼저 끝나야 하는 작업을 연결합니다. |
+| `work-github-issue` | GitHub 이슈를 실제로 시작하거나 이어서 작업할 때 | 준비 상태와 선행 작업을 확인하고, 세션 전용 임대를 잡아 중복 작업을 막은 뒤 증거와 함께 완료·인계합니다. |
+| `diagnosing-bugs` | 오류, 간헐적 실패, 속도 저하의 원인을 찾을 때 | 재현 방법을 만들고 가능한 원인을 하나씩 반증해 실제 원인을 찾습니다. “진단만” 요청했다면 코드를 고치지 않습니다. |
+| `tdd` | 기능을 만들거나 버그를 테스트부터 고칠 때 | 실패하는 테스트를 먼저 확인하고, 최소 구현과 정리를 작은 단위로 반복합니다. |
+| `code-review` | 커밋이나 PR 전 변경 전체를 검토할 때 | 저장소 규칙 준수 여부와 원래 요구사항 충족 여부를 서로 섞지 않고 따로 검토합니다. |
+| `writing-great-skills` | Codex 스킬을 새로 만들거나 기존 스킬을 다듬을 때 | 호출 조건, 작업 분기, 완료 기준, 안전 경계를 점검해 스킬이 매번 예측 가능한 절차를 따르게 합니다. |
 
-## Validate
+## 가장 흔한 사용 흐름
+
+```text
+새 요청
+  → triage                 요청이 실제로 준비됐는지 확인
+  → to-spec                합의 내용을 명세로 정리
+  → to-tickets             큰 명세를 작은 이슈로 분해
+  → work-github-issue      한 세션이 이슈를 안전하게 점유
+      → diagnosing-bugs    버그라면 먼저 원인을 확인
+      → tdd                테스트부터 구현
+      → code-review        규칙과 요구사항을 독립적으로 검토
+  → work-github-issue      검증 증거를 남기고 완료 또는 인계
+```
+
+모든 작업에 전부 사용할 필요는 없습니다. 작은 로컬 변경은 `tdd`와 `code-review`만으로 충분할 수 있습니다. GitHub 이슈를 여러 에이전트가 다룬다면 반드시 `work-github-issue`를 바깥 작업 흐름으로 사용합니다.
+
+## 같은 계정을 쓰는 여러 에이전트가 왜 충돌하지 않나요?
+
+GitHub의 담당자 표시만으로는 부족합니다. 여러 세션이 같은 GitHub 계정으로 보이기 때문입니다.
+
+`work-github-issue`는 이슈 번호와 에이전트 세션을 묶은 별도 임대를 원격 Git에 원자적으로 생성합니다. 먼저 임대한 세션만 파일을 수정할 수 있고, 다른 세션은 현재 소유자를 확인한 뒤 멈춥니다. 이슈 라벨·명세·하위 이슈를 게시하는 짧은 작업도 같은 임대 방식으로 직렬화하므로, 두 세션이 똑같은 계획 이슈를 만드는 것도 막습니다. 임대가 만료되거나 작업을 넘겨받을 때는 기존 브랜치·커밋·테스트·이슈 상태를 먼저 확인합니다.
+
+다른 스킬은 이 임대를 직접 만들거나 해제하지 않습니다. 이 단일 소유권 규칙 덕분에 스킬을 조합해도 충돌 방지 방식이 달라지지 않습니다.
+
+## 설치
+
+Codex에게 다음처럼 요청하면 됩니다.
+
+> `rca32/skills` 저장소에서 `work-github-issue`, `triage`, `to-spec`, `to-tickets`, `diagnosing-bugs`, `tdd`, `code-review`, `writing-great-skills` 스킬을 설치해 줘.
+
+또는 이미 설치된 `skill-installer`로 `skills/<스킬 이름>` 경로를 선택해 설치할 수 있습니다. 설치가 끝난 뒤 새 세션을 시작하면 스킬 목록이 갱신됩니다.
+
+설치된 `${CODEX_HOME:-$HOME/.codex}/skills`는 사용용 복사본입니다. 스킬을 수정할 때는 이 저장소를 고치고 검증·push한 뒤 다시 설치합니다.
+
+## 처음 사용할 프로젝트의 준비 사항
+
+GitHub 이슈 작업을 시작하기 전에 프로젝트에 다음이 준비되어 있어야 합니다.
+
+- Git, Python 3, GitHub CLI(`gh`)가 설치되어 있어야 합니다.
+- `gh auth status`가 작업에 사용할 GitHub 계정으로 로그인됐다고 표시해야 합니다.
+- `origin` 같은 임대용 원격 저장소가 `https://github.com/owner/repo.git` 또는 이에 해당하는 정식 SSH 주소를 가리켜야 합니다.
+- 그 계정은 이슈를 읽고 수정할 권한과 원격 임대 ref를 push할 권한이 있어야 합니다.
+- 프로젝트 문서에 이슈 상태 라벨과 선행 작업 표시 방법이 정의되어 있어야 합니다. 별도 규칙이 없다면 `work-github-issue`의 기본 계약은 `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix` 중 하나를 상태로 사용합니다.
+
+확신이 없다면 Codex에게 “이 저장소에서 `work-github-issue`를 쓰기 위한 준비 상태를 읽기 전용으로 점검해 줘”라고 요청하면 됩니다. 실제 첫 임대는 인증·원격 주소·원자적 ref push가 맞지 않으면 작업을 시작하지 않고 실패하도록 설계되어 있습니다.
+
+## 사용 예시
+
+```text
+$triage 이슈 #42가 에이전트가 작업할 만큼 구체적인지 확인해 줘.
+$to-spec 지금까지 합의한 결제 재시도 정책을 명세로 정리해 줘.
+$to-tickets 승인된 이슈 #50을 구현 가능한 작은 이슈로 게시해 줘.
+$work-github-issue 현재 시작할 수 있는 이슈 하나를 안전하게 맡아서 완료해 줘.
+$diagnosing-bugs 간헐적인 타임아웃의 원인만 진단해 줘. 아직 수정하지 마.
+$tdd 이 변경을 공개 인터페이스 테스트부터 구현해 줘.
+$code-review 커밋 전 현재 작업 전체를 규칙과 명세 기준으로 검토해 줘.
+$writing-great-skills 이 스킬의 호출 조건과 완료 기준을 더 예측 가능하게 고쳐 줘.
+```
+
+`triage`, `to-spec`, `to-tickets`는 의도하지 않은 이슈 변경을 피하기 위해 이름을 직접 불러 사용하는 방식입니다. 또한 “검토해 줘”, “초안을 만들어 줘”는 외부 게시 권한을 뜻하지 않습니다. 이슈 생성·라벨 변경·게시까지 원한다면 요청에 분명히 포함해야 합니다.
+
+## 저장소를 관리할 때
+
+각 스킬은 `skills/<스킬 이름>/`에 있습니다. 기본 구조는 다음과 같습니다.
+
+```text
+SKILL.md             에이전트가 따르는 핵심 업무 계약
+agents/openai.yaml   스킬 목록에 표시되는 이름과 시작 문장
+references/          필요할 때만 읽는 상세 규칙과 템플릿
+scripts/             반복 작업을 안전하게 실행하는 도구
+```
+
+변경한 스킬은 구조 검사를 통과해야 합니다.
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py" skills/<스킬 이름>
+```
+
+스크립트가 포함된 스킬은 해당 테스트도 실행합니다.
 
 ```bash
 python3 skills/work-github-issue/scripts/test_issue_lease.py -v
-python3 ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py \
-  skills/work-github-issue
+bash -n skills/diagnosing-bugs/scripts/hitl-loop.template.sh
 ```
+
+에이전트용 상세 작성·검증·배포 계약은 [AGENTS.md](AGENTS.md)에 있습니다.

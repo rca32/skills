@@ -1,0 +1,6 @@
+interface:
+  display_name: "Spec to Tickets"
+  short_description: "Decompose an approved spec into dependency-safe tracer bullets"
+  default_prompt: "Use $to-tickets to publish this approved spec as validated vertical implementation tickets."
+policy:
+  allow_implicit_invocation: false

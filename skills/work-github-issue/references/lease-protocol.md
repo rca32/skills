@@ -1,5 +1,11 @@
 # Session lease protocol
 
+The `rca.*` schema, marker, and ref prefixes below are stable version-1 wire
+identifiers retained for compatibility with existing leases. They do not bind
+the skill to an RCA project. Do not rename them without a migration that checks
+both old and new namespaces; otherwise sessions using different installed
+versions could both believe they own the same issue.
+
 The authoritative lock is an atomic ref pair on the configured Git remote:
 `refs/notes/rca-issue-leases/<issue>` and
 `refs/notes/rca-agent-sessions/<session>`. The notes namespace keeps lease
@@ -12,6 +18,14 @@ source HEAD, creation/renewal time, and expiry.
 ```bash
 # Acquire; generates and returns a session id when omitted.
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_lease.py" claim 42
+
+# Serialize authorized planning writes without assignment/comment projection.
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_lease.py" \
+  claim 42 --purpose planning
+
+# Use key 0 only for a repository-level planning item with no source issue.
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_lease.py" \
+  claim 0 --purpose planning
 
 # Inspect without mutating.
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_lease.py" status 42
@@ -29,6 +43,10 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_leas
 # Delete only the observed lease tip and project the outcome to GitHub.
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_lease.py" release 42 \
   --session <id> --outcome handoff --evidence <issue-comment-url>
+
+# A fully reconciled planning lease releases without implementation evidence.
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_lease.py" \
+  release 42 --session <id>
 ```
 
 Use `--remote <name>`, `--repo owner/name`, and `--ttl-minutes <n>` when the
@@ -40,6 +58,11 @@ An issue already assigned to the same shared account without a lease is
 ambiguous. Inspect its comments and branches, then use
 `--allow-shared-assignee` only with an explicit handoff or confirmation that no
 session is active. An expired valid lease uses `--takeover-expired` instead.
+
+Legacy version-1 lease records without a `purpose` field are interpreted as
+`implementation`. A session cannot change an active lease's purpose in place.
+Planning claims bypass implementation readiness and assignee projection, but
+still require an open source issue when the key is nonzero.
 
 ## Exit codes
 

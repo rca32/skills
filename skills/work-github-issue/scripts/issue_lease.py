@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Atomic Git-ref leases for same-account GitHub issue workers."""
+"""Atomic Git-ref leases for same-account GitHub issue and planning workers."""
 
 from __future__ import annotations
 
@@ -25,6 +25,7 @@ STATE_ROLES = {
     "ready-for-human",
     "wontfix",
 }
+LEASE_PURPOSES = {"implementation", "planning"}
 
 
 @dataclass
@@ -131,7 +132,14 @@ def read_lease(
     for field in ("session", "actor", "createdAt", "renewedAt", "expiresAt"):
         if not isinstance(value.get(field), str) or not value[field]:
             raise LeaseFailure(f"{ref} is missing {field}")
+    if value.get("purpose", "implementation") not in LEASE_PURPOSES:
+        raise LeaseFailure(f"{ref} has an invalid lease purpose")
     return value
+
+
+def lease_purpose(metadata: dict[str, Any]) -> str:
+    """Return the purpose, treating pre-purpose v1 leases as implementation."""
+    return str(metadata.get("purpose", "implementation"))
 
 
 def current_lease(remote: str, issue: int) -> tuple[str, dict[str, Any]] | None:
@@ -416,6 +424,13 @@ def validate_issue_gate(
 def github_precheck(args: argparse.Namespace, actor: str) -> dict[str, Any] | None:
     if args.no_github_sync:
         return None
+    if getattr(args, "purpose", "implementation") == "planning":
+        if args.issue == 0:
+            return None
+        value = github_issue_snapshot(args)
+        if value["state"] != "OPEN":
+            raise LeaseFailure(f"issue {args.issue} is not open")
+        return value
     value = github_issue_snapshot(args)
     validate_issue_gate(args, value, actor, allow_unready=args.allow_unready)
     same_account = any(item["login"] == actor for item in value["assignees"])
@@ -446,6 +461,13 @@ def github_reconcile_claim(
     args: argparse.Namespace, metadata: dict[str, Any], takeover: bool
 ) -> None:
     if args.no_github_sync:
+        return
+    if lease_purpose(metadata) == "planning":
+        if args.issue == 0:
+            return
+        value = github_issue_snapshot(args)
+        if value["state"] != "OPEN":
+            raise LeaseFailure(f"issue {args.issue} is not open")
         return
     value = github_issue_snapshot(args)
     actor = metadata["actor"]
@@ -617,6 +639,12 @@ def command_claim(args: argparse.Namespace) -> None:
     if current:
         parent, existing = current
         if existing["session"] == session and not expired(existing):
+            if lease_purpose(existing) != args.purpose:
+                raise LeaseFailure(
+                    "session already owns this key for a different purpose",
+                    3,
+                    {"issue": args.issue, "remoteSha": parent, "lease": existing},
+                )
             github_reconcile_claim(args, existing, False)
             emit("already-owned", issue=args.issue, remoteSha=parent, lease=existing)
             return
@@ -656,7 +684,8 @@ def command_claim(args: argparse.Namespace) -> None:
         "createdAt": created,
         "renewedAt": renewed,
         "expiresAt": iso(ttl_expiry(args.ttl_minutes)),
-        "readinessOverride": args.allow_unready,
+        "purpose": args.purpose,
+        "readinessOverride": args.allow_unready if args.purpose == "implementation" else False,
     }
     new_sha = create_commit(metadata, parent)
     push_lease(
@@ -727,6 +756,17 @@ def command_status(args: argparse.Namespace) -> None:
 def assert_github_owned(args: argparse.Namespace, metadata: dict[str, Any]) -> None:
     if args.no_github_sync:
         return
+    if lease_purpose(metadata) == "planning":
+        if args.issue == 0:
+            return
+        state = github_issue_snapshot(args)
+        if state["state"] != "OPEN":
+            raise LeaseFailure(
+                "planning lease source issue is no longer open",
+                5,
+                {"issueUrl": state["url"]},
+            )
+        return
     state = github_issue_snapshot(args)
     validate_issue_gate(
         args,
@@ -770,6 +810,24 @@ def command_renew(args: argparse.Namespace) -> None:
 
 def command_release(args: argparse.Namespace) -> None:
     sha, metadata = require_owned(args, allow_expired=True)
+    purpose = lease_purpose(metadata)
+    if purpose == "planning":
+        if args.evidence or args.outcome:
+            raise LeaseFailure(
+                "planning release does not accept implementation evidence or outcome"
+            )
+        delete_lease(args.remote, args.issue, metadata["session"], sha)
+        emit(
+            "released",
+            issue=args.issue,
+            purpose=purpose,
+            session=metadata["session"],
+        )
+        return
+    if not args.evidence or not args.outcome:
+        raise LeaseFailure(
+            "implementation release requires --outcome and --evidence"
+        )
     args.evidence = validate_evidence(
         args, args.evidence, metadata["session"], args.outcome
     )
@@ -789,11 +847,17 @@ def command_release(args: argparse.Namespace) -> None:
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     common = argparse.ArgumentParser(add_help=False)
-    common.add_argument("issue", type=int, help="positive GitHub issue number")
+    common.add_argument(
+        "issue",
+        type=int,
+        help="GitHub issue number; key 0 is reserved for repository-wide planning",
+    )
     common.add_argument(
         "--remote", default="origin", help="Git remote that stores the lease ref"
     )
-    common.add_argument("--repo", help="GitHub owner/name; inferred by gh when omitted")
+    common.add_argument(
+        "--repo", help="GitHub owner/name; inferred from the canonical remote when omitted"
+    )
     common.add_argument(
         "--no-github-sync",
         action="store_true",
@@ -805,6 +869,12 @@ def parser() -> argparse.ArgumentParser:
     claim = commands.add_parser("claim", parents=[common])
     claim.add_argument("--session")
     claim.add_argument("--ttl-minutes", type=float, default=30.0)
+    claim.add_argument(
+        "--purpose",
+        choices=sorted(LEASE_PURPOSES),
+        default="implementation",
+        help="implementation claims project to GitHub; planning claims serialize tracker writes only",
+    )
     claim.add_argument("--takeover-expired", action="store_true")
     claim.add_argument("--allow-shared-assignee", action="store_true")
     claim.add_argument(
@@ -830,13 +900,11 @@ def parser() -> argparse.ArgumentParser:
     release.add_argument("--session", required=True)
     release.add_argument(
         "--evidence",
-        required=True,
         help="durable issue comment, commit, PR, artifact, or handoff pointer",
     )
     release.add_argument(
         "--outcome",
         choices=("completed", "handoff", "blocked"),
-        required=True,
     )
     release.set_defaults(handler=command_release)
     return result
@@ -846,8 +914,17 @@ def main() -> None:
     args = parser().parse_args()
     try:
         ensure_repo()
-        if args.issue <= 0:
-            raise LeaseFailure("issue must be a positive integer")
+        if args.issue < 0:
+            raise LeaseFailure("lease key must be zero or a positive issue number")
+        if args.command == "claim":
+            if args.issue == 0 and args.purpose != "planning":
+                raise LeaseFailure("key 0 is reserved for repository-wide planning")
+            if args.purpose == "planning" and (
+                args.allow_unready or args.allow_shared_assignee
+            ):
+                raise LeaseFailure(
+                    "planning claims do not accept implementation readiness or assignee overrides"
+                )
         bind_github_repo(args)
         args.handler(args)
     except LeaseFailure as error:

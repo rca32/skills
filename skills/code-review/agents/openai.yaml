@@ -1,0 +1,4 @@
+interface:
+  display_name: "Two-Axis Code Review"
+  short_description: "Review worktree changes against repository standards and spec"
+  default_prompt: "Use $code-review to assess the full worktree independently against repository Standards and the originating Spec."
