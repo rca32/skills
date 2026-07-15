@@ -18,14 +18,118 @@ from typing import Any, NoReturn
 SCHEMA = "rca.issue-lease.v1"
 MARKER = "RCA-ISSUE-LEASE-V1"
 SESSION_RE = re.compile(r"^[A-Za-z0-9._-]{8,128}$")
-STATE_ROLES = {
-    "needs-triage",
-    "needs-info",
-    "ready-for-agent",
-    "ready-for-human",
-    "wontfix",
+STATE_LABELS_BY_ROLE = {
+    "needs-triage": {"needs-triage", "상태: 분류 필요"},
+    "needs-info": {"needs-info", "상태: 정보 필요"},
+    "ready-for-agent": {"ready-for-agent", "상태: 에이전트 작업 가능"},
+    "ready-for-human": {"ready-for-human", "상태: 사람 검토 필요"},
+    "wontfix": {"wontfix", "상태: 진행하지 않음"},
+}
+STATE_ROLE_BY_LABEL = {
+    label: role
+    for role, labels in STATE_LABELS_BY_ROLE.items()
+    for label in labels
+}
+EVIDENCE_SECTION_ALIASES = {
+    "outcome": {"## Outcome", "## 결과"},
+    "changes": {"## Changes", "## 변경 사항"},
+    "verification": {"## Verification", "## 검증"},
+    "limitations": {"## Limitations", "## 제한 사항"},
+    "safety": {"## Safety", "## 안전"},
+    "next-action": {"## Next action", "## 다음 행동"},
+}
+EVIDENCE_SECTION_BY_HEADING = {
+    heading: section
+    for section, headings in EVIDENCE_SECTION_ALIASES.items()
+    for heading in headings
+}
+HUMAN_ACTION_HEADINGS = {
+    "## 사람에게 필요한 도움",
+    "## Human action required",
+}
+HUMAN_ACTION_FIELD_ALIASES = {
+    "reason": {"**필요한 이유:**", "**Why this is needed:**"},
+    "request-type": {"**요청 종류:**", "**Request type:**"},
+    "target": {"**대상:**", "**Target:**"},
+    "response": {"**답변/결과를 남길 곳:**", "**Where to respond:**"},
+    "completion": {"**완료 조건:**", "**Completion condition:**"},
+    "completion-evidence": {"**완료 증거:**", "**Completion evidence:**"},
+    "next-state": {"**완료 후 상태:**", "**State after completion:**"},
+    "transition-owner": {"**전환 담당:**", "**Transition owner:**"},
+}
+HUMAN_ACTION_STEP_HEADINGS = {"### 해 주실 일", "### What to do"}
+HUMAN_ACTION_REQUEST_TYPES = {
+    "질문",
+    "결정",
+    "승인",
+    "권한부여",
+    "병합",
+    "수동작업",
+    "검토",
+    "question",
+    "decision",
+    "approval",
+    "accessgrant",
+    "merge",
+    "manualaction",
+    "review",
+}
+HUMAN_ACTION_RESULT_TOKENS = {
+    "질문": {"답변", "제공", "알려", "작성", "나열"},
+    "question": {"answer", "provide", "describe", "list"},
+    "결정": {"결정", "선택"},
+    "decision": {"decide", "choose", "select"},
+    "승인": {"승인", "거절", "수정요청"},
+    "approval": {"approve", "approval", "reject", "requestchanges", "changerequest"},
+    "권한부여": {"권한부여", "접근허용", "권한변경"},
+    "accessgrant": {"grantaccess", "grantpermission", "changepermission"},
+    "병합": {"병합"},
+    "merge": {"merge", "merged"},
+    "수동작업": {"실행", "변경", "입력", "업로드", "재시작", "배포", "설정"},
+    "manualaction": {"run", "change", "enter", "upload", "restart", "deploy", "configure"},
+    "검토": {"승인", "수정요청", "의견", "검토결과"},
+    "review": {"approve", "approval", "requestchanges", "changerequest", "comment", "reviewoutcome"},
+}
+HUMAN_ACTION_EVIDENCE_TOKENS = {
+    "url",
+    "id",
+    "댓글",
+    "리뷰",
+    "로그",
+    "링크",
+    "스크린샷",
+    "기록",
+    "comment",
+    "review",
+    "log",
+    "link",
+    "screenshot",
+    "record",
+}
+GENERIC_HUMAN_ACTION_TEXT = {
+    "검토해주세요",
+    "확인해주세요",
+    "정보를주세요",
+    "확인이필요합니다",
+    "확인완료",
+    "상태변경",
+    "review",
+    "please review",
+    "more information needed",
+    "state change",
+    "done",
+}
+GENERIC_HUMAN_ACTION_PATTERNS = {
+    "적절",
+    "알아서",
+    "필요한조치",
+    "asappropriate",
+    "asneeded",
+    "handleit",
+    "takecare",
 }
 LEASE_PURPOSES = {"implementation", "planning"}
+DISPLAY_LANGUAGES = {"en", "ko"}
 
 
 @dataclass
@@ -134,12 +238,26 @@ def read_lease(
             raise LeaseFailure(f"{ref} is missing {field}")
     if value.get("purpose", "implementation") not in LEASE_PURPOSES:
         raise LeaseFailure(f"{ref} has an invalid lease purpose")
+    if (
+        "displayLanguage" in value
+        and value["displayLanguage"] not in DISPLAY_LANGUAGES
+    ):
+        raise LeaseFailure(f"{ref} has an invalid display language")
     return value
 
 
 def lease_purpose(metadata: dict[str, Any]) -> str:
     """Return the purpose, treating pre-purpose v1 leases as implementation."""
     return str(metadata.get("purpose", "implementation"))
+
+
+def lease_display_language(
+    metadata: dict[str, Any], override: str | None = None
+) -> str:
+    value = str(metadata.get("displayLanguage") or override or "en")
+    if value not in DISPLAY_LANGUAGES:
+        raise LeaseFailure("lease has an invalid display language")
+    return value
 
 
 def current_lease(remote: str, issue: int) -> tuple[str, dict[str, Any]] | None:
@@ -378,11 +496,120 @@ def github_actor(args: argparse.Namespace) -> str:
 
 
 def github_issue_snapshot(args: argparse.Namespace) -> dict[str, Any]:
-    fields = "state,assignees,url,labels,blockedBy,comments,parent"
+    fields = "state,assignees,url,labels,blockedBy,comments,parent,body"
     result = run(
         gh_args(args, "issue", "view", str(args.issue), "--json", fields)
     )
     return json.loads(result.stdout)
+
+
+def recognized_state_labels(labels: set[str]) -> dict[str, str]:
+    return {
+        label: STATE_ROLE_BY_LABEL[label]
+        for label in labels
+        if label in STATE_ROLE_BY_LABEL
+    }
+
+
+def normalize_human_action_text(value: str) -> str:
+    return re.sub(r"[\s.!?。，、]+", "", value).casefold()
+
+
+def meaningful_human_action_text(value: str) -> bool:
+    value = value.strip()
+    if len(value) < 4 or "<" in value or ">" in value:
+        return False
+    normalized = normalize_human_action_text(value)
+    if normalized in {
+        normalize_human_action_text(item) for item in GENERIC_HUMAN_ACTION_TEXT
+    }:
+        return False
+    return not any(pattern in normalized for pattern in GENERIC_HUMAN_ACTION_PATTERNS)
+
+
+def human_action_contract_is_complete(body: str) -> bool:
+    lines = body.splitlines()
+    heading_indexes = [
+        index for index, line in enumerate(lines) if line in HUMAN_ACTION_HEADINGS
+    ]
+    if len(heading_indexes) != 1:
+        return False
+    start = heading_indexes[0] + 1
+    block: list[str] = []
+    for line in lines[start:]:
+        if line.startswith("## "):
+            break
+        block.append(line.strip())
+    if sum(line in HUMAN_ACTION_STEP_HEADINGS for line in block) != 1:
+        return False
+    values: dict[str, str] = {}
+    for line in block:
+        for field, aliases in HUMAN_ACTION_FIELD_ALIASES.items():
+            for alias in aliases:
+                if line.startswith(alias):
+                    if field in values:
+                        return False
+                    values[field] = line[len(alias) :].strip()
+    if any(field not in values for field in HUMAN_ACTION_FIELD_ALIASES):
+        return False
+    if any(
+        not meaningful_human_action_text(values[field])
+        for field in HUMAN_ACTION_FIELD_ALIASES
+        if field != "request-type"
+    ):
+        return False
+    actions = [
+        line[6:].strip()
+        for line in block
+        if line.startswith("- [ ] ") or line.casefold().startswith("- [x] ")
+    ]
+    if not actions or not all(meaningful_human_action_text(action) for action in actions):
+        return False
+    request_type = normalize_human_action_text(values["request-type"])
+    if request_type not in HUMAN_ACTION_REQUEST_TYPES:
+        return False
+    target = normalize_human_action_text(values["target"])
+    normalized_actions = [normalize_human_action_text(action) for action in actions]
+    if not any(target in action for action in normalized_actions):
+        return False
+    if not any(
+        token in action
+        for token in HUMAN_ACTION_RESULT_TOKENS[request_type]
+        for action in normalized_actions
+    ):
+        return False
+    evidence_value = values["completion-evidence"]
+    completion_evidence = normalize_human_action_text(evidence_value)
+    if not (
+        re.search(r"https?://\S+", evidence_value)
+        or re.search(r"#\d+", evidence_value)
+        or any(token in completion_evidence for token in HUMAN_ACTION_EVIDENCE_TOKENS)
+    ):
+        return False
+    next_state = values["next-state"].casefold()
+    destinations = [
+        label for label in STATE_ROLE_BY_LABEL if label.casefold() in next_state
+    ]
+    terminal = any(
+        phrase in next_state
+        for phrase in ("완료 증거와 함께 종료", "close with completion evidence")
+    )
+    if len(destinations) + int(terminal) != 1:
+        return False
+    owner = normalize_human_action_text(values["transition-owner"])
+    expected_owner = "work-github-issue" if terminal else "triage"
+    return owner == expected_owner
+
+
+def latest_human_action_contract(value: dict[str, Any]) -> str | None:
+    candidates = [str(value.get("body", ""))]
+    candidates.extend(str(comment.get("body", "")) for comment in value["comments"])
+    matching = [
+        body
+        for body in candidates
+        if any(heading in body for heading in HUMAN_ACTION_HEADINGS)
+    ]
+    return matching[-1] if matching else None
 
 
 def validate_issue_gate(
@@ -395,7 +622,18 @@ def validate_issue_gate(
     if value["state"] != "OPEN":
         raise LeaseFailure(f"issue {args.issue} is not open")
     labels = {item["name"] for item in value["labels"]}
-    if "ready-for-agent" not in labels and not allow_unready:
+    state_labels = recognized_state_labels(labels)
+    if len(state_labels) > 1:
+        raise LeaseFailure(
+            f"issue {args.issue} has conflicting state labels",
+            2,
+            {
+                "stateLabels": sorted(state_labels),
+                "stateRoles": sorted(set(state_labels.values())),
+                "issueUrl": value["url"],
+            },
+        )
+    if not (labels & STATE_LABELS_BY_ROLE["ready-for-agent"]) and not allow_unready:
         raise LeaseFailure(
             f"issue {args.issue} is not ready-for-agent",
             2,
@@ -503,34 +741,68 @@ def github_reconcile_claim(
 def github_claim(args: argparse.Namespace, metadata: dict[str, Any], takeover: bool) -> None:
     if args.no_github_sync:
         return
-    action = "took over an expired" if takeover else "acquired"
-    body = "\n".join(
-        [
-            claim_marker(metadata["session"]),
-            f"Agent session lease {action}.",
-            "",
-            f"- Session: `{metadata['session']}`",
-            f"- Branch: `{metadata['branch']}`",
-            f"- Source HEAD: `{metadata['headSha']}`",
-            f"- Initial expiry: `{metadata['expiresAt']}`",
-            f"- Authority: `{ref_for(args.issue)}` (renewals may extend the expiry)",
-        ]
+    language = lease_display_language(
+        metadata, getattr(args, "display_language", None)
     )
+    if language == "ko":
+        action = "만료된 lease를 인수했습니다." if takeover else "lease를 획득했습니다."
+        body = "\n".join(
+            [
+                claim_marker(metadata["session"]),
+                f"에이전트 세션 {action}",
+                "",
+                f"- 세션: `{metadata['session']}`",
+                f"- 브랜치: `{metadata['branch']}`",
+                f"- 시작 HEAD: `{metadata['headSha']}`",
+                f"- 최초 만료 시각: `{metadata['expiresAt']}`",
+                f"- 소유권 기준: `{ref_for(args.issue)}` (갱신하면 만료 시각이 연장될 수 있습니다)",
+            ]
+        )
+    else:
+        action = "took over an expired" if takeover else "acquired"
+        body = "\n".join(
+            [
+                claim_marker(metadata["session"]),
+                f"Agent session lease {action}.",
+                "",
+                f"- Session: `{metadata['session']}`",
+                f"- Branch: `{metadata['branch']}`",
+                f"- Source HEAD: `{metadata['headSha']}`",
+                f"- Initial expiry: `{metadata['expiresAt']}`",
+                f"- Authority: `{ref_for(args.issue)}` (renewals may extend the expiry)",
+            ]
+        )
     run(gh_args(args, "issue", "comment", str(args.issue), "--body", body))
 
 
-def github_release(args: argparse.Namespace, outcome: str, session: str) -> None:
+def github_release(
+    args: argparse.Namespace, outcome: str, session: str, display_language: str
+) -> None:
     if args.no_github_sync:
         return
     if outcome != "completed":
         run(gh_args(args, "issue", "edit", str(args.issue), "--remove-assignee", "@me"))
-    body = "\n".join(
-        [
-            f"<!-- rca-issue-lease-release:v1 session={session} -->",
-            f"Agent session lease released with outcome `{outcome}`.",
-            f"Evidence: {args.evidence}",
-        ]
-    )
+    if display_language == "ko":
+        outcome_label = {
+            "completed": "완료",
+            "blocked": "차단됨",
+            "handoff": "인계",
+        }[outcome]
+        body = "\n".join(
+            [
+                f"<!-- rca-issue-lease-release:v1 session={session} -->",
+                f"에이전트 세션 lease를 `{outcome_label}` 결과로 해제했습니다 (`{outcome}`).",
+                f"증거: {args.evidence}",
+            ]
+        )
+    else:
+        body = "\n".join(
+            [
+                f"<!-- rca-issue-lease-release:v1 session={session} -->",
+                f"Agent session lease released with outcome `{outcome}`.",
+                f"Evidence: {args.evidence}",
+            ]
+        )
     run(gh_args(args, "issue", "comment", str(args.issue), "--body", body))
 
 
@@ -548,12 +820,17 @@ def github_release_precheck(args: argparse.Namespace) -> None:
     if args.outcome == "blocked":
         labels = {item["name"] for item in value["labels"]}
         open_blockers = [item for item in value["blockedBy"] if item.get("state") != "CLOSED"]
-        state_roles = labels & STATE_ROLES
-        if len(state_roles) != 1:
+        state_labels = recognized_state_labels(labels)
+        state_roles = set(state_labels.values())
+        if len(state_labels) != 1:
             raise LeaseFailure(
                 "blocked release requires exactly one triage state role",
                 2,
-                {"stateRoles": sorted(state_roles), "issueUrl": value["url"]},
+                {
+                    "stateLabels": sorted(state_labels),
+                    "stateRoles": sorted(state_roles),
+                    "issueUrl": value["url"],
+                },
             )
         if not open_blockers and state_roles.isdisjoint({"needs-info", "ready-for-human"}):
             raise LeaseFailure(
@@ -561,6 +838,14 @@ def github_release_precheck(args: argparse.Namespace) -> None:
                 2,
                 {"labels": sorted(labels), "issueUrl": value["url"]},
             )
+        if not state_roles.isdisjoint({"needs-info", "ready-for-human"}):
+            human_action = latest_human_action_contract(value)
+            if human_action is None or not human_action_contract_is_complete(human_action):
+                raise LeaseFailure(
+                    "blocked human-wait release requires an actionable Human action contract",
+                    2,
+                    {"stateRoles": sorted(state_roles), "issueUrl": value["url"]},
+                )
 
 
 def validate_session(value: str) -> str:
@@ -597,19 +882,20 @@ def validate_evidence(
     body = str(comment.get("body", ""))
     marker = f"<!-- rca-issue-evidence:v1 session={session} outcome={outcome} -->"
     required_sections = {
-        "## Outcome",
-        "## Changes",
-        "## Verification",
-        "## Limitations",
-        "## Safety",
+        "outcome",
+        "changes",
+        "verification",
+        "limitations",
+        "safety",
     }
     if outcome in {"blocked", "handoff"}:
-        required_sections.add("## Next action")
+        required_sections.add("next-action")
     section_content = {section: [] for section in required_sections}
     current_section: str | None = None
     for line in body.splitlines():
         if line.startswith("## "):
-            current_section = line if line in section_content else None
+            candidate = EVIDENCE_SECTION_BY_HEADING.get(line)
+            current_section = candidate if candidate in section_content else None
         elif current_section and line.strip() and not line.strip().startswith("<!--"):
             section_content[current_section].append(line.strip())
     sections_filled = all(section_content[section] for section in required_sections)
@@ -685,6 +971,7 @@ def command_claim(args: argparse.Namespace) -> None:
         "renewedAt": renewed,
         "expiresAt": iso(ttl_expiry(args.ttl_minutes)),
         "purpose": args.purpose,
+        "displayLanguage": args.display_language or "ko",
         "readinessOverride": args.allow_unready if args.purpose == "implementation" else False,
     }
     new_sha = create_commit(metadata, parent)
@@ -832,9 +1119,15 @@ def command_release(args: argparse.Namespace) -> None:
         args, args.evidence, metadata["session"], args.outcome
     )
     github_release_precheck(args)
+    display_language = lease_display_language(metadata, args.display_language)
     delete_lease(args.remote, args.issue, metadata["session"], sha)
     try:
-        github_release(args, args.outcome, metadata["session"])
+        github_release(
+            args,
+            args.outcome,
+            metadata["session"],
+            display_language,
+        )
     except LeaseFailure as error:
         raise LeaseFailure(
             f"GitHub projection failed after lease release: {error.message}",
@@ -864,6 +1157,11 @@ def parser() -> argparse.ArgumentParser:
         help="test only: skip issue readiness, assignment, and comments; --repo is ignored",
     )
     common.add_argument("--actor", help="actor projection; normally inferred from gh")
+    common.add_argument(
+        "--display-language",
+        choices=sorted(DISPLAY_LANGUAGES),
+        help="human-facing GitHub lease comment language; new leases default to ko",
+    )
     commands = result.add_subparsers(dest="command", required=True)
 
     claim = commands.add_parser("claim", parents=[common])

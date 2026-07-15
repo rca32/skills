@@ -11,7 +11,9 @@ The authoritative lock is an atomic ref pair on the configured Git remote:
 `refs/notes/rca-agent-sessions/<session>`. The notes namespace keeps lease
 traffic out of branch/tag CI and the branch list. Both refs point to one commit
 containing `rca.issue-lease.v1` JSON with the issue, session, actor, branch,
-source HEAD, creation/renewal time, and expiry.
+source HEAD, creation/renewal time, expiry, purpose, and optional display
+language. Readers treat a missing display language as the legacy English
+projection behavior.
 
 ## Commands
 
@@ -50,7 +52,11 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_leas
 ```
 
 Use `--remote <name>`, `--repo owner/name`, and `--ttl-minutes <n>` when the
-defaults are not correct. `--no-github-sync --actor <name>` is reserved for
+defaults are not correct. New leases use Korean GitHub projection comments by
+default; pass `--display-language en` at claim when repository instructions
+require English. The selected language is stored in the lease and reused for
+release; legacy leases without this field retain English compatibility.
+`--no-github-sync --actor <name>` is reserved for
 disposable test remotes. That mode ignores `--repo` and validates only the Git
 lease lifecycle; it cannot prove issue readiness, assignment, or comments.
 

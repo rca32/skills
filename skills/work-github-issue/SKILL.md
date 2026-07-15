@@ -13,7 +13,7 @@ Read the repository's configured issue-tracker document before the first
 tracker write. If none exists, use
 [references/tracker-contract.md](references/tracker-contract.md). Read
 [references/lifecycle.md](references/lifecycle.md) only when the issue is not
-already `ready-for-agent`, belongs to a Wayfinder map, or must be split,
+already in the configured `ready-for-agent` role, belongs to a Wayfinder map, or must be split,
 triaged, handed off, or resolved into a parent.
 
 Use `documenting-work` whenever a workflow proposes a durable file, report, or
@@ -26,8 +26,16 @@ repository explicitly assigns that authority elsewhere.
 Before the first real lease in a repository, verify that Git is available, the
 configured remote resolves to the intended canonical GitHub `owner/name`, `gh`
 is authenticated to the expected account, the tracker contract and state-label
-mapping are known, and the account may push atomic refs to the remote. A claim
-fails closed when these prerequisites are absent.
+mapping are known and recognized by the lease helper or repository adapter, and
+the account may push atomic refs to the remote. Under the bundled fallback,
+publish Korean state labels and accept the legacy English aliases only for
+existing issues; never attach both aliases for one role. A claim fails closed
+when these prerequisites are absent.
+
+Resolve the human-facing tracker language before claim. The lease helper
+defaults new claim/release projection comments to Korean and records that
+choice in the lease; pass `--display-language en` when the selected repository
+contract requires English. Keep protocol markers unchanged in either language.
 
 Read-only triage, drafting, and graph design need no lease. Before `triage`,
 `to-spec`, or `to-tickets` performs authorized tracker writes, acquire a short
@@ -207,7 +215,10 @@ remote branch, pull request, or integration target, and classify the operation
 as present exactly once or absent before retrying. If tracker writes are
 prohibited, remain read-only and do not claim.
 
-Post the configured tracker document's structured evidence comment.
+Post the configured tracker document's structured evidence comment in its
+human-facing language. Under the bundled fallback, use the Korean evidence
+headings while preserving the protocol marker; legacy English headings remain
+read-compatible.
 Link any repository document or artifact selected by `documenting-work`; do not
 copy its full body into the evidence comment.
 
@@ -241,7 +252,15 @@ repository completion point has been reached. For every non-complete session,
 apply the configured tracker contract's state and `blocked|handoff` mapping; do
 not substitute the fallback vocabulary when the repository defines another
 outcome. When the bundled fallback contract is active, apply its human-wait and
-continuation rules directly.
+continuation rules directly. Before releasing `blocked` in `needs-info` or
+`ready-for-human`, verify the authoritative issue body or latest comment tells
+the person why intervention is required, the exact action, where to respond,
+the observable completion condition, durable evidence reference, and the next
+state plus transition owner.
+The person records the requested answer or action evidence but does not edit
+the state directly: authorized `triage` owns revalidation and open-state
+transitions, while this skill owns evidence-backed completion and closure. Do
+not release with a generic request to review or provide information.
 
 Do not delete a branch or worktree as part of lease release. After evidence and
 release readback, follow the resolved cleanup contract. Remove only a clean,
