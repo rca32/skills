@@ -13,7 +13,7 @@ otherwise apply the invariant in the final column directly.
 | Destination is larger than the visible route | `wayfinder` | Shared map, named tickets, frontier, fog, one ticket per session |
 | Ready ticket is being built | Skill's execution step | Test seam, focused implementation, regular checks, final suite |
 | Diff is ready to judge | `code-review` | Standards and Spec stay separate |
-| Work is ready to publish | repository publish flow | Intentional scope, commit, push/PR authorization |
+| Work is ready to publish | resolved repository publish flow | Fixed point, PR/integration targets, separate push/PR/merge authority, checks, completion point |
 
 The selected tracker contract is the single source of truth for state labels,
 frontier membership, dependency representation, claim authority, and close

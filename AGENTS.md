@@ -60,7 +60,7 @@ Consuming-repository documentation instructions override the bundled fallback. W
 
 ## Runtime prerequisites
 
-The consuming repository must provide Git, Python 3, an authenticated GitHub CLI, a canonical GitHub remote that matches the requested repository, permission to push the atomic lease refs, and a documented tracker-state/dependency mapping. When repository instructions omit tracker semantics, use `work-github-issue/references/tracker-contract.md`. Missing authentication, remote identity, tracker mapping, or atomic-ref permission is a fail-closed preflight result, not authorization to bypass the lease.
+The consuming repository must provide Git, Python 3, an authenticated GitHub CLI, a canonical GitHub remote that matches the requested repository, permission to push the atomic lease refs, and a documented tracker-state/dependency mapping. Implementation also requires an explicit user or repository execution/publication contract for every requested outcome: ticket base and fixed point, worktree eligibility, authorized delivery surface, PR and integration targets, merge authority and strategy, required checks, completion point, and cleanup policy as applicable. When repository instructions omit tracker semantics, use `work-github-issue/references/tracker-contract.md`; that fallback deliberately does not invent repository-specific publication values. Missing authentication, remote identity, tracker mapping, atomic-ref permission, or a publication field required by the requested outcome is a fail-closed preflight result, not authorization to bypass the lease or guess a target.
 
 ## Invocation policy
 
