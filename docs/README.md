@@ -14,6 +14,7 @@
 | 문서의 원본 위치와 수명 결정 | `documenting-work` | [개발 문서의 자리 정하기](skills/documenting-work.md) |
 | GitHub 이슈를 충돌 없이 구현 | `work-github-issue` | [GitHub 이슈를 안전하게 맡아 처리하기](skills/work-github-issue.md) |
 | 원인을 모르는 오류나 성능 저하 조사 | `diagnosing-bugs` | [증거로 버그 원인 찾기](skills/diagnosing-bugs.md) |
+| 복잡도·성능 hotspot 분석 또는 안전한 최적화 | `complexity-optimizer` | [복잡도와 성능 hotspot 개선하기](skills/complexity-optimizer.md) |
 | 테스트를 먼저 작성해 기능 또는 수정 구현 | `tdd` | [작은 Red-Green-Refactor 반복](skills/tdd.md) |
 | 변경 사항이 규칙과 요구사항을 만족하는지 검토 | `code-review` | [두 기준으로 독립적인 코드 리뷰](skills/code-review.md) |
 | 새 스킬을 만들거나 기존 스킬 개선 | `writing-great-skills` | [예측 가능한 스킬 작성하기](skills/writing-great-skills.md) |
@@ -25,6 +26,7 @@
 ```text
 triage → to-spec → to-tickets → work-github-issue
                                       ├─ diagnosing-bugs
+                                      ├─ complexity-optimizer
                                       ├─ tdd
                                       └─ code-review
 ```
@@ -33,7 +35,7 @@ triage → to-spec → to-tickets → work-github-issue
 - `to-spec`은 합의된 범위를 명세로 고정합니다.
 - `to-tickets`는 명세를 의존성이 분명한 작은 작업으로 나눕니다.
 - `work-github-issue`는 한 세션만 이슈를 맡도록 조정하고 완료나 인계까지 책임집니다.
-- 원인을 모르면 `diagnosing-bugs`, 구현할 행동이 정해졌으면 `tdd`, 구현이 끝났으면 `code-review`를 안쪽 과정으로 사용합니다.
+- 원인을 모르면 `diagnosing-bugs`, 복잡도·성능 hotspot을 찾거나 개선하면 `complexity-optimizer`, 구현할 행동이 정해졌으면 `tdd`, 구현이 끝났으면 `code-review`를 안쪽 과정으로 사용합니다.
 
 모든 작업에 이 전체 흐름이 필요한 것은 아닙니다. 작은 로컬 변경이라면 `tdd`와 `code-review`만으로 충분할 수 있습니다.
 
