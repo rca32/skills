@@ -13,7 +13,7 @@ Read the repository's configured issue-tracker document before the first
 tracker write. If none exists, use
 [references/tracker-contract.md](references/tracker-contract.md). Read
 [references/lifecycle.md](references/lifecycle.md) only when the issue is not
-already `ready-for-agent`, belongs to a Wayfinder map, or must be split,
+already in the configured `ready-for-agent` role, belongs to a Wayfinder map, or must be split,
 triaged, handed off, or resolved into a parent.
 
 Use `documenting-work` whenever a workflow proposes a durable file, report, or
@@ -26,8 +26,16 @@ repository explicitly assigns that authority elsewhere.
 Before the first real lease in a repository, verify that Git is available, the
 configured remote resolves to the intended canonical GitHub `owner/name`, `gh`
 is authenticated to the expected account, the tracker contract and state-label
-mapping are known, and the account may push atomic refs to the remote. A claim
-fails closed when these prerequisites are absent.
+mapping are known and recognized by the lease helper or repository adapter, and
+the account may push atomic refs to the remote. Under the bundled fallback,
+publish Korean state labels and accept the legacy English aliases only for
+existing issues; never attach both aliases for one role. A claim fails closed
+when these prerequisites are absent.
+
+Resolve the human-facing tracker language before claim. The lease helper
+defaults new claim/release projection comments to Korean and records that
+choice in the lease; pass `--display-language en` when the selected repository
+contract requires English. Keep protocol markers unchanged in either language.
 
 Read-only triage, drafting, and graph design need no lease. Before `triage`,
 `to-spec`, or `to-tickets` performs authorized tracker writes, acquire a short
@@ -64,13 +72,39 @@ requires.
 
 - Route raw incoming reports through `triage`.
 - Route a settled multi-session plan through `to-spec` and `to-tickets`.
-- Route a huge foggy effort through `wayfinder`.
+- Route a huge foggy effort through `wayfinder` when it is installed; otherwise
+  keep the issue non-ready and report the missing shared map, named ticket,
+  frontier, or fog decision required before implementation.
 - Apply the configured tracker document's readiness, frontier, dependency, and
   override contract before selecting implementation work.
 
+Before an implementation claim, resolve the execution and publication contract
+from explicit user instructions, then applicable repository instructions and one
+unambiguous configured publish flow. Record:
+
+- the ticket base and pre-work fixed point;
+- when the current worktree is eligible and where an isolated worktree may be
+  created otherwise;
+- the authorized delivery surface: local commit, pushed branch, pull request,
+  or merge;
+- the pull-request target and, when integration or direct merge is in scope, the
+  integration target;
+- merge authority and strategy, required checks, and the repository-defined
+  completion point when publication is in scope;
+- branch and worktree retention or cleanup rules.
+
+Do not select a merge target merely because it is the remote default branch or
+because a nearby pull request used it. A local-only request may mark publication
+fields `not authorized` only when the user explicitly scopes the outcome to local
+work; the configured tracker contract still owns its release outcome. If a field
+required for the requested outcome is missing or two authorities conflict,
+remain read-only and report the exact decision required instead of claiming.
+
 Completion criterion: the issue snapshot satisfies the tracker contract and its
 requested outcome plus acceptance criteria are present in the body or an
-identified brief/spec.
+identified brief/spec; the execution contract is resolved; and every publication
+field required by the requested outcome is either resolved or explicitly out of
+scope.
 
 ## 2. Acquire the implementation lease
 
@@ -97,12 +131,35 @@ is assigned, and the returned lease is unexpired and owned by this session.
 
 ## 3. Execute one ticket
 
-Create or select a branch that isolates this ticket. Follow the repository owner
-boundaries and any skill the user explicitly invoked. At the agreed highest
-test seam, make behavior changes test-first where practical. Run typechecking
-and focused tests regularly, then the full relevant suite once. Keep the ticket
-a tracer bullet: deliver its end-to-end acceptance criteria without absorbing
-adjacent tickets.
+After the claim, create or select a ticket branch from the resolved fixed point.
+Use the current worktree only when all of these are true:
+
+- it is already on the ticket branch, or selecting that branch will not disturb
+  unrelated state;
+- every staged, unstaged, and untracked change is verified as part of this ticket;
+- no other active session or user task shares the directory;
+- the work needs no revision switching or destructive experiment.
+
+Otherwise create a separate worktree without cleaning, stashing, resetting, or
+switching the user's active checkout. Inspect `git worktree list` before choosing
+the branch. If the intended ticket branch is already checked out in an ineligible
+worktree, do not force it into another worktree: reuse it only after it becomes
+eligible and exclusive, or create an authorized distinct continuation branch at
+its durable committed HEAD and record the relationship. If relevant uncommitted
+state remains there or a continuation branch is not authorized, stop before
+editing, preserve both workspaces, and apply the configured tracker contract's
+non-complete outcome.
+
+A separate worktree uses the same issue lease and a branch that isolates the
+ticket. From the selected execution workspace, renew the lease so its branch and
+source HEAD projection describe the actual ticket workspace, then verify
+ownership before editing.
+
+Follow the repository owner boundaries and any skill the user explicitly
+invoked. At the agreed highest test seam, make behavior changes test-first where
+practical. Run typechecking and focused tests regularly, then the full relevant
+suite once. Keep the ticket a tracer bullet: deliver its end-to-end acceptance
+criteria without absorbing adjacent tickets.
 
 Renew before the TTL expires and before a long unattended operation:
 
@@ -122,27 +179,61 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_leas
 If check fails, stop writes, preserve local evidence, and report the current
 lease owner. Resume only after reacquiring or receiving an explicit handoff.
 
-Completion criterion: each acceptance criterion maps to a changed behavior,
-test, or named evidence artifact; the focused and final suites are green; and
-`check` returns `status=owned` for this session.
+Completion criterion: the execution workspace is isolated at the recorded fixed
+point; its branch and HEAD match the current lease projection; each acceptance
+criterion maps to a changed behavior, test, or named evidence artifact; the
+focused and final suites are green; and `check` returns `status=owned` for this
+session.
 
 ## 4. Review and publish evidence
 
 Review the pre-work fixed point on both Standards and Spec, using `code-review`
 when available.
-Address actionable findings, run the final relevant suite, and commit only the
-ticket's files. Publish only when the user or active workflow authorizes it.
-The real-issue claim authorizes its required tracker projection and evidence
-writes; if tracker writes are prohibited, remain read-only and do not claim.
+Address actionable findings and run the final relevant suite. Commit, push, open
+a pull request, or merge only to the extent authorized by the user or active
+repository workflow, and include only the ticket's files. An implementation
+claim authorizes required tracker projection and evidence writes; it does not by
+itself authorize code publication. A pushed branch does not authorize a pull
+request, and pull-request creation does not authorize merge.
 
-Post the configured tracker document's structured evidence comment.
+After creating or amending the final commit, renew from the execution workspace
+and check ownership so the lease projection names the exact branch and HEAD
+before any publication or evidence write.
+
+Apply the resolved publication contract rather than inventing a target or merge
+method. Before each consequential write, recheck the lease and the target. Read
+back operation-specific state:
+
+- after push, the remote branch points to the intended commit;
+- after pull-request create or update, its head, base, state, and required checks
+  match the contract;
+- after merge, the configured integration target contains the published change
+  and required checks remain satisfied.
+
+An unknown publication result remains unresolved. Keep the lease, inspect the
+remote branch, pull request, or integration target, and classify the operation
+as present exactly once or absent before retrying. If tracker writes are
+prohibited, remain read-only and do not claim.
+
+Post the configured tracker document's structured evidence comment in its
+human-facing language. Under the bundled fallback, use the Korean evidence
+headings while preserving the protocol marker; legacy English headings remain
+read-compatible.
 Link any repository document or artifact selected by `documenting-work`; do not
 copy its full body into the evidence comment.
 
-Completion criterion: the issue comment names the exact local or published
-commit, commands and results, evidence paths, limitations, and safety outcome;
-the reviewed diff contains only the ticket's scope. Without publication
-authorization, proceed to the tracker-defined handoff outcome.
+Read back every implementation tracker write as well. Reconcile an evidence
+comment by the exact `rca-issue-evidence:v1` session/outcome marker: reuse exactly
+one match, create only when no match exists, and stop on duplicates or an unknown
+search result. Verify labels, parent state, and closure from their exact tracker
+fields. Never repeat an ambiguous tracker mutation before this readback.
+
+Completion criterion: the reviewed diff contains only the ticket's scope; every
+authorized publication and tracker step has an exact readback; and the issue
+comment names the fixed point, branch, exact local or published commit, pull
+request or merge state when applicable, commands and results, evidence paths,
+limitations, and safety outcome. Without publication authorization, proceed to
+the configured tracker contract's non-complete outcome.
 
 ## 5. Resolve or hand off
 
@@ -156,8 +247,31 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_leas
   --evidence <issue-evidence-comment-url>
 ```
 
+Use `completed` only when every acceptance criterion holds and the resolved
+repository completion point has been reached. For every non-complete session,
+apply the configured tracker contract's state and `blocked|handoff` mapping; do
+not substitute the fallback vocabulary when the repository defines another
+outcome. When the bundled fallback contract is active, apply its human-wait and
+continuation rules directly. Before releasing `blocked` in `needs-info` or
+`ready-for-human`, verify the authoritative issue body or latest comment tells
+the person why intervention is required, the exact action, where to respond,
+the observable completion condition, durable evidence reference, and the next
+state plus transition owner.
+The person records the requested answer or action evidence but does not edit
+the state directly: authorized `triage` owns revalidation and open-state
+transitions, while this skill owns evidence-backed completion and closure. Do
+not release with a generic request to review or provide information.
+
+Do not delete a branch or worktree as part of lease release. After evidence and
+release readback, follow the resolved cleanup contract. Remove only a clean,
+disposable worktree whose branch and commits are durably recoverable; remote or
+local branch deletion requires its own authorization. Preserve any workspace
+with unknown, uncommitted, or untracked state and report its next safe action.
+
 Completion criterion: `status <issue>` returns `status=unclaimed` and the issue,
-parent map, publication state, and evidence match the tracker-defined outcome.
+parent map, repository completion point, publication state, and evidence match
+the tracker-defined outcome; any authorized cleanup is read back without losing
+unpublished work.
 
 ## Lease guardrails
 

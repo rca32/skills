@@ -19,6 +19,23 @@ sys.path.insert(0, str(SCRIPT.parent))
 import issue_lease  # noqa: E402
 
 
+VALID_HUMAN_ACTION_BODY = "\n".join(
+    [
+        "## 사람에게 필요한 도움",
+        "**필요한 이유:** 보안 승인이 있어야 안전하게 계속할 수 있습니다.",
+        "**요청 종류:** 검토",
+        "**대상:** PR #42",
+        "### 해 주실 일",
+        "- [ ] PR #42의 권한 변경을 검토하고 승인 또는 수정 요청을 남겨 주세요.",
+        "**답변/결과를 남길 곳:** PR #42 리뷰",
+        "**완료 조건:** 승인 또는 구체적인 수정 요청이 리뷰로 등록됨",
+        "**완료 증거:** PR #42 승인 또는 수정 요청 리뷰 링크",
+        "**완료 후 상태:** 상태: 에이전트 작업 가능",
+        "**전환 담당:** triage",
+    ]
+)
+
+
 def command(args: list[str], cwd: pathlib.Path, check: bool = True) -> subprocess.CompletedProcess[str]:
     result = subprocess.run(
         args,
@@ -338,6 +355,48 @@ class IssueLeaseTest(unittest.TestCase):
 
 
 class GitHubContractTest(unittest.TestCase):
+    def test_claim_and_release_comments_explain_the_lease_in_korean(self) -> None:
+        args = issue_lease.argparse.Namespace(
+            no_github_sync=False,
+            issue=50,
+            repo="octo-org/example-repo",
+            evidence="https://github.com/octo-org/example-repo/issues/50#issuecomment-1",
+        )
+        metadata = {
+            "session": "session-korean",
+            "branch": "agent/korean",
+            "headSha": "a" * 40,
+            "expiresAt": "2030-01-01T00:00:00Z",
+            "displayLanguage": "ko",
+        }
+        completed = subprocess.CompletedProcess([], 0, "", "")
+        with mock.patch.object(
+            issue_lease, "run", return_value=completed
+        ) as invoked:
+            issue_lease.github_claim(args, metadata, False)
+            claim_command = invoked.call_args.args[0]
+            claim_body = claim_command[claim_command.index("--body") + 1]
+            self.assertIn("에이전트 세션 lease를 획득했습니다.", claim_body)
+            self.assertIn("- 세션:", claim_body)
+
+            issue_lease.github_release(args, "blocked", metadata["session"], "ko")
+            release_command = invoked.call_args.args[0]
+            release_body = release_command[release_command.index("--body") + 1]
+            self.assertIn("차단됨", release_body)
+            self.assertIn("증거:", release_body)
+
+            english = dict(metadata)
+            english["displayLanguage"] = "en"
+            issue_lease.github_claim(args, english, False)
+            claim_command = invoked.call_args.args[0]
+            claim_body = claim_command[claim_command.index("--body") + 1]
+            self.assertIn("Agent session lease acquired.", claim_body)
+
+            issue_lease.github_release(args, "blocked", metadata["session"], "en")
+            release_command = invoked.call_args.args[0]
+            release_body = release_command[release_command.index("--body") + 1]
+            self.assertIn("released with outcome `blocked`", release_body)
+
     def test_remote_url_binds_repository_identity(self) -> None:
         urls = (
             "https://github.com/octo-org/example-repo.git",
@@ -397,6 +456,57 @@ class GitHubContractTest(unittest.TestCase):
         with mock.patch.object(issue_lease, "github_issue_snapshot", return_value=blocked):
             with self.assertRaises(issue_lease.LeaseFailure):
                 issue_lease.github_precheck(args, "octocat")
+
+    def test_korean_ready_label_allows_claim(self) -> None:
+        args = issue_lease.argparse.Namespace(
+            no_github_sync=False,
+            issue=50,
+            repo="octo-org/example-repo",
+            allow_unready=False,
+            allow_shared_assignee=False,
+            takeover_expired=False,
+        )
+        ready = {
+            "state": "OPEN",
+            "assignees": [],
+            "url": "https://github.com/octo-org/example-repo/issues/50",
+            "labels": [{"name": "상태: 에이전트 작업 가능"}],
+            "blockedBy": [],
+            "comments": [],
+            "parent": None,
+        }
+        with mock.patch.object(issue_lease, "github_issue_snapshot", return_value=ready):
+            self.assertEqual(issue_lease.github_precheck(args, "octocat"), ready)
+
+    def test_claim_rejects_multiple_state_labels_and_aliases(self) -> None:
+        args = issue_lease.argparse.Namespace(
+            no_github_sync=False,
+            issue=50,
+            repo="octo-org/example-repo",
+            allow_unready=False,
+            allow_shared_assignee=False,
+            takeover_expired=False,
+        )
+        base = {
+            "state": "OPEN",
+            "assignees": [],
+            "url": "https://github.com/octo-org/example-repo/issues/50",
+            "blockedBy": [],
+            "comments": [],
+            "parent": None,
+        }
+        conflicts = (
+            ["상태: 에이전트 작업 가능", "상태: 정보 필요"],
+            ["ready-for-agent", "상태: 에이전트 작업 가능"],
+        )
+        for labels in conflicts:
+            snapshot = dict(base)
+            snapshot["labels"] = [{"name": label} for label in labels]
+            with mock.patch.object(
+                issue_lease, "github_issue_snapshot", return_value=snapshot
+            ):
+                with self.assertRaises(issue_lease.LeaseFailure):
+                    issue_lease.github_precheck(args, "octocat")
 
     def test_planning_precheck_and_reconcile_do_not_project_a_claim(self) -> None:
         args = issue_lease.argparse.Namespace(
@@ -552,10 +662,20 @@ class GitHubContractTest(unittest.TestCase):
 
         needs_info = dict(opened)
         needs_info["labels"] = [{"name": "needs-info"}]
+        needs_info["comments"] = [{"body": VALID_HUMAN_ACTION_BODY}]
         with mock.patch.object(
             issue_lease, "github_issue_snapshot", return_value=needs_info
         ):
             issue_lease.github_release_precheck(args)
+
+        for korean_state in ("상태: 정보 필요", "상태: 사람 검토 필요"):
+            localized = dict(opened)
+            localized["labels"] = [{"name": korean_state}]
+            localized["comments"] = [{"body": VALID_HUMAN_ACTION_BODY}]
+            with mock.patch.object(
+                issue_lease, "github_issue_snapshot", return_value=localized
+            ):
+                issue_lease.github_release_precheck(args)
 
         conflicting = dict(opened)
         conflicting["labels"] = [
@@ -567,6 +687,194 @@ class GitHubContractTest(unittest.TestCase):
         ):
             with self.assertRaises(issue_lease.LeaseFailure):
                 issue_lease.github_release_precheck(args)
+
+        duplicate_aliases = dict(opened)
+        duplicate_aliases["labels"] = [
+            {"name": "needs-info"},
+            {"name": "상태: 정보 필요"},
+        ]
+        with mock.patch.object(
+            issue_lease, "github_issue_snapshot", return_value=duplicate_aliases
+        ):
+            with self.assertRaises(issue_lease.LeaseFailure):
+                issue_lease.github_release_precheck(args)
+
+    def test_blocked_human_wait_requires_actionable_human_contract(self) -> None:
+        args = issue_lease.argparse.Namespace(
+            no_github_sync=False,
+            issue=53,
+            repo="octo-org/example-repo",
+            outcome="blocked",
+        )
+        base = {
+            "state": "OPEN",
+            "assignees": [],
+            "url": "https://github.com/octo-org/example-repo/issues/53",
+            "labels": [{"name": "상태: 사람 검토 필요"}],
+            "blockedBy": [],
+            "comments": [],
+            "parent": None,
+            "body": "",
+        }
+        vague = dict(base)
+        vague["comments"] = [
+            {
+                "body": "\n".join(
+                    [
+                        "## 사람에게 필요한 도움",
+                        "**필요한 이유:** 확인이 필요합니다.",
+                        "**요청 종류:** 검토",
+                        "**대상:** 변경 사항",
+                        "### 해 주실 일",
+                        "- [ ] 검토해 주세요.",
+                        "**답변/결과를 남길 곳:** 이슈 댓글",
+                        "**완료 조건:** 확인 완료",
+                        "**완료 증거:** 이슈 댓글",
+                        "**완료 후 상태:** 상태 변경",
+                        "**전환 담당:** 사람",
+                    ]
+                )
+            }
+        ]
+        paraphrased_vague = dict(base)
+        paraphrased_vague["comments"] = [
+            {
+                "body": "\n".join(
+                    [
+                        "## 사람에게 필요한 도움",
+                        "**필요한 이유:** 안전한 진행을 위해 사람의 판단이 필요합니다.",
+                        "**요청 종류:** 검토",
+                        "**대상:** 적절한 처리",
+                        "### 해 주실 일",
+                        "- [ ] 적절한 처리를 검토한 뒤 처리해 주세요.",
+                        "**답변/결과를 남길 곳:** 이슈 댓글",
+                        "**완료 조건:** 처리 결과가 댓글로 등록됨",
+                        "**완료 증거:** 이슈 댓글",
+                        "**완료 후 상태:** 상태: 에이전트 작업 가능",
+                        "**전환 담당:** triage",
+                    ]
+                )
+            }
+        ]
+        unknown_state = dict(base)
+        unknown_state["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    "상태: 에이전트 작업 가능", "상태: 나중에 결정"
+                )
+            }
+        ]
+        imprecise = dict(base)
+        imprecise["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    "PR #42의 권한 변경을 검토하고 승인 또는 수정 요청을 남겨 주세요.",
+                    "PR #42를 봐 주세요.",
+                ).replace(
+                    "승인 또는 구체적인 수정 요청이 리뷰로 등록됨",
+                    "처리가 끝남",
+                ).replace(
+                    "PR #42 승인 또는 수정 요청 리뷰 링크",
+                    "처리 완료",
+                )
+            }
+        ]
+        missing_owner = dict(base)
+        missing_owner["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    "\n**전환 담당:** triage", ""
+                )
+            }
+        ]
+        wrong_owner = dict(base)
+        wrong_owner["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    "**전환 담당:** triage", "**전환 담당:** 사람"
+                )
+            }
+        ]
+        conflicting_destination = dict(base)
+        conflicting_destination["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    "상태: 에이전트 작업 가능",
+                    "상태: 에이전트 작업 가능 또는 상태: 정보 필요",
+                )
+            }
+        ]
+        for snapshot in (
+            base,
+            vague,
+            paraphrased_vague,
+            unknown_state,
+            imprecise,
+            missing_owner,
+            wrong_owner,
+            conflicting_destination,
+        ):
+            with mock.patch.object(
+                issue_lease, "github_issue_snapshot", return_value=snapshot
+            ):
+                with self.assertRaises(issue_lease.LeaseFailure):
+                    issue_lease.github_release_precheck(args)
+
+        english = dict(base)
+        english["body"] = "\n".join(
+            [
+                "## Human action required",
+                "**Why this is needed:** A maintainer must approve the security boundary.",
+                "**Request type:** Review",
+                "**Target:** PR #42",
+                "### What to do",
+                "- [ ] Review PR #42 and submit an approval or specific change request.",
+                "**Where to respond:** PR #42 review",
+                "**Completion condition:** An approval or actionable change request is recorded.",
+                "**Completion evidence:** PR #42 approval or change-request review link",
+                "**State after completion:** ready-for-agent",
+                "**Transition owner:** triage",
+            ]
+        )
+        with mock.patch.object(
+            issue_lease, "github_issue_snapshot", return_value=english
+        ):
+            issue_lease.github_release_precheck(args)
+
+        closure = dict(base)
+        closure["body"] = VALID_HUMAN_ACTION_BODY.replace(
+            "상태: 에이전트 작업 가능", "완료 증거와 함께 종료"
+        ).replace("**전환 담당:** triage", "**전환 담당:** work-github-issue")
+        with mock.patch.object(
+            issue_lease, "github_issue_snapshot", return_value=closure
+        ):
+            issue_lease.github_release_precheck(args)
+
+    def test_invalid_display_language_does_not_delete_the_lease(self) -> None:
+        args = issue_lease.argparse.Namespace(
+            no_github_sync=True,
+            issue=53,
+            evidence="local-test:blocked",
+            outcome="blocked",
+            display_language=None,
+            remote="origin",
+        )
+        metadata = {
+            "session": "session-language",
+            "purpose": "implementation",
+            "displayLanguage": "invalid",
+        }
+        with (
+            mock.patch.object(
+                issue_lease,
+                "require_owned",
+                return_value=("a" * 40, metadata),
+            ),
+            mock.patch.object(issue_lease, "delete_lease") as deleted,
+        ):
+            with self.assertRaises(issue_lease.LeaseFailure):
+                issue_lease.command_release(args)
+        deleted.assert_not_called()
 
     def test_production_evidence_must_be_existing_issue_comment(self) -> None:
         args = issue_lease.argparse.Namespace(
@@ -632,6 +940,41 @@ class GitHubContractTest(unittest.TestCase):
                 issue_lease.validate_evidence(
                     args, url, "session-evidence", "completed"
                 )
+
+    def test_production_evidence_accepts_korean_sections(self) -> None:
+        args = issue_lease.argparse.Namespace(
+            no_github_sync=False, issue=54, repo="octo-org/example-repo"
+        )
+        url = "https://github.com/octo-org/example-repo/issues/54#issuecomment-12345"
+        comment = {
+            "html_url": url,
+            "issue_url": "https://api.github.com/repos/octo-org/example-repo/issues/54",
+            "body": "\n".join(
+                [
+                    "<!-- rca-issue-evidence:v1 session=session-evidence outcome=blocked -->",
+                    "## 결과",
+                    "사람의 승인을 기다립니다.",
+                    "## 변경 사항",
+                    "커밋 abc를 준비했습니다.",
+                    "## 검증",
+                    "테스트가 통과했습니다.",
+                    "## 제한 사항",
+                    "아직 병합되지 않았습니다.",
+                    "## 안전",
+                    "원격 병합은 수행하지 않았습니다.",
+                    "## 다음 행동",
+                    "유지보수자가 PR을 검토하고 승인 여부를 댓글로 알려 주세요.",
+                ]
+            ),
+        }
+        completed = subprocess.CompletedProcess([], 0, json.dumps(comment), "")
+        with mock.patch.object(issue_lease, "run", return_value=completed):
+            self.assertEqual(
+                issue_lease.validate_evidence(
+                    args, url, "session-evidence", "blocked"
+                ),
+                url,
+            )
 
 
 if __name__ == "__main__":

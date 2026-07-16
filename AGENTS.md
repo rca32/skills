@@ -39,6 +39,7 @@ Companion skills have deliberately narrower authority:
 | `to-tickets` | Authorized two-phase ticket creation, parent/dependency links, graph validation, readiness-state preparation | Ticket claim, implementation evidence, parent completion |
 | `documenting-work` | Persistence tier, single authority, repository fallback path, document identity, metadata, index, pointers, and document lifecycle | Domain content, tracker lifecycle, leases, publication authorization |
 | `diagnosing-bugs` | Reproduction, minimization, falsifiable diagnosis, and an authorized fix branch | Tracker or lease mutation, unsafe production reproduction, fixes under diagnose-only authorization |
+| `complexity-optimizer` | Read-only hotspot analysis and explicitly authorized behavior-preserving optimization | Unknown-cause performance diagnosis, tracker or lease mutation, commit, push, publication |
 | `tdd` | Public-seam red-green-refactor implementation after outer authorization | Lease management, tracker mutation, commit, push, publication |
 | `code-review` | Read-only Standards and Spec review of a pinned complete worktree snapshot | Edits, tracker mutation, lease management, commit, push |
 
@@ -60,11 +61,11 @@ Consuming-repository documentation instructions override the bundled fallback. W
 
 ## Runtime prerequisites
 
-The consuming repository must provide Git, Python 3, an authenticated GitHub CLI, a canonical GitHub remote that matches the requested repository, permission to push the atomic lease refs, and a documented tracker-state/dependency mapping. When repository instructions omit tracker semantics, use `work-github-issue/references/tracker-contract.md`. Missing authentication, remote identity, tracker mapping, or atomic-ref permission is a fail-closed preflight result, not authorization to bypass the lease.
+The consuming repository must provide Git, Python 3, an authenticated GitHub CLI, a canonical GitHub remote that matches the requested repository, permission to push the atomic lease refs, and a documented tracker-state/dependency mapping. Implementation also requires an explicit user or repository execution/publication contract for every requested outcome: ticket base and fixed point, worktree eligibility, authorized delivery surface, PR and integration targets, merge authority and strategy, required checks, completion point, and cleanup policy as applicable. When repository instructions omit tracker semantics, use `work-github-issue/references/tracker-contract.md`; that fallback deliberately does not invent repository-specific publication values. Missing authentication, remote identity, tracker mapping, atomic-ref permission, or a publication field required by the requested outcome is a fail-closed preflight result, not authorization to bypass the lease or guess a target.
 
 ## Invocation policy
 
-- Keep `tdd`, `diagnosing-bugs`, `code-review`, `documenting-work`, and `work-github-issue` eligible for implicit discovery when their trigger descriptions are specific enough to avoid overlap.
+- Keep `tdd`, `diagnosing-bugs`, `complexity-optimizer`, `code-review`, `documenting-work`, and `work-github-issue` eligible for implicit discovery when their trigger descriptions are specific enough to avoid overlap.
 - Keep `triage`, `to-spec`, and `to-tickets` explicit by setting `policy.allow_implicit_invocation: false` in `agents/openai.yaml`; these workflows can mutate durable planning state when explicitly asked.
 - A request to inspect, review, draft, or explain is read-only. It does not authorize issue creation, label changes, comments, closure, commit, push, or PR publication.
 - A request to publish tickets authorizes the validated publication workflow, not implementation or parent closure.
