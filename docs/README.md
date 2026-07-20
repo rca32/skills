@@ -39,6 +39,10 @@ triage → to-spec → to-tickets → work-github-issue
 
 모든 작업에 이 전체 흐름이 필요한 것은 아닙니다. 작은 로컬 변경이라면 `tdd`와 `code-review`만으로 충분할 수 있습니다.
 
+## 실행 가이드
+
+- [`to-tickets` 티켓 그래프를 Goal로 끝까지 구현하기](workflows/complete-ticket-graph-with-goal.md): PR 생성에서 멈추지 않고, 허가된 merge·이슈 완료·lease 해제·안전한 worktree 정리까지 반복하는 kickoff 프롬프트
+
 ## 꼭 알아둘 권한 원칙
 
 “살펴봐”, “설명해 줘”, “초안을 만들어 줘”는 읽기와 초안 작성만 허용합니다. 다음 행동은 별도로 분명하게 요청해야 합니다.
