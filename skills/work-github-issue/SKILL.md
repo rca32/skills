@@ -16,6 +16,11 @@ tracker write. If none exists, use
 already in the configured `ready-for-agent` role, belongs to a Wayfinder map, or must be split,
 triaged, handed off, or resolved into a parent.
 
+Read [references/workspace-cleanup.md](references/workspace-cleanup.md) only
+when an implementation session used a ticket branch or worktree and is ready to
+record its final outcome. It defines the bundled cleanup default and the safe
+removal checks.
+
 Use `documenting-work` whenever a workflow proposes a durable file, report, or
 artifact outside the tracker. The issue comment remains authoritative for agent
 briefs, implementation evidence, and issue-backed handoffs unless the consuming
@@ -91,7 +96,16 @@ unambiguous configured publish flow. Record:
   integration target;
 - merge authority and strategy, required checks, and the repository-defined
   completion point when publication is in scope;
-- branch and worktree retention or cleanup rules.
+- which branch and worktree already existed, which ones this session may create,
+  and any repository or user cleanup override.
+
+When no higher authority defines cleanup, use the bundled default: after a
+`completed` implementation, remove an eligible linked worktree created by this
+session and delete its eligible session-created local ticket branch. Retain
+pre-existing or shared workspaces, all `blocked|handoff` workspaces, and remote
+branches. This default resolves local cleanup policy; deleting a remote branch
+or a pre-existing local artifact still requires explicit repository or user
+authority.
 
 Do not select a merge target merely because it is the remote default branch or
 because a nearby pull request used it. A local-only request may mark publication
@@ -104,7 +118,7 @@ Completion criterion: the issue snapshot satisfies the tracker contract and its
 requested outcome plus acceptance criteria are present in the body or an
 identified brief/spec; the execution contract is resolved; and every publication
 field required by the requested outcome is either resolved or explicitly out of
-scope.
+scope. Workspace provenance and the applicable cleanup policy are also recorded.
 
 ## 2. Acquire the implementation lease
 
@@ -132,10 +146,15 @@ is assigned, and the returned lease is unexpired and owned by this session.
 ## 3. Execute one ticket
 
 After the claim, create or select a ticket branch from the resolved fixed point.
+Before creating either artifact, capture `git worktree list --porcelain`, the
+relevant local and remote refs, and the intended canonical path. Mark each
+selected branch and worktree as pre-existing or created by this session; never
+infer ownership from its name later.
+
 Use the current worktree only when all of these are true:
 
-- it is already on the ticket branch, or selecting that branch will not disturb
-  unrelated state;
+- it is already on the ticket branch; creating or selecting a different ticket
+  branch uses a linked worktree instead of changing this checkout;
 - every staged, unstaged, and untracked change is verified as part of this ticket;
 - no other active session or user task shares the directory;
 - the work needs no revision switching or destructive experiment.
@@ -215,6 +234,16 @@ remote branch, pull request, or integration target, and classify the operation
 as present exactly once or absent before retrying. If tracker writes are
 prohibited, remain read-only and do not claim.
 
+Once the acceptance criteria and resolved repository completion point establish
+a `completed` outcome, including every publication readback required by that
+outcome, perform the applicable cleanup from a retained control worktree while
+the implementation lease is still owned. Follow
+[references/workspace-cleanup.md](references/workspace-cleanup.md), recheck the
+lease immediately before removal, and read back each worktree or ref deletion.
+Do not apply the bundled deletion default to `blocked` or `handoff` outcomes.
+When a cleanup precondition fails, preserve the exact path or ref and record the
+failed condition plus next safe action; never force removal.
+
 Post the configured tracker document's structured evidence comment in its
 human-facing language. Under the bundled fallback, use the Korean evidence
 headings while preserving the protocol marker; legacy English headings remain
@@ -232,8 +261,10 @@ Completion criterion: the reviewed diff contains only the ticket's scope; every
 authorized publication and tracker step has an exact readback; and the issue
 comment names the fixed point, branch, exact local or published commit, pull
 request or merge state when applicable, commands and results, evidence paths,
-limitations, and safety outcome. Without publication authorization, proceed to
-the configured tracker contract's non-complete outcome.
+cleanup result or preserved workspace, limitations, and safety outcome. When the
+requested completion point requires publication but that publication is not
+authorized, proceed to the configured tracker contract's non-complete outcome;
+an explicitly resolved local completion point remains eligible for `completed`.
 
 ## 5. Resolve or hand off
 
@@ -262,16 +293,16 @@ the state directly: authorized `triage` owns revalidation and open-state
 transitions, while this skill owns evidence-backed completion and closure. Do
 not release with a generic request to review or provide information.
 
-Do not delete a branch or worktree as part of lease release. After evidence and
-release readback, follow the resolved cleanup contract. Remove only a clean,
-disposable worktree whose branch and commits are durably recoverable; remote or
-local branch deletion requires its own authorization. Preserve any workspace
-with unknown, uncommitted, or untracked state and report its next safe action.
+Cleanup is a separate, read-backed operation completed before the final evidence
+and lease release; the release command itself never deletes workspaces. After
+release readback, do not start an automatic cleanup pass because a successor may
+already be acquiring the issue. Report every artifact preserved by policy or a
+failed safety check.
 
 Completion criterion: `status <issue>` returns `status=unclaimed` and the issue,
 parent map, repository completion point, publication state, and evidence match
-the tracker-defined outcome; any authorized cleanup is read back without losing
-unpublished work.
+the tracker-defined outcome; no eligible session-created workspace remains, and
+every intentionally preserved path or ref and its next safe action are reported.
 
 ## Lease guardrails
 

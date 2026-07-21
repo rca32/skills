@@ -29,6 +29,7 @@ Do not add a per-skill README. Keep user-facing catalog and installation guidanc
 - same-account session leases and their renewal, takeover, and release;
 - assignment/lease projection consistency;
 - issue-backed implementation evidence, completion, blocked outcome, and handoff.
+- post-implementation cleanup of session-created worktrees and ticket branches.
 
 Companion skills have deliberately narrower authority:
 
@@ -61,7 +62,7 @@ Consuming-repository documentation instructions override the bundled fallback. W
 
 ## Runtime prerequisites
 
-The consuming repository must provide Git, Python 3, an authenticated GitHub CLI, a canonical GitHub remote that matches the requested repository, permission to push the atomic lease refs, and a documented tracker-state/dependency mapping. Implementation also requires an explicit user or repository execution/publication contract for every requested outcome: ticket base and fixed point, worktree eligibility, authorized delivery surface, PR and integration targets, merge authority and strategy, required checks, completion point, and cleanup policy as applicable. When repository instructions omit tracker semantics, use `work-github-issue/references/tracker-contract.md`; that fallback deliberately does not invent repository-specific publication values. Missing authentication, remote identity, tracker mapping, atomic-ref permission, or a publication field required by the requested outcome is a fail-closed preflight result, not authorization to bypass the lease or guess a target.
+The consuming repository must provide Git, Python 3, an authenticated GitHub CLI, a canonical GitHub remote that matches the requested repository, permission to push the atomic lease refs, and a documented tracker-state/dependency mapping. Implementation also requires an explicit user or repository execution/publication contract for every requested outcome: ticket base and fixed point, worktree eligibility, authorized delivery surface, PR and integration targets, merge authority and strategy, required checks, completion point, and cleanup policy as applicable. When no higher authority defines cleanup, the bundled `work-github-issue` contract authorizes only a completed session to remove its own clean linked worktree and safely deletable local ticket branch after exact provenance, recovery, and ownership checks. It retains pre-existing or shared artifacts, non-complete workspaces, and remote branches; broader cleanup requires explicit user or consuming-repository authority. When repository instructions omit tracker semantics, use `work-github-issue/references/tracker-contract.md`; that fallback deliberately does not invent repository-specific publication values. Missing authentication, remote identity, tracker mapping, atomic-ref permission, or a publication field required by the requested outcome is a fail-closed preflight result, not authorization to bypass the lease or guess a target.
 
 ## Invocation policy
 
