@@ -293,7 +293,13 @@ continuation rules directly. Before releasing `blocked` in `needs-info` or
 `ready-for-human`, verify the authoritative issue body or latest comment tells
 the person why intervention is required, the exact action, where to respond,
 the observable completion condition, durable evidence reference, and the next
-state plus transition owner.
+state plus transition owner. For `ready-for-human`, also include one copy-ready
+suggested comment tailored to that response location. Name the exact target,
+then follow the selected tracker contract's exact suggested-comment shape with
+distinct concrete results and editable rationale and evidence-reference slots,
+without pretending the action already happened. The person
+edits and posts it only after performing the requested review, approval, or
+manual action; the suggested comment never substitutes for that action.
 The person records the requested answer or action evidence but does not edit
 the state directly: authorized `prepare-issue` owns revalidation and open-state
 transitions, while this skill owns evidence-backed completion and closure. Do

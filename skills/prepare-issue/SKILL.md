@@ -60,7 +60,7 @@ Classify the result as `confirmed`, `not reproduced`, or `insufficient informati
 ### 4. Build the outcome
 
 - `ready-for-agent` (`상태: 에이전트 작업 가능`): require a complete brief using [the agent brief contract](references/agent-brief.md). Every acceptance criterion must be independently observable and blockers must already be represented by the tracker contract.
-- `ready-for-human` (`상태: 사람 검토 필요`): use the same brief and fill the selected tracker contract's Human action block with the request type, exact target, and judgment, permission, access, merge, or manual action that prevents autonomous work. Name where the person responds, the observable completion condition and durable evidence reference, which state follows, and the authorized transition owner.
+- `ready-for-human` (`상태: 사람 검토 필요`): use the same brief and fill the selected tracker contract's Human action block with the request type, exact target, and judgment, permission, access, merge, or manual action that prevents autonomous work. Name where the person responds, the observable completion condition and durable evidence reference, which state follows, and the authorized transition owner. Include a copy-ready suggested comment that follows the selected tracker contract's exact shape, repeats the target, and offers distinct concrete results plus editable rationale and evidence-reference slots without claiming the action is complete.
 - `needs-info` (`상태: 정보 필요`): preserve established facts and ask only concrete, answerable questions about an exact target in the Human action block. The person records the answer without editing labels. After a reply, revalidate the brief and blockers before recommending or applying `상태: 에이전트 작업 가능`.
 - `wontfix` (`상태: 진행하지 않음`): state whether the request is already implemented, a duplicate, or rejected. Follow repository policy for durable rejected-decision records; if none exists and a durable enhancement rejection is required, resolve one `decision` document through `documenting-work` and link it from the issue.
 - `needs-triage` (`상태: 분류 필요`): preserve the partial evidence and the next decision required.
@@ -74,6 +74,6 @@ Issue preparation is complete when:
 - the evidence and search scope are recorded;
 - category and state do not conflict;
 - any ready item has a durable brief and validated blockers;
-- any human-wait item tells the person exactly why, the request type and target, what to do, where to respond, what completion looks like, which state follows, and which skill owns that transition;
+- any human-wait item tells the person exactly why, the request type and target, what to do, where to respond, what completion looks like, which state follows, and which skill owns that transition; a `ready-for-human` item also includes its copy-ready suggested comment;
 - tracker mutations match the user's authorization;
 - no implementation lease, code commit, push, or completion evidence was created by this skill.

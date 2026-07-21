@@ -58,6 +58,10 @@ fallback uses Korean headings and plain language:
 
 **답변/결과를 남길 곳:** <이슈 댓글, 연결된 PR 리뷰 또는 지정 시스템>
 
+<!-- `상태: 사람 검토 필요`에서만 아래 필드를 채웁니다. `상태: 정보 필요`이면 생략합니다. -->
+
+**추천 댓글:** <위의 정확한 대상> — 결과: [<허용 결과 1> | <허용 결과 2>]. 판단 근거: [작성]. 완료 증거: [링크 붙여넣기].
+
 **완료 조건:** <요청한 판단이나 작업이 끝났다고 볼 수 있는 관찰 가능한 조건>
 
 **완료 증거:** <이슈 댓글 URL, PR 리뷰 링크, 로그·감사 이벤트 ID 또는 스크린샷 링크>
@@ -71,4 +75,4 @@ For a pull request, describe the current state of the diff and the remaining gap
 
 A brief is incomplete when it relies on phrases such as “works correctly,” gives only implementation steps, omits negative or compatibility behavior, or cannot be verified without guessing the intended result.
 
-Omit `## 사람에게 필요한 도움` when no human action is required. For a human-wait state, a brief is also incomplete when it says only “review this” or “provide more information” without naming the exact action, response location, completion evidence, and next state.
+Omit `## 사람에게 필요한 도움` when no human action is required. For a human-wait state, a brief is also incomplete when it says only “review this” or “provide more information” without naming the exact action, response location, completion evidence, and next state. For `상태: 사람 검토 필요`, the brief is incomplete without a copy-ready suggested comment that repeats the exact target and provides bracketed `결과`, `판단 근거`, and `완료 증거` slots; omit that field for `상태: 정보 필요` when it adds no value.

@@ -78,6 +78,8 @@ identifiers, API names, links, and protocol markers exactly.
 
 **답변/결과를 남길 곳:** <이슈 댓글, 연결된 PR 리뷰 또는 지정 시스템>
 
+**추천 댓글:** <위의 정확한 명세 또는 계획 대상> — 결과: [승인 | 수정 요청]. 판단 근거: [작성]. 완료 증거: [링크 붙여넣기].
+
 **완료 조건:** <요청한 판단이나 작업이 끝났다고 볼 수 있는 관찰 가능한 조건>
 
 **완료 증거:** <이슈 댓글 URL, 결정 링크, 리뷰 링크 또는 기록 ID>
@@ -91,4 +93,4 @@ Omit empty scenario categories, but never omit material unknowns. A long list is
 
 Omit `## 사람에게 필요한 도움` only when the selected persistence and state
 require no human action. A tracker-published fallback planning issue in `상태:
-사람 검토 필요` must fill it.
+사람 검토 필요` must fill it, including its copy-ready `추천 댓글`.

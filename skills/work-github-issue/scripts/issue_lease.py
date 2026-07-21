@@ -57,6 +57,15 @@ HUMAN_ACTION_FIELD_ALIASES = {
     "next-state": {"**완료 후 상태:**", "**State after completion:**"},
     "transition-owner": {"**전환 담당:**", "**Transition owner:**"},
 }
+HUMAN_ACTION_SUGGESTED_COMMENT_ALIASES = {
+    "**추천 댓글:**",
+    "**Suggested comment:**",
+}
+SUGGESTED_COMMENT_SLOT_ALIASES = {
+    "result": {"결과", "Result"},
+    "rationale": {"판단 근거", "근거", "Rationale", "Reason"},
+    "evidence": {"완료 증거", "증거", "Evidence", "Review link", "리뷰 링크"},
+}
 HUMAN_ACTION_STEP_HEADINGS = {"### 해 주실 일", "### What to do"}
 # Read old issue bodies created before the skill rename; new templates publish only prepare-issue.
 OPEN_STATE_TRANSITION_OWNERS = {"prepare-issue", "triage"}
@@ -82,15 +91,65 @@ HUMAN_ACTION_RESULT_TOKENS = {
     "결정": {"결정", "선택"},
     "decision": {"decide", "choose", "select"},
     "승인": {"승인", "거절", "수정요청"},
-    "approval": {"approve", "approval", "reject", "requestchanges", "changerequest"},
-    "권한부여": {"권한부여", "접근허용", "권한변경"},
-    "accessgrant": {"grantaccess", "grantpermission", "changepermission"},
+    "approval": {
+        "approve",
+        "approved",
+        "approval",
+        "reject",
+        "rejected",
+        "requestchanges",
+        "changesrequested",
+        "changerequest",
+    },
+    "권한부여": {"권한부여", "접근허용", "권한변경", "권한거절", "접근거절"},
+    "accessgrant": {
+        "grantaccess",
+        "grantpermission",
+        "changepermission",
+        "denyaccess",
+        "denypermission",
+        "accessdenied",
+        "permissiondenied",
+    },
     "병합": {"병합"},
     "merge": {"merge", "merged"},
     "수동작업": {"실행", "변경", "입력", "업로드", "재시작", "배포", "설정"},
     "manualaction": {"run", "change", "enter", "upload", "restart", "deploy", "configure"},
-    "검토": {"승인", "수정요청", "의견", "검토결과"},
-    "review": {"approve", "approval", "requestchanges", "changerequest", "comment", "reviewoutcome"},
+    "검토": {"승인", "거절", "수정요청", "의견", "검토결과"},
+    "review": {
+        "approve",
+        "approved",
+        "approval",
+        "requestchanges",
+        "changesrequested",
+        "changerequest",
+        "comment",
+        "reviewoutcome",
+    },
+}
+CONTROLLED_SUGGESTED_RESULT_TOKENS = {
+    "검토": {"승인", "거절", "수정요청"},
+    "review": {
+        "approve",
+        "approved",
+        "approval",
+        "reject",
+        "rejected",
+        "requestchanges",
+        "changesrequested",
+        "changerequest",
+    },
+    "승인": {"승인", "거절", "수정요청"},
+    "approval": {
+        "approve",
+        "approved",
+        "approval",
+        "reject",
+        "rejected",
+        "requestchanges",
+        "changesrequested",
+        "changerequest",
+    },
 }
 HUMAN_ACTION_EVIDENCE_TOKENS = {
     "url",
@@ -108,6 +167,11 @@ HUMAN_ACTION_EVIDENCE_TOKENS = {
     "screenshot",
     "record",
 }
+GENERIC_SUGGESTED_RESULT_RE = re.compile(
+    r"^(?:(?:선택|결과|옵션)(?:\d+|[a-z]|가|나|하나|둘|첫째|둘째)|"
+    r"(?:choice|option|result)(?:\d+|[a-z]|one|two|first|second))$",
+    re.IGNORECASE,
+)
 GENERIC_HUMAN_ACTION_TEXT = {
     "검토해주세요",
     "확인해주세요",
@@ -529,7 +593,111 @@ def meaningful_human_action_text(value: str) -> bool:
     return not any(pattern in normalized for pattern in GENERIC_HUMAN_ACTION_PATTERNS)
 
 
-def human_action_contract_is_complete(body: str) -> bool:
+def suggested_comment_is_useful(
+    value: str,
+    target: str,
+    request_type: str,
+    actions: list[str],
+    response_location: str,
+    completion_evidence: str,
+) -> bool:
+    target = target.strip()
+    if not target:
+        return False
+
+    aliases = {
+        slot: "|".join(
+            re.escape(alias) for alias in sorted(slot_aliases, key=len, reverse=True)
+        )
+        for slot, slot_aliases in SUGGESTED_COMMENT_SLOT_ALIASES.items()
+    }
+    match = re.fullmatch(
+        rf"\s*{re.escape(target)}\s*(?:—|-)\s*"
+        rf"(?:{aliases['result']})\s*:\s*\[([^\[\]\r\n]+)\]\s*\.\s*"
+        rf"(?:{aliases['rationale']})\s*:\s*\[([^\[\]\r\n]+)\]\s*\.\s*"
+        rf"(?:{aliases['evidence']})\s*:\s*\[([^\[\]\r\n]+)\]\s*\.?\s*",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if match is None:
+        return False
+    slots = {
+        "result": match.group(1).strip(),
+        "rationale": match.group(2).strip(),
+        "evidence": match.group(3).strip(),
+    }
+    result_choices = [choice.strip() for choice in slots["result"].split("|")]
+    if len(result_choices) < 2 or any(not choice for choice in result_choices):
+        return False
+    normalized_choices = [normalize_human_action_text(choice) for choice in result_choices]
+    if len(set(normalized_choices)) != len(normalized_choices):
+        return False
+    if any(
+        len(choice) < 2 or not re.search(r"[0-9a-z가-힣]", choice)
+        for choice in normalized_choices
+    ):
+        return False
+    if any(GENERIC_SUGGESTED_RESULT_RE.fullmatch(choice) for choice in normalized_choices):
+        return False
+    result_tokens = HUMAN_ACTION_RESULT_TOKENS[request_type]
+    action_patterns = []
+    for choice in result_choices:
+        escaped_choice = re.escape(choice.strip()).replace(r"\ ", r"\s+")
+        action_patterns.append(
+            re.compile(
+                rf"(?<![0-9a-z가-힣]){escaped_choice}"
+                rf"(?=$|[^0-9a-z가-힣]|(?:으로|은|는|이|가|을|를|로|와|과)"
+                rf"(?=$|[^0-9a-z가-힣]))",
+                flags=re.IGNORECASE,
+            )
+        )
+    if request_type in CONTROLLED_SUGGESTED_RESULT_TOKENS:
+        allowed_results = CONTROLLED_SUGGESTED_RESULT_TOKENS[request_type]
+        if any(choice not in allowed_results for choice in normalized_choices):
+            return False
+    elif any(
+        not any(pattern.search(action) for action in actions)
+        and choice not in result_tokens
+        for choice, pattern in zip(normalized_choices, action_patterns, strict=True)
+    ):
+        return False
+    if any("<" in slot_value or ">" in slot_value for slot_value in slots.values()):
+        return False
+    evidence = slots["evidence"]
+    evidence_reference = bool(re.search(r"https?://\S+|#\d+", evidence))
+    evidence_reference = evidence_reference or any(
+        token in evidence for token in {"댓글", "리뷰", "로그", "링크", "스크린샷", "기록"}
+    )
+    evidence_reference = evidence_reference or bool(
+        re.search(
+            r"(?<![a-z])(?:url|id|comment|review|log|link|screenshot|record)(?![a-z])",
+            evidence,
+            flags=re.IGNORECASE,
+        )
+    )
+    if not evidence_reference:
+        return False
+
+    evidence_text = normalize_human_action_text(
+        f"{evidence} {completion_evidence}"
+    )
+    creates_review_evidence = (
+        request_type in {"검토", "review", "승인", "approval"}
+        and any(token in evidence_text for token in {"리뷰", "review"})
+    )
+    if creates_review_evidence:
+        response = normalize_human_action_text(response_location)
+        if not (
+            ("이슈" in response and "댓글" in response)
+            or ("issue" in response and "comment" in response)
+        ):
+            return False
+    return True
+
+
+def human_action_contract_is_complete(
+    body: str, *, require_suggested_comment: bool = False
+) -> bool:
     lines = body.splitlines()
     heading_indexes = [
         index for index, line in enumerate(lines) if line in HUMAN_ACTION_HEADINGS
@@ -544,19 +712,22 @@ def human_action_contract_is_complete(body: str) -> bool:
         block.append(line.strip())
     if sum(line in HUMAN_ACTION_STEP_HEADINGS for line in block) != 1:
         return False
+    field_aliases = dict(HUMAN_ACTION_FIELD_ALIASES)
+    if require_suggested_comment:
+        field_aliases["suggested-comment"] = HUMAN_ACTION_SUGGESTED_COMMENT_ALIASES
     values: dict[str, str] = {}
     for line in block:
-        for field, aliases in HUMAN_ACTION_FIELD_ALIASES.items():
+        for field, aliases in field_aliases.items():
             for alias in aliases:
                 if line.startswith(alias):
                     if field in values:
                         return False
                     values[field] = line[len(alias) :].strip()
-    if any(field not in values for field in HUMAN_ACTION_FIELD_ALIASES):
+    if any(field not in values for field in field_aliases):
         return False
     if any(
-        not meaningful_human_action_text(values[field])
-        for field in HUMAN_ACTION_FIELD_ALIASES
+        not meaningful_human_action_text(value)
+        for field, value in values.items()
         if field != "request-type"
     ):
         return False
@@ -570,7 +741,8 @@ def human_action_contract_is_complete(body: str) -> bool:
     request_type = normalize_human_action_text(values["request-type"])
     if request_type not in HUMAN_ACTION_REQUEST_TYPES:
         return False
-    target = normalize_human_action_text(values["target"])
+    target_value = values["target"]
+    target = normalize_human_action_text(target_value)
     normalized_actions = [normalize_human_action_text(action) for action in actions]
     if not any(target in action for action in normalized_actions):
         return False
@@ -578,6 +750,16 @@ def human_action_contract_is_complete(body: str) -> bool:
         token in action
         for token in HUMAN_ACTION_RESULT_TOKENS[request_type]
         for action in normalized_actions
+    ):
+        return False
+    suggested_comment = values.get("suggested-comment")
+    if suggested_comment is not None and not suggested_comment_is_useful(
+        suggested_comment,
+        target_value,
+        request_type,
+        actions,
+        values["response"],
+        values["completion-evidence"],
     ):
         return False
     evidence_value = values["completion-evidence"]
@@ -842,9 +1024,19 @@ def github_release_precheck(args: argparse.Namespace) -> None:
             )
         if not state_roles.isdisjoint({"needs-info", "ready-for-human"}):
             human_action = latest_human_action_contract(value)
-            if human_action is None or not human_action_contract_is_complete(human_action):
+            require_suggested_comment = "ready-for-human" in state_roles
+            if human_action is None or not human_action_contract_is_complete(
+                human_action,
+                require_suggested_comment=require_suggested_comment,
+            ):
+                requirement = (
+                    "an actionable Human action contract including a useful "
+                    "Suggested comment"
+                    if require_suggested_comment
+                    else "an actionable Human action contract"
+                )
                 raise LeaseFailure(
-                    "blocked human-wait release requires an actionable Human action contract",
+                    f"blocked human-wait release requires {requirement}",
                     2,
                     {"stateRoles": sorted(state_roles), "issueUrl": value["url"]},
                 )

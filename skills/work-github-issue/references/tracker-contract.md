@@ -69,6 +69,10 @@ generic request such as "please review".
 
 **답변/결과를 남길 곳:** <이슈 댓글, 연결된 PR 리뷰 또는 지정 시스템>
 
+<!-- `상태: 사람 검토 필요`에서만 아래 필드를 채웁니다. `상태: 정보 필요`이면 생략합니다. -->
+
+**추천 댓글:** <위의 정확한 대상> — 결과: [<허용 결과 1> | <허용 결과 2>]. 판단 근거: [작성]. 완료 증거: [링크 붙여넣기].
+
 **완료 조건:** <요청한 판단이나 작업이 끝났다고 볼 수 있는 관찰 가능한 조건>
 
 **완료 증거:** <이슈 댓글 URL, PR 리뷰 링크, 로그·감사 이벤트 ID 또는 스크린샷 링크>
@@ -82,7 +86,22 @@ When repository instructions require English, the bundled helper accepts the
 equivalent headings `## Human action required`, `### What to do`, `**Why this
 is needed:**`, `**Request type:**`, `**Target:**`, `**Where to respond:**`,
 `**Completion condition:**`, `**Completion evidence:**`, and `**State after
-completion:**`. Use one language per block and add `**Transition owner:**` with `prepare-issue` for an open-state
+completion:**`. Use `**Suggested comment:**` as the English alias of `**추천 댓글:**`.
+Format it as `<exact target> — Result: [<accepted result 1> | <accepted result 2>]. Rationale: [write]. Evidence: [paste link].`
+The suggested comment must consist only of that target/result/rationale/evidence
+shape. Replace the result placeholders with at least two distinct, concrete
+outcomes; generic choices such as `choice 1` and duplicate choices are invalid.
+Each result choice must also appear in the concrete checklist action or be a
+recognized outcome for its request type. Match recognized outcomes exactly:
+substring variants, one-character abbreviations, and unrelated but concrete
+options are invalid. Review and approval choices must name actual decisions such
+as approval, rejection, or changes requested; `comment` and `review outcome` are
+not result choices. Choose results that converge on the one next-state destination named in
+the block. If the outcomes require different destinations, rewrite or split the
+request before publication instead of putting conditional state branches here.
+Keep the rationale and evidence fields editable, and make the evidence slot name
+a durable reference such as a comment, review, log, URL, ID, or screenshot link.
+Use one language per block and add `**Transition owner:**` with `prepare-issue` for an open-state
 destination or `work-github-issue` for evidence-backed closure.
 
 For `needs-info`, ask only questions whose answers can change the brief, and
@@ -90,12 +109,19 @@ name the accepted format or choices when useful. After the answer arrives,
 the person records the answer but does not change the state. An authorized
 `prepare-issue` workflow must revalidate the brief and blockers before replacing it
 with `상태: 에이전트 작업 가능`; otherwise keep `상태: 정보 필요` with an
-updated request.
+updated request. A suggested comment is optional for `needs-info`.
 
 For `ready-for-human`, identify the exact judgment, permission, PR, access, or
 manual action, explain the relevant choice or risk, and state what evidence
-counts as completion. The person performs the named action and records its
-evidence but does not edit the state label directly. If agent work remains, an authorized `prepare-issue`
+counts as completion. Include one copy-ready suggested comment that repeats the
+exact target and follows the shape above with concrete result choices, rationale,
+and evidence-reference slots without claiming the work is already done. The person
+performs the named action, edits the suggestion to the actual result, and records its
+evidence but does not edit the state label directly. When the action itself creates
+the evidence on another surface, such as a PR review, make the response location
+an issue comment where the person can post the suggested comment with that
+evidence URL. The fallback release validator rejects a PR-review result that tells
+the person to post the review's not-yet-created URL back into the same review. If agent work remains, an authorized `prepare-issue`
 workflow revalidates and applies the next state. If the human action reaches the
 repository completion point, an authorized `work-github-issue` completion flow
 records the required evidence and closes the issue.

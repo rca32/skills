@@ -45,7 +45,7 @@ Make those edges explicit. Do not disguise a wide refactor as a feature ticket.
 
 Compute a lowercase SHA-256 graph revision fingerprint from the approved source body plus the ordered identifiers and bodies of the specific accepted comments or decision records used for decomposition. Record those source identities; do not include secrets in the fingerprint input or marker. Use [the ticket template](references/ticket-template.md). Assign stable draft keys such as `T1`, `T2`, and express blockers by those keys until real tracker identifiers exist.
 
-Use outcome-first titles and plain language. Explain unavoidable technical terms at first use. When a ticket must wait in the selected tracker contract's `needs-info` or `ready-for-human` role, fill its Human action contract with the exact reason, request type, target, one concrete action, response location, observable completion condition and evidence reference, next state, and authorized transition owner. A generic request to review or provide more information is incomplete.
+Use outcome-first titles and plain language. Explain unavoidable technical terms at first use. When a ticket must wait in the selected tracker contract's `needs-info` or `ready-for-human` role, fill its Human action contract with the exact reason, request type, target, one concrete action, response location, observable completion condition and evidence reference, next state, and authorized transition owner. For `ready-for-human`, also provide a copy-ready suggested comment for recording the person's result, rationale, and evidence link. A generic request to review or provide more information is incomplete.
 
 When the user asks to draft or review a breakdown, present the proposed graph and wait for approval before publishing. When the user explicitly asks to publish an approved source, that instruction authorizes publication after validation; proceed without a second approval unless a material ambiguity would change scope or dependencies. In either case, call out parallel frontier tickets, the critical path, and any scope that does not fit a single session.
 
@@ -60,7 +60,7 @@ Reject or repair the draft if any of these checks fail:
 - every ticket has a user-visible or operationally observable outcome;
 - no ticket silently expands the approved source;
 - initial frontier tickets can begin without an unrepresented prerequisite.
-- every human-wait ticket names an actionable request, response location, completion evidence, and next state.
+- every human-wait ticket names an actionable request, response location, completion evidence, and next state; every `ready-for-human` ticket also has a copy-ready suggested comment.
 
 ## Publish in two phases
 

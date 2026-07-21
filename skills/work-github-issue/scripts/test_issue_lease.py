@@ -19,20 +19,79 @@ sys.path.insert(0, str(SCRIPT.parent))
 import issue_lease  # noqa: E402
 
 
+SUGGESTED_REVIEW_COMMENT = (
+    "PR #42 권한 변경 — 결과: [승인 | 수정 요청]. "
+    "판단 근거: [작성]. 완료 증거: [PR #42 리뷰 URL 붙여넣기]."
+)
+SUGGESTED_REVIEW_COMMENT_WITHOUT_RATIONALE = (
+    "PR #42 권한 변경 — 결과: [승인 | 수정 요청]. "
+    "완료 증거: [PR #42 리뷰 URL 붙여넣기]."
+)
+MISLEADING_COMPLETED_REVIEW_COMMENT = (
+    "PR #42 검토 결과: 승인. 판단 근거: 요구사항 충족. "
+    "리뷰 링크: https://example.invalid/reviews/42."
+)
+PRECOMPLETED_REVIEW_COMMENT = (
+    "PR #42 권한 변경을 검토하고 승인 완료했습니다. "
+    + SUGGESTED_REVIEW_COMMENT
+)
+GENERIC_RESULT_REVIEW_COMMENT = SUGGESTED_REVIEW_COMMENT.replace(
+    "승인 | 수정 요청", "선택 1 | 선택 2"
+)
+DUPLICATE_RESULT_REVIEW_COMMENT = SUGGESTED_REVIEW_COMMENT.replace(
+    "승인 | 수정 요청", "승인 | 승인"
+)
+SUBSTRING_EVIDENCE_REVIEW_COMMENT = SUGGESTED_REVIEW_COMMENT.replace(
+    "PR #42 리뷰 URL 붙여넣기", "catalog"
+)
+LETTERED_RESULT_REVIEW_COMMENT = SUGGESTED_REVIEW_COMMENT.replace(
+    "승인 | 수정 요청", "선택 A | 선택 B"
+)
+PUNCTUATION_RESULT_REVIEW_COMMENT = SUGGESTED_REVIEW_COMMENT.replace(
+    "승인 | 수정 요청", "— | 승인"
+)
+UNRELATED_RESULT_REVIEW_COMMENT = SUGGESTED_REVIEW_COMMENT.replace(
+    "승인 | 수정 요청", "PostgreSQL | MySQL"
+)
+DISGUISED_UNRELATED_RESULT_REVIEW_COMMENT = SUGGESTED_REVIEW_COMMENT.replace(
+    "승인 | 수정 요청", "PostgreSQL 승인 | MySQL 승인"
+)
+BARE_RESULT_REVIEW_COMMENT = SUGGESTED_REVIEW_COMMENT.replace(
+    "승인 | 수정 요청", "A | R"
+)
+SUBSTRING_RESULT_REVIEW_COMMENT = SUGGESTED_REVIEW_COMMENT.replace(
+    "승인 | 수정 요청", "commentary | approvedly"
+)
+TRUNCATED_RESULT_REVIEW_COMMENT = SUGGESTED_REVIEW_COMMENT.replace(
+    "승인 | 수정 요청", "approve | quest"
+)
+INCOMPLETE_RESULT_REVIEW_COMMENT = SUGGESTED_REVIEW_COMMENT.replace(
+    "승인 | 수정 요청", "승인 | 요청"
+)
+GENERIC_CONTROLLED_RESULT_REVIEW_COMMENT = SUGGESTED_REVIEW_COMMENT.replace(
+    "승인 | 수정 요청", "의견 | 검토 결과"
+)
+GENERIC_EVIDENCE_REVIEW_COMMENT = SUGGESTED_REVIEW_COMMENT.replace(
+    "PR #42 리뷰 URL 붙여넣기", "링크 붙여넣기"
+)
 VALID_HUMAN_ACTION_BODY = "\n".join(
     [
         "## 사람에게 필요한 도움",
         "**필요한 이유:** 보안 승인이 있어야 안전하게 계속할 수 있습니다.",
         "**요청 종류:** 검토",
-        "**대상:** PR #42",
+        "**대상:** PR #42 권한 변경",
         "### 해 주실 일",
-        "- [ ] PR #42의 권한 변경을 검토하고 승인 또는 수정 요청을 남겨 주세요.",
-        "**답변/결과를 남길 곳:** PR #42 리뷰",
+        "- [ ] PR #42 권한 변경을 검토하고 승인 또는 수정 요청을 PR #42 리뷰에 남겨 주세요.",
+        "**답변/결과를 남길 곳:** 이슈 #53 댓글 (실제 검토는 PR #42 리뷰)",
         "**완료 조건:** 승인 또는 구체적인 수정 요청이 리뷰로 등록됨",
         "**완료 증거:** PR #42 승인 또는 수정 요청 리뷰 링크",
         "**완료 후 상태:** 상태: 에이전트 작업 가능",
         "**전환 담당:** prepare-issue",
+        f"**추천 댓글:** {SUGGESTED_REVIEW_COMMENT}",
     ]
+)
+HUMAN_ACTION_WITHOUT_SUGGESTED_COMMENT = VALID_HUMAN_ACTION_BODY.replace(
+    f"\n**추천 댓글:** {SUGGESTED_REVIEW_COMMENT}", ""
 )
 
 
@@ -662,16 +721,24 @@ class GitHubContractTest(unittest.TestCase):
 
         needs_info = dict(opened)
         needs_info["labels"] = [{"name": "needs-info"}]
-        needs_info["comments"] = [{"body": VALID_HUMAN_ACTION_BODY}]
+        needs_info["comments"] = [
+            {
+                "body": HUMAN_ACTION_WITHOUT_SUGGESTED_COMMENT
+                + "\n**추천 댓글:** 답변을 남겨 주세요."
+            }
+        ]
         with mock.patch.object(
             issue_lease, "github_issue_snapshot", return_value=needs_info
         ):
             issue_lease.github_release_precheck(args)
 
-        for korean_state in ("상태: 정보 필요", "상태: 사람 검토 필요"):
+        for korean_state, human_action in (
+            ("상태: 정보 필요", HUMAN_ACTION_WITHOUT_SUGGESTED_COMMENT),
+            ("상태: 사람 검토 필요", VALID_HUMAN_ACTION_BODY),
+        ):
             localized = dict(opened)
             localized["labels"] = [{"name": korean_state}]
-            localized["comments"] = [{"body": VALID_HUMAN_ACTION_BODY}]
+            localized["comments"] = [{"body": human_action}]
             with mock.patch.object(
                 issue_lease, "github_issue_snapshot", return_value=localized
             ):
@@ -768,7 +835,7 @@ class GitHubContractTest(unittest.TestCase):
         imprecise["comments"] = [
             {
                 "body": VALID_HUMAN_ACTION_BODY.replace(
-                    "PR #42의 권한 변경을 검토하고 승인 또는 수정 요청을 남겨 주세요.",
+                    "PR #42 권한 변경을 검토하고 승인 또는 수정 요청을 PR #42 리뷰에 남겨 주세요.",
                     "PR #42를 봐 주세요.",
                 ).replace(
                     "승인 또는 구체적인 수정 요청이 리뷰로 등록됨",
@@ -795,6 +862,178 @@ class GitHubContractTest(unittest.TestCase):
                 )
             }
         ]
+        missing_suggested_comment = dict(base)
+        missing_suggested_comment["comments"] = [
+            {"body": HUMAN_ACTION_WITHOUT_SUGGESTED_COMMENT}
+        ]
+        unhelpful_suggested_comment = dict(base)
+        unhelpful_suggested_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    SUGGESTED_REVIEW_COMMENT_WITHOUT_RATIONALE,
+                )
+            }
+        ]
+        misleading_completed_comment = dict(base)
+        misleading_completed_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    MISLEADING_COMPLETED_REVIEW_COMMENT,
+                )
+            }
+        ]
+        precompleted_comment = dict(base)
+        precompleted_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    PRECOMPLETED_REVIEW_COMMENT,
+                )
+            }
+        ]
+        generic_result_comment = dict(base)
+        generic_result_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    GENERIC_RESULT_REVIEW_COMMENT,
+                )
+            }
+        ]
+        duplicate_result_comment = dict(base)
+        duplicate_result_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    DUPLICATE_RESULT_REVIEW_COMMENT,
+                )
+            }
+        ]
+        substring_evidence_comment = dict(base)
+        substring_evidence_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    SUBSTRING_EVIDENCE_REVIEW_COMMENT,
+                )
+            }
+        ]
+        lettered_result_comment = dict(base)
+        lettered_result_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    LETTERED_RESULT_REVIEW_COMMENT,
+                )
+            }
+        ]
+        punctuation_result_comment = dict(base)
+        punctuation_result_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    PUNCTUATION_RESULT_REVIEW_COMMENT,
+                )
+            }
+        ]
+        unrelated_result_comment = dict(base)
+        unrelated_result_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    UNRELATED_RESULT_REVIEW_COMMENT,
+                )
+            }
+        ]
+        disguised_unrelated_result_comment = dict(base)
+        disguised_unrelated_result_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    DISGUISED_UNRELATED_RESULT_REVIEW_COMMENT,
+                )
+            }
+        ]
+        bare_result_comment = dict(base)
+        bare_result_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    BARE_RESULT_REVIEW_COMMENT,
+                )
+            }
+        ]
+        substring_result_comment = dict(base)
+        substring_result_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    SUBSTRING_RESULT_REVIEW_COMMENT,
+                )
+            }
+        ]
+        truncated_result_comment = dict(base)
+        truncated_result_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    TRUNCATED_RESULT_REVIEW_COMMENT,
+                )
+            }
+        ]
+        incomplete_result_comment = dict(base)
+        incomplete_result_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    INCOMPLETE_RESULT_REVIEW_COMMENT,
+                )
+            }
+        ]
+        generic_controlled_result_comment = dict(base)
+        generic_controlled_result_comment["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    GENERIC_CONTROLLED_RESULT_REVIEW_COMMENT,
+                )
+            }
+        ]
+        self_referential_response = dict(base)
+        self_referential_response["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    "이슈 #53 댓글 (실제 검토는 PR #42 리뷰)",
+                    "PR #42 리뷰",
+                )
+            }
+        ]
+        implicit_review_self_response = dict(base)
+        implicit_review_self_response["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    "승인 또는 수정 요청을 PR #42 리뷰에 남겨 주세요.",
+                    "승인 또는 수정 요청을 남겨 주세요.",
+                ).replace(
+                    "이슈 #53 댓글 (실제 검토는 PR #42 리뷰)",
+                    "PR #42 리뷰",
+                )
+            }
+        ]
+        completion_evidence_self_response = dict(base)
+        completion_evidence_self_response["comments"] = [
+            {
+                "body": VALID_HUMAN_ACTION_BODY.replace(
+                    SUGGESTED_REVIEW_COMMENT,
+                    GENERIC_EVIDENCE_REVIEW_COMMENT,
+                ).replace(
+                    "이슈 #53 댓글 (실제 검토는 PR #42 리뷰)",
+                    "PR #42 리뷰",
+                )
+            }
+        ]
         conflicting_destination = dict(base)
         conflicting_destination["comments"] = [
             {
@@ -804,7 +1043,7 @@ class GitHubContractTest(unittest.TestCase):
                 )
             }
         ]
-        for snapshot in (
+        for index, snapshot in enumerate((
             base,
             vague,
             paraphrased_vague,
@@ -812,13 +1051,33 @@ class GitHubContractTest(unittest.TestCase):
             imprecise,
             missing_owner,
             wrong_owner,
+            missing_suggested_comment,
+            unhelpful_suggested_comment,
+            misleading_completed_comment,
+            precompleted_comment,
+            generic_result_comment,
+            duplicate_result_comment,
+            substring_evidence_comment,
+            lettered_result_comment,
+            punctuation_result_comment,
+            unrelated_result_comment,
+            disguised_unrelated_result_comment,
+            bare_result_comment,
+            substring_result_comment,
+            truncated_result_comment,
+            incomplete_result_comment,
+            generic_controlled_result_comment,
+            self_referential_response,
+            implicit_review_self_response,
+            completion_evidence_self_response,
             conflicting_destination,
-        ):
-            with mock.patch.object(
-                issue_lease, "github_issue_snapshot", return_value=snapshot
-            ):
-                with self.assertRaises(issue_lease.LeaseFailure):
-                    issue_lease.github_release_precheck(args)
+        )):
+            with self.subTest(invalid_snapshot=index):
+                with mock.patch.object(
+                    issue_lease, "github_issue_snapshot", return_value=snapshot
+                ):
+                    with self.assertRaises(issue_lease.LeaseFailure):
+                        issue_lease.github_release_precheck(args)
 
         english = dict(base)
         english["body"] = "\n".join(
@@ -829,17 +1088,54 @@ class GitHubContractTest(unittest.TestCase):
                 "**Target:** PR #42",
                 "### What to do",
                 "- [ ] Review PR #42 and submit an approval or specific change request.",
-                "**Where to respond:** PR #42 review",
+                "**Where to respond:** issue #53 comment after the PR #42 review",
                 "**Completion condition:** An approval or actionable change request is recorded.",
                 "**Completion evidence:** PR #42 approval or change-request review link",
                 "**State after completion:** ready-for-agent",
                 "**Transition owner:** prepare-issue",
+                "**Suggested comment:** PR #42 — Result: [approved | changes requested]. Rationale: [write]. Evidence: [paste the PR #42 review URL].",
             ]
         )
         with mock.patch.object(
             issue_lease, "github_issue_snapshot", return_value=english
         ):
             issue_lease.github_release_precheck(args)
+
+        english_truncated_result = dict(english)
+        english_truncated_result["body"] = english["body"].replace(
+            "approved | changes requested", "approve | quest"
+        )
+        with mock.patch.object(
+            issue_lease,
+            "github_issue_snapshot",
+            return_value=english_truncated_result,
+        ):
+            with self.assertRaises(issue_lease.LeaseFailure):
+                issue_lease.github_release_precheck(args)
+
+        english_incomplete_result = dict(english)
+        english_incomplete_result["body"] = english["body"].replace(
+            "approved | changes requested", "approve | request"
+        )
+        with mock.patch.object(
+            issue_lease,
+            "github_issue_snapshot",
+            return_value=english_incomplete_result,
+        ):
+            with self.assertRaises(issue_lease.LeaseFailure):
+                issue_lease.github_release_precheck(args)
+
+        english_generic_controlled_result = dict(english)
+        english_generic_controlled_result["body"] = english["body"].replace(
+            "approved | changes requested", "comment | review outcome"
+        )
+        with mock.patch.object(
+            issue_lease,
+            "github_issue_snapshot",
+            return_value=english_generic_controlled_result,
+        ):
+            with self.assertRaises(issue_lease.LeaseFailure):
+                issue_lease.github_release_precheck(args)
 
         legacy_owner = dict(base)
         legacy_owner["body"] = VALID_HUMAN_ACTION_BODY.replace(
@@ -858,6 +1154,57 @@ class GitHubContractTest(unittest.TestCase):
             issue_lease, "github_issue_snapshot", return_value=closure
         ):
             issue_lease.github_release_precheck(args)
+
+    def test_suggested_comment_supports_human_request_types(self) -> None:
+        cases = (
+            (
+                "검토",
+                "릴리스 후보",
+                "릴리스 후보를 검토하고 승인 또는 거절 결과를 남겨 주세요.",
+                "릴리스 후보 — 결과: [승인 | 거절]. 판단 근거: [작성]. 완료 증거: [검토 댓글 링크].",
+            ),
+            (
+                "결정",
+                "데이터베이스 엔진",
+                "데이터베이스 엔진을 PostgreSQL 또는 MySQL로 결정하고 근거를 남겨 주세요.",
+                "데이터베이스 엔진 — 결과: [PostgreSQL | MySQL]. 판단 근거: [작성]. 완료 증거: [결정 댓글 링크].",
+            ),
+            (
+                "권한 부여",
+                "운영 계정",
+                "운영 계정의 배포 권한 부여 또는 거절을 결정하고 근거를 남겨 주세요.",
+                "운영 계정 — 결과: [권한 부여 | 권한 거절]. 판단 근거: [작성]. 완료 증거: [감사 로그 링크].",
+            ),
+            (
+                "수동 작업",
+                "프로덕션 재시작",
+                "프로덕션 재시작을 실행하고 성공 또는 실패 결과를 남겨 주세요.",
+                "프로덕션 재시작 — 결과: [성공 | 실패]. 판단 근거: [작성]. 완료 증거: [운영 로그 링크].",
+            ),
+        )
+        for request_type, target, action, suggested_comment in cases:
+            body = "\n".join(
+                [
+                    "## 사람에게 필요한 도움",
+                    "**필요한 이유:** 사람이 직접 판단하거나 실행해야 안전하게 계속할 수 있습니다.",
+                    f"**요청 종류:** {request_type}",
+                    f"**대상:** {target}",
+                    "### 해 주실 일",
+                    f"- [ ] {action}",
+                    "**답변/결과를 남길 곳:** 이슈 #53 댓글",
+                    "**완료 조건:** 요청한 결과와 근거가 이슈 댓글에 등록됨",
+                    "**완료 증거:** 이슈 #53 결과 댓글 링크",
+                    "**완료 후 상태:** 상태: 에이전트 작업 가능",
+                    "**전환 담당:** prepare-issue",
+                    f"**추천 댓글:** {suggested_comment}",
+                ]
+            )
+            self.assertTrue(
+                issue_lease.human_action_contract_is_complete(
+                    body, require_suggested_comment=True
+                ),
+                request_type,
+            )
 
     def test_invalid_display_language_does_not_delete_the_lease(self) -> None:
         args = issue_lease.argparse.Namespace(
