@@ -35,7 +35,7 @@ Companion skills have deliberately narrower authority:
 
 | Skill | Owns | Must not own |
 | --- | --- | --- |
-| `triage` | Intake, claim verification, category/state recommendation, authorized labels/comments, durable readiness brief | Implementation lease, code changes, completion evidence |
+| `prepare-issue` | Intake, claim verification, category/state recommendation, authorized labels/comments, durable readiness brief | Implementation lease, code changes, completion evidence |
 | `codebase-design` | Read-only module-interface and architectural-seam exploration, comparison, and recommendation | Code edits, spec or ticket persistence, tracker or lease mutation, implementation, completed-change review |
 | `to-spec` | Conversation synthesis, planning spec, settled verification-seam recording, explicit assumptions/open questions | Invented requirements, unresolved module-interface design, implementation readiness, ticket claim |
 | `to-tickets` | Authorized two-phase ticket creation, parent/dependency links, graph validation, readiness-state preparation | Ticket claim, implementation evidence, parent completion |
@@ -68,7 +68,7 @@ The consuming repository must provide Git, Python 3, an authenticated GitHub CLI
 ## Invocation policy
 
 - Keep `codebase-design`, `tdd`, `diagnosing-bugs`, `complexity-optimizer`, `code-review`, `documenting-work`, and `work-github-issue` eligible for implicit discovery when their trigger descriptions are specific enough to avoid overlap.
-- Keep `triage`, `to-spec`, and `to-tickets` explicit by setting `policy.allow_implicit_invocation: false` in `agents/openai.yaml`; these workflows can mutate durable planning state when explicitly asked.
+- Keep `prepare-issue`, `to-spec`, and `to-tickets` explicit by setting `policy.allow_implicit_invocation: false` in `agents/openai.yaml`; these workflows can mutate durable planning state when explicitly asked.
 - A request to inspect, review, draft, or explain is read-only. It does not authorize issue creation, label changes, comments, closure, commit, push, or PR publication.
 - A request to publish tickets authorizes the validated publication workflow, not implementation or parent closure.
 

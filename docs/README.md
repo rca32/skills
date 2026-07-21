@@ -8,7 +8,7 @@
 
 | 하고 싶은 일 | 사용할 스킬 | 쉬운 설명 |
 | --- | --- | --- |
-| 새 이슈를 분류하고 작업 가능한 상태인지 확인 | `triage` | [이슈 접수와 준비 상태 확인](skills/triage.md) |
+| 새 이슈를 분류하고 작업 가능한 상태인지 확인 | `prepare-issue` | [개발 이슈 준비하기](skills/prepare-issue.md) |
 | module interface나 seam을 설계 | `codebase-design` | [깊은 module interface 설계하기](skills/codebase-design.md) |
 | 대화에서 합의한 내용을 명세로 정리 | `to-spec` | [대화를 명세로 바꾸기](skills/to-spec.md) |
 | 큰 명세를 작은 구현 이슈로 분해 | `to-tickets` | [명세를 티켓으로 나누기](skills/to-tickets.md) |
@@ -25,7 +25,7 @@
 큰 기능을 GitHub 이슈로 관리한다면 보통 다음 순서로 이어집니다.
 
 ```text
-triage → codebase-design? → to-spec → to-tickets → work-github-issue
+prepare-issue → codebase-design? → to-spec → to-tickets → work-github-issue
                                                         ├─ diagnosing-bugs
                                                         ├─ complexity-optimizer
                                                         ├─ codebase-design?
@@ -33,7 +33,7 @@ triage → codebase-design? → to-spec → to-tickets → work-github-issue
                                                         └─ code-review
 ```
 
-- `triage`는 요청이 실제로 작업할 준비가 됐는지 확인합니다.
+- `prepare-issue`는 요청이 실제로 작업할 준비가 됐는지 확인합니다.
 - `codebase-design`은 interface나 seam 선택이 열려 있을 때 구현 전에 설계안을 비교하고 하나를 추천합니다. 승인 범위를 넘는 공개 계약 변경은 사용자나 저장소 권위가 수락한 뒤에만 구현하고, 티켓이 범위 안의 설계 재량을 명시적으로 위임했다면 그 안에서는 바로 이어갑니다.
 - `to-spec`은 합의된 범위를 명세로 고정합니다.
 - `to-tickets`는 명세를 의존성이 분명한 작은 작업으로 나눕니다.

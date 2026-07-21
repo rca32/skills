@@ -1,0 +1,6 @@
+interface:
+  display_name: "개발 이슈 준비"
+  short_description: "개발 전 이슈를 검증하고 작업 가능한 상태로 준비"
+  default_prompt: "Use $prepare-issue to verify this issue and prepare a complete readiness brief."
+policy:
+  allow_implicit_invocation: false

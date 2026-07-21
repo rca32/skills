@@ -6,7 +6,7 @@ otherwise apply the invariant in the final column directly.
 
 | Situation | Route | Preserved invariant |
 | --- | --- | --- |
-| Incoming bug or request | `triage` | Verify before briefing; exactly one category and state role |
+| Incoming bug or request | `prepare-issue` | Verify before briefing; exactly one category and state role |
 | Settled conversation needs a durable PRD | `to-spec` | Domain vocabulary, testing seams, decisions, out-of-scope |
 | Approved plan spans sessions | `to-tickets` | Tracer-bullet slices with genuine blocking edges |
 | A spec, decision, report, handoff, or artifact may be persisted | `documenting-work` | One authority, repository override, stable identity/path, index and pointers |

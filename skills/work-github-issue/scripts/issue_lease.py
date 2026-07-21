@@ -58,6 +58,8 @@ HUMAN_ACTION_FIELD_ALIASES = {
     "transition-owner": {"**전환 담당:**", "**Transition owner:**"},
 }
 HUMAN_ACTION_STEP_HEADINGS = {"### 해 주실 일", "### What to do"}
+# Read old issue bodies created before the skill rename; new templates publish only prepare-issue.
+OPEN_STATE_TRANSITION_OWNERS = {"prepare-issue", "triage"}
 HUMAN_ACTION_REQUEST_TYPES = {
     "질문",
     "결정",
@@ -597,8 +599,8 @@ def human_action_contract_is_complete(body: str) -> bool:
     if len(destinations) + int(terminal) != 1:
         return False
     owner = normalize_human_action_text(values["transition-owner"])
-    expected_owner = "work-github-issue" if terminal else "triage"
-    return owner == expected_owner
+    expected_owners = {"work-github-issue"} if terminal else OPEN_STATE_TRANSITION_OWNERS
+    return owner in expected_owners
 
 
 def latest_human_action_contract(value: dict[str, Any]) -> str | None:
@@ -824,7 +826,7 @@ def github_release_precheck(args: argparse.Namespace) -> None:
         state_roles = set(state_labels.values())
         if len(state_labels) != 1:
             raise LeaseFailure(
-                "blocked release requires exactly one triage state role",
+                "blocked release requires exactly one recognized state role",
                 2,
                 {
                     "stateLabels": sorted(state_labels),

@@ -41,7 +41,7 @@ single state label:
 
 Colors are setup suggestions, not automation identity. Read the legacy category
 aliases on existing issues, but never add a Korean category label beside its
-English alias. Conflicting recognized categories require triage.
+English alias. Conflicting recognized categories require issue preparation.
 
 The bundled lease helper also reads the legacy English labels `needs-triage`,
 `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. Use those only
@@ -73,29 +73,29 @@ generic request such as "please review".
 
 **완료 증거:** <이슈 댓글 URL, PR 리뷰 링크, 로그·감사 이벤트 ID 또는 스크린샷 링크>
 
-**완료 후 상태:** <authorized triage 재검증 후 상태: 에이전트 작업 가능 | 상태: 정보 필요 유지 | 완료 증거와 함께 종료>
+**완료 후 상태:** <authorized prepare-issue 재검증 후 상태: 에이전트 작업 가능 | 상태: 정보 필요 유지 | 완료 증거와 함께 종료>
 
-**전환 담당:** <triage | work-github-issue>
+**전환 담당:** <prepare-issue | work-github-issue>
 ```
 
 When repository instructions require English, the bundled helper accepts the
 equivalent headings `## Human action required`, `### What to do`, `**Why this
 is needed:**`, `**Request type:**`, `**Target:**`, `**Where to respond:**`,
 `**Completion condition:**`, `**Completion evidence:**`, and `**State after
-completion:**`. Use one language per block and add `**Transition owner:**` with `triage` for an open-state
+completion:**`. Use one language per block and add `**Transition owner:**` with `prepare-issue` for an open-state
 destination or `work-github-issue` for evidence-backed closure.
 
 For `needs-info`, ask only questions whose answers can change the brief, and
 name the accepted format or choices when useful. After the answer arrives,
 the person records the answer but does not change the state. An authorized
-`triage` workflow must revalidate the brief and blockers before replacing it
+`prepare-issue` workflow must revalidate the brief and blockers before replacing it
 with `상태: 에이전트 작업 가능`; otherwise keep `상태: 정보 필요` with an
 updated request.
 
 For `ready-for-human`, identify the exact judgment, permission, PR, access, or
 manual action, explain the relevant choice or risk, and state what evidence
 counts as completion. The person performs the named action and records its
-evidence but does not edit the state label directly. If agent work remains, an authorized `triage`
+evidence but does not edit the state label directly. If agent work remains, an authorized `prepare-issue`
 workflow revalidates and applies the next state. If the human action reaches the
 repository completion point, an authorized `work-github-issue` completion flow
 records the required evidence and closes the issue.

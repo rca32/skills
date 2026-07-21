@@ -31,7 +31,7 @@ VALID_HUMAN_ACTION_BODY = "\n".join(
         "**완료 조건:** 승인 또는 구체적인 수정 요청이 리뷰로 등록됨",
         "**완료 증거:** PR #42 승인 또는 수정 요청 리뷰 링크",
         "**완료 후 상태:** 상태: 에이전트 작업 가능",
-        "**전환 담당:** triage",
+        "**전환 담당:** prepare-issue",
     ]
 )
 
@@ -751,7 +751,7 @@ class GitHubContractTest(unittest.TestCase):
                         "**완료 조건:** 처리 결과가 댓글로 등록됨",
                         "**완료 증거:** 이슈 댓글",
                         "**완료 후 상태:** 상태: 에이전트 작업 가능",
-                        "**전환 담당:** triage",
+                        "**전환 담당:** prepare-issue",
                     ]
                 )
             }
@@ -783,7 +783,7 @@ class GitHubContractTest(unittest.TestCase):
         missing_owner["comments"] = [
             {
                 "body": VALID_HUMAN_ACTION_BODY.replace(
-                    "\n**전환 담당:** triage", ""
+                    "\n**전환 담당:** prepare-issue", ""
                 )
             }
         ]
@@ -791,7 +791,7 @@ class GitHubContractTest(unittest.TestCase):
         wrong_owner["comments"] = [
             {
                 "body": VALID_HUMAN_ACTION_BODY.replace(
-                    "**전환 담당:** triage", "**전환 담당:** 사람"
+                    "**전환 담당:** prepare-issue", "**전환 담당:** 사람"
                 )
             }
         ]
@@ -833,7 +833,7 @@ class GitHubContractTest(unittest.TestCase):
                 "**Completion condition:** An approval or actionable change request is recorded.",
                 "**Completion evidence:** PR #42 approval or change-request review link",
                 "**State after completion:** ready-for-agent",
-                "**Transition owner:** triage",
+                "**Transition owner:** prepare-issue",
             ]
         )
         with mock.patch.object(
@@ -841,10 +841,19 @@ class GitHubContractTest(unittest.TestCase):
         ):
             issue_lease.github_release_precheck(args)
 
+        legacy_owner = dict(base)
+        legacy_owner["body"] = VALID_HUMAN_ACTION_BODY.replace(
+            "**전환 담당:** prepare-issue", "**전환 담당:** triage"
+        )
+        with mock.patch.object(
+            issue_lease, "github_issue_snapshot", return_value=legacy_owner
+        ):
+            issue_lease.github_release_precheck(args)
+
         closure = dict(base)
         closure["body"] = VALID_HUMAN_ACTION_BODY.replace(
             "상태: 에이전트 작업 가능", "완료 증거와 함께 종료"
-        ).replace("**전환 담당:** triage", "**전환 담당:** work-github-issue")
+        ).replace("**전환 담당:** prepare-issue", "**전환 담당:** work-github-issue")
         with mock.patch.object(
             issue_lease, "github_issue_snapshot", return_value=closure
         ):

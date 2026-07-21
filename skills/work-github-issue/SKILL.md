@@ -14,7 +14,7 @@ tracker write. If none exists, use
 [references/tracker-contract.md](references/tracker-contract.md). Read
 [references/lifecycle.md](references/lifecycle.md) only when the issue is not
 already in the configured `ready-for-agent` role, belongs to a Wayfinder map, or must be split,
-triaged, handed off, or resolved into a parent.
+prepared, handed off, or resolved into a parent.
 
 Read [references/workspace-cleanup.md](references/workspace-cleanup.md) only
 when an implementation session used a ticket branch or worktree and is ready to
@@ -42,7 +42,7 @@ defaults new claim/release projection comments to Korean and records that
 choice in the lease; pass `--display-language en` when the selected repository
 contract requires English. Keep protocol markers unchanged in either language.
 
-Read-only triage, drafting, and graph design need no lease. Before `triage`,
+Read-only issue preparation, drafting, and graph design need no lease. Before `prepare-issue`,
 `to-spec`, or `to-tickets` performs authorized tracker writes, acquire a short
 planning lease through this skill. Use the source or parent issue as the key; use
 key `0` only when creating a repository-level planning item with no source issue:
@@ -75,7 +75,7 @@ Fetch the full issue body, comments, labels, assignees, state, parent, and open
 blocking dependencies. Resolve bare issue numbers as the tracker document
 requires.
 
-- Route raw incoming reports through `triage`.
+- Route raw incoming reports through `prepare-issue`.
 - Route a settled multi-session plan through `to-spec` and `to-tickets`.
 - Route a huge foggy effort through `wayfinder` when it is installed; otherwise
   keep the issue non-ready and report the missing shared map, named ticket,
@@ -123,7 +123,7 @@ scope. Workspace provenance and the applicable cleanup policy are also recorded.
 ## 2. Acquire the implementation lease
 
 Run the claim before implementation exploration or any implementation-related
-local/external write. Read-only investigation required to triage, verify,
+local/external write. Read-only investigation required to prepare, verify,
 de-duplicate, or determine blockers remains part of readiness and precedes the
 lease:
 
@@ -295,7 +295,7 @@ the person why intervention is required, the exact action, where to respond,
 the observable completion condition, durable evidence reference, and the next
 state plus transition owner.
 The person records the requested answer or action evidence but does not edit
-the state directly: authorized `triage` owns revalidation and open-state
+the state directly: authorized `prepare-issue` owns revalidation and open-state
 transitions, while this skill owns evidence-backed completion and closure. Do
 not release with a generic request to review or provide information.
 

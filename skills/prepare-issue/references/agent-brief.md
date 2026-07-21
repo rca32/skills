@@ -62,9 +62,9 @@ fallback uses Korean headings and plain language:
 
 **완료 증거:** <이슈 댓글 URL, PR 리뷰 링크, 로그·감사 이벤트 ID 또는 스크린샷 링크>
 
-**완료 후 상태:** <authorized triage 재검증 후 상태: 에이전트 작업 가능 | 상태: 정보 필요 유지 | 완료 증거와 함께 종료>
+**완료 후 상태:** <authorized prepare-issue 재검증 후 상태: 에이전트 작업 가능 | 상태: 정보 필요 유지 | 완료 증거와 함께 종료>
 
-**전환 담당:** <triage | work-github-issue>
+**전환 담당:** <prepare-issue | work-github-issue>
 ```
 
 For a pull request, describe the current state of the diff and the remaining gaps. Do not rewrite the request as if no code exists.

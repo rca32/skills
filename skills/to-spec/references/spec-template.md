@@ -84,7 +84,7 @@ identifiers, API names, links, and protocol markers exactly.
 
 **완료 후 상태:** <승인 댓글을 남기고 `상태: 사람 검토 필요`를 유지한 채 `$to-tickets` 게시 요청>
 
-**전환 담당:** triage
+**전환 담당:** prepare-issue
 ```
 
 Omit empty scenario categories, but never omit material unknowns. A long list is not a substitute for traceability or observable criteria.
