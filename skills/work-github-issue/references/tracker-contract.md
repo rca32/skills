@@ -126,6 +126,10 @@ workflow revalidates and applies the next state. If the human action reaches the
 repository completion point, an authorized `work-github-issue` completion flow
 records the required evidence and closes the issue.
 
+Do not enter `ready-for-human` for a review or merge already covered by an
+applicable standing repository authorization. Complete the authorized local
+tests, independent reviews, publication, and readbacks autonomously instead.
+
 ## Publication and completion
 
 This fallback does not choose a base branch, pull-request target, integration

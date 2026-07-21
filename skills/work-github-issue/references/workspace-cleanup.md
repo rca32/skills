@@ -1,8 +1,19 @@
 # Workspace cleanup
 
 Use this reference only after implementation and publication are settled and
-before posting final evidence and releasing the implementation lease. Cleanup is
-housekeeping under the same session, not part of the lease mutation.
+before posting final evidence, closing the issue, and releasing the
+implementation lease. Cleanup is housekeeping under the same session, not part
+of the lease mutation. Keep the issue open until cleanup succeeds or every
+preserved artifact has a safe disposition that the repository completion
+contract accepts.
+
+## Contents
+
+- [Default disposition](#default-disposition)
+- [Remove a linked worktree](#remove-a-linked-worktree)
+- [Delete a local ticket branch](#delete-a-local-ticket-branch)
+- [Delete an authorized remote branch](#delete-an-authorized-remote-branch)
+- [Evidence and release](#evidence-and-release)
 
 ## Default disposition
 
@@ -40,7 +51,9 @@ owned. Immediately before removal, verify all of the following:
 - the final commit remains reachable through the local branch that will be
   retained, a live remote ref read back from the canonical remote, or the
   verified integration ref. Do not treat a stale remote-tracking ref as durable
-  recovery evidence.
+  recovery evidence. After squash or rebase merge, the integration commit does
+  not by itself make the original ticket-head commit recoverable; retain and
+  verify a live remote ticket ref or another durable ref for that exact OID.
 
 Recheck lease ownership, then run ordinary `git worktree remove` against the
 explicit canonical path from the control worktree. Never use `--force`, broad
@@ -94,6 +107,7 @@ result must be reconciled before retrying.
 
 Put the cleanup result in the session evidence: removed worktree paths, deleted
 refs, retained recovery refs, and every preserved artifact with its reason and
-next safe action. Read back that evidence, apply the tracker outcome, and release
-the lease. Do not begin a new automatic cleanup attempt after release because a
-successor session may already own or be inspecting the work.
+next safe action. Read back that evidence, apply the tracker outcome, close the
+issue only for a completed outcome, and release the lease. Do not begin a new
+automatic cleanup attempt after release because a successor session may already
+own or be inspecting the work.

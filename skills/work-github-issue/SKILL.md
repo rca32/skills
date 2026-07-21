@@ -1,6 +1,6 @@
 ---
 name: work-github-issue
-description: Coordinate collision-safe GitHub issue implementation and planning mutations through readiness, remote session leases, review, evidence, and resolution. Use before starting, resuming, publishing planning state, handing off, or finishing issue-backed work when agents may share one account.
+description: Coordinate collision-safe GitHub issue implementation and planning mutations through readiness, remote session leases, review, evidence, and resolution. Use before starting, resuming, publishing planning state, handing off, or finishing issue-backed work when agents may share one account. Also use to inspect or install a consuming repository's execution and publication contract; policy writes require explicit repository-policy mutation authority.
 ---
 
 # Work GitHub Issue
@@ -26,6 +26,20 @@ artifact outside the tracker. The issue comment remains authoritative for agent
 briefs, implementation evidence, and issue-backed handoffs unless the consuming
 repository explicitly assigns that authority elsewhere.
 
+Minimize human intervention within resolved authority. Continue without asking
+for confirmation when repository evidence, applicable instructions, and an
+existing standing authorization determine the next safe action. Escalate only
+for genuinely missing requirements or authority, unavailable access, a safety
+decision outside the ticket, or an external write that cannot be reconciled.
+
+When a consuming repository lacks an execution and publication contract, remain
+read-only for publication-dependent work. If the user asks to install the
+bundled autonomous policy, read both the
+[repository-contract workflow](references/repository-contract.md) and the exact
+[managed contract template](references/consumer-agents-contract.md), then use
+its `AGENTS.md` workflow; never insert standing merge authority without explicit
+repository-policy mutation authorization.
+
 ## 0. Preflight and serialize planning writes
 
 Before the first real lease in a repository, verify that Git is available, the
@@ -36,6 +50,14 @@ the account may push atomic refs to the remote. Under the bundled fallback,
 publish Korean state labels and accept the legacy English aliases only for
 existing issues; never attach both aliases for one role. A claim fails closed
 when these prerequisites are absent.
+
+When the applicable repository contract prohibits GitHub Actions, verify before
+claim that Actions are disabled for the canonical repository and that no branch
+rule requires an Actions-hosted status check, external approving review, or
+restriction the lease-owning agent cannot satisfy autonomously. If any state
+conflicts or cannot be read reliably, do not claim publication-dependent work:
+pushing a branch or opening a pull request could trigger a prohibited service or
+lead to an unavoidable human wait.
 
 Resolve the human-facing tracker language before claim. The lease helper
 defaults new claim/release projection comments to Korean and records that
@@ -113,6 +135,8 @@ fields `not authorized` only when the user explicitly scopes the outcome to loca
 work; the configured tracker contract still owns its release outcome. If a field
 required for the requested outcome is missing or two authorities conflict,
 remain read-only and report the exact decision required instead of claiming.
+Do not ask the user to restate a field already resolved by a valid applicable
+repository contract.
 
 Completion criterion: the issue snapshot satisfies the tracker contract and its
 requested outcome plus acceptance criteria are present in the body or an
@@ -212,18 +236,29 @@ session.
 
 ## 4. Review and publish evidence
 
-Review the pre-work fixed point on both Standards and Spec, using `code-review`
-when available.
-Address actionable findings and run the final relevant suite. Commit, push, open
-a pull request, or merge only to the extent authorized by the user or active
-repository workflow, and include only the ticket's files. An implementation
-claim authorizes required tracker projection and evidence writes; it does not by
-itself authorize code publication. A pushed branch does not authorize a pull
-request, and pull-request creation does not authorize merge.
+Create or amend the final ticket commit before final verification and review,
+then require a clean execution workspace. Renew from that workspace and check
+ownership so the lease projection names the exact branch and ticket-head OID.
+Record the live integration-base OID used to build that candidate and require
+the candidate to incorporate that base. Run the final local verification for
+that `(integration-base OID, ticket-head OID)` pair and record it as the
+candidate reviewed-and-tested pair.
 
-After creating or amending the final commit, renew from the execution workspace
-and check ownership so the lease projection names the exact branch and HEAD
-before any publication or evidence write.
+Review the pre-work fixed point through that candidate pair independently on both
+Standards and Spec, using `code-review` when available. Do not expose one
+reviewer's conclusions to the other before both reports are complete. Address
+every blocker/high finding and every medium finding that affects safety,
+ownership, invocation, or predictable completion. Any finding-driven file or
+commit change creates a new candidate pair and invalidates local verification
+and both pair-bound reviews, regardless of which axis found it. A changed live
+integration base has the same effect: incorporate the new base, create the new
+ticket-head OID, and repeat every gate. Continue until one unchanged pair passes.
+
+Push, open a pull request, or merge only to the extent authorized by the user or
+active repository workflow, and include only the ticket's files. An
+implementation claim authorizes required tracker projection and evidence writes;
+it does not by itself authorize code publication. A pushed branch does not
+authorize a pull request, and pull-request creation does not authorize merge.
 
 Apply the resolved publication contract rather than inventing a target or merge
 method. Before each consequential write, recheck the lease and the target. Read
@@ -235,22 +270,58 @@ back operation-specific state:
 - after merge, the configured integration target contains the published change
   and required checks remain satisfied.
 
+When the applicable repository contract grants standing autonomous merge
+authority, do not pause for redundant human approval after local tests and both
+independent reviews satisfy its gates. Before merge, inspect the pull request and
+every included commit message plus the selected merge message for a closing
+keyword targeting the leased issue. Remove an authorized pull-request-body
+keyword and read back that edit. Rewrite a commit or merge message only within
+explicit publication authority and rerun invalidated verification and reviews;
+stop if any source could still close the issue before cleanup and final evidence.
+Re-read the live pull request head OID, live remote ticket ref, base, state,
+review result, and integration ref. Require the PR head and remote ticket ref to
+equal the reviewed ticket-head OID and the live integration ref to equal the
+reviewed integration-base OID. Any mismatch invalidates the pair; incorporate
+the new base or head and repeat local verification plus both reviews. Perform
+the authorized merge only when a provider-side rule or operation atomically
+rejects either a stale expected head or a stale expected integration base. On
+GitHub, pass the merge API's `sha` head precondition and require a branch rule or
+other recorded provider mechanism that rejects an out-of-date base without
+GitHub Actions. An unguarded merge, or a provider that cannot enforce both
+preconditions, is not authorized. Treat a mismatch as a stale-pair stop, not a
+retry with newly observed OIDs. Then verify that the pull request reports merged
+from the reviewed ticket-head OID and the live integration ref
+contains the reported integration commit. Record both OIDs; squash and rebase
+merge need not preserve the ticket head as an ancestor. A contract that
+prohibits GitHub Actions makes hosted Actions and required Actions checks
+unavailable rather than optional: run its local verification and stop on
+conflicting branch rules instead of enabling, triggering, rerunning, or bypassing
+Actions.
+
 An unknown publication result remains unresolved. Keep the lease, inspect the
 remote branch, pull request, or integration target, and classify the operation
 as present exactly once or absent before retrying. If tracker writes are
 prohibited, remain read-only and do not claim.
+If merge unexpectedly closes the leased issue before cleanup and final evidence,
+reconcile it back to open while the implementation lease is still owned and
+verify that state before continuing. Treat an unknown reopen result like any
+other unresolved tracker mutation.
 
 Once the acceptance criteria and resolved repository completion point establish
-a `completed` outcome, including every publication readback required by that
-outcome, perform the applicable cleanup from a retained control worktree while
-the implementation lease is still owned. Follow
+that implementation is publishable, including every publication readback
+required by that outcome, verify that the final commit is recoverable from a
+live remote ref or the integration ref. Then perform the applicable cleanup from
+a retained control worktree while the implementation lease is still owned. Follow
 [references/workspace-cleanup.md](references/workspace-cleanup.md), recheck the
 lease immediately before removal, and read back each worktree or ref deletion.
 Do not apply the bundled deletion default to `blocked` or `handoff` outcomes.
 When a cleanup precondition fails, preserve the exact path or ref and record the
 failed condition plus next safe action; never force removal.
 
-Post the configured tracker document's structured evidence comment in its
+Post the configured tracker document's structured evidence comment only after
+the cleanup result or safe preservation disposition is settled. Include both
+independent review results, the ticket-head and integration OIDs, the live
+ticket-head recovery ref, and cleanup disposition. Use the contract's
 human-facing language. Under the bundled fallback, use the Korean evidence
 headings while preserving the protocol marker; legacy English headings remain
 read-compatible.
