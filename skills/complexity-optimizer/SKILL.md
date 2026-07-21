@@ -34,7 +34,7 @@ Keep a report in the conversation by default. When the user explicitly asks to s
 
 For an unexplained slow or flaky symptom, use `diagnosing-bugs` to establish a reproducible cause before optimizing. Use `code-review` rather than this skill when the request is to judge a complete change against repository Standards or an originating Spec.
 
-This skill may make a locally authorized optimization, but it never claims or releases an issue, changes tracker state, commits, pushes, opens a pull request, merges, or publishes evidence. For issue-backed edits, do not change files until the outer `work-github-issue` workflow confirms a valid implementation lease for this session. Use `tdd` for the behavior-preserving implementation slice when available, and leave final independent review to `code-review`.
+This skill may make a locally authorized optimization, but it never claims or releases an issue, changes tracker state, commits, pushes, opens a pull request, merges, or publishes evidence. For issue-backed edits, do not change files until the outer `work-github-issue` workflow confirms a valid implementation lease for this session. When a validated hotspot shows that consolidating shallow modules or moving a public seam is necessary, use `codebase-design` to recommend the target module shape and obtain the required acceptance before editing. Use `tdd` for the behavior-preserving implementation slice when available, and leave final independent review to `code-review`.
 
 ## Workflow
 

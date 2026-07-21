@@ -175,7 +175,13 @@ source HEAD projection describe the actual ticket workspace, then verify
 ownership before editing.
 
 Follow the repository owner boundaries and any skill the user explicitly
-invoked. At the agreed highest test seam, make behavior changes test-first where
+invoked. If the ticket still requires a module-interface or architectural-seam
+decision, use `codebase-design` before the first implementation edit. Resume
+only when the recommendation is resolved under that skill's acceptance
+contract. If it exceeds or changes approved behavior,
+architecture, ticket boundaries, dependencies, or another approval-gated
+contract, stop and return to the planning workflow rather than widening the
+ticket. At the agreed highest test seam, make behavior changes test-first where
 practical. Run typechecking and focused tests regularly, then the full relevant
 suite once. Keep the ticket a tracer bullet: deliver its end-to-end acceptance
 criteria without absorbing adjacent tickets.

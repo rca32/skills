@@ -78,7 +78,7 @@ Do not change production behavior. Report:
 
 1. Turn the minimized repro into a failing regression test at a public seam when one exists.
 2. Confirm the test fails for the diagnosed cause.
-3. Apply the smallest fix. Use the `tdd` skill for behavior changes.
+3. Apply the smallest fix. When the fix requires a new module interface or a materially different seam, use `codebase-design` to recommend that design without widening the diagnosed scope; obtain the required user or repository acceptance before implementation. Use the `tdd` skill for behavior changes.
 4. Confirm the regression test passes.
 5. Re-run the original feedback loop and risk-appropriate surrounding tests or benchmarks.
 

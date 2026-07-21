@@ -17,7 +17,7 @@ Treat every repository change made to satisfy an issue as issue-backed, includin
 
 1. Read the request, repository instructions, nearby tests, and domain or architecture documents relevant to the change.
 2. Name the public seam through which a caller observes the behavior: a public function, command, HTTP endpoint, event, rendered interaction, or another stable contract.
-3. Derive the seam from the existing contract when it is clear. Ask the user only when two or more materially different seams would change the API, architecture, or test cost and the repository does not resolve the choice.
+3. Derive the seam from the existing contract when it is clear. When two or more materially different module seams would change the API, architecture, or test cost, use `codebase-design` to recommend one before the first Red. Do not start Red until the recommendation is resolved under that skill's acceptance contract. If the recommendation exceeds or changes approved behavior, architecture, ticket boundaries, dependencies, or another approval-gated contract, return control to the outer planning workflow instead of editing.
 4. State the seam and first observable behavior before editing.
 
 Test behavior through that seam, not private methods or incidental call order. Read [references/tests.md](references/tests.md) when selecting assertions and [references/mocking.md](references/mocking.md) when the behavior crosses system boundaries.
