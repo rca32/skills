@@ -47,7 +47,7 @@ Companion skills have deliberately narrower authority:
 
 Planning skills may prepare tracker metadata only when the user authorized those external writes. They must leave runtime claim enforcement to `work-github-issue`.
 
-Every planning mutation must be serialized by a `work-github-issue` lease with `purpose=planning`. Key it to the source/parent issue, or to repository-wide key `0` only when no source issue exists. Read-only assessment and drafting do not claim. Planning leases and implementation leases share the same atomic ref namespace, so they conflict by construction; an active lease cannot change purpose in place. Inner planning skills request, check, and release this outer lease but never redefine its protocol.
+Every tracker or other shared external planning mutation must be serialized by a `work-github-issue` lease with `purpose=planning`. Key it to the source/parent issue, or to repository-wide key `0` only when no source issue exists. Read-only assessment, drafting, and authorized repository-file edits use local fingerprint and dirty-worktree protection without a remote lease unless they occur inside an already leased issue implementation. Planning leases and implementation leases share the same atomic ref namespace, so they conflict by construction; an active lease cannot change purpose in place. Inner planning skills request, check, and release this outer lease but never redefine its protocol.
 
 ## Document-output contract
 
@@ -57,13 +57,13 @@ Every planning mutation must be serialized by a `work-github-issue` lease with `
 2. exactly one authoritative body;
 3. repository path/document ID only when repository persistence is selected;
 4. metadata, index, pointer, update, and supersession behavior;
-5. write authorization and the outer planning/implementation lease.
+5. write authorization, plus an outer planning/implementation lease only for tracker, other shared external, or already-leased issue implementation writes.
 
 Consuming-repository documentation instructions override the bundled fallback. Without a local convention, use `documenting-work/references/document-contract.md` and its resolver. Tracker-authoritative briefs, tickets, evidence, and issue handoffs must not be copied into editable Markdown bodies. Conversation-only reports create no file. Generated runtime output follows the repository artifact/retention contract, not `docs/`.
 
 ## Runtime prerequisites
 
-The consuming repository must provide Git, Python 3, an authenticated GitHub CLI, a canonical GitHub remote that matches the requested repository, permission to push the atomic lease refs, and a documented tracker-state/dependency mapping. Implementation also requires an explicit user or repository execution/publication contract for every requested outcome: ticket base and fixed point, worktree eligibility, authorized delivery surface, PR and integration targets, merge authority and strategy, required checks, completion point, and cleanup policy as applicable. When no higher authority defines cleanup, the bundled `work-github-issue` contract authorizes only a completed session to remove its own clean linked worktree and safely deletable local ticket branch after exact provenance, recovery, and ownership checks. It retains pre-existing or shared artifacts, non-complete workspaces, and remote branches; broader cleanup requires explicit user or consuming-repository authority. When repository instructions omit tracker semantics, use `work-github-issue/references/tracker-contract.md`; that fallback deliberately does not invent repository-specific publication values. Missing authentication, remote identity, tracker mapping, atomic-ref permission, or a publication field required by the requested outcome is a fail-closed preflight result, not authorization to bypass the lease or guess a target.
+GitHub issue workflows require Git, Python 3, an authenticated GitHub CLI, a canonical GitHub remote that matches the requested repository, permission to push the atomic lease refs, and a documented tracker-state/dependency mapping. Local analysis, implementation, tests, and authorized repository-document edits do not inherit those GitHub prerequisites unless they are part of an issue-backed workflow. Resolve execution fields before editing, push/PR fields before publication, and merge authority, strategy, required checks, completion point, and cleanup before merge. When no higher authority defines cleanup, the bundled `work-github-issue` contract authorizes only a completed session to remove its own clean linked worktree and safely deletable local ticket branch after exact provenance, recovery, and ownership checks. It retains pre-existing or shared artifacts, non-complete workspaces, and remote branches; broader cleanup requires explicit user or consuming-repository authority. When repository instructions omit tracker semantics, use `work-github-issue/references/tracker-contract.md`.
 
 ## Invocation policy
 
@@ -122,8 +122,8 @@ For every changed skill:
 1. Run `quick_validate.py skills/<skill-name>` from the installed `skill-creator`.
 2. Execute every changed deterministic script against disposable inputs; syntax-check interactive templates.
 3. Scan the package for TODO markers, local absolute paths, project-only names, obsolete dependencies, unsupported frontmatter, and broken relative references.
-4. Forward-test complex behavior with realistic prompts that do not reveal the intended answer. Include authorization ambiguity, partial external failure, dirty-worktree coverage, and same-account collision when relevant.
-5. Run independent Standards and Spec reviews. Do not let one reviewer see the other's conclusions before both reports are complete.
+4. Forward-test complex behavior with realistic prompts that do not reveal the intended answer. Include authorization ambiguity, partial external failure, dirty-worktree coverage, and same-account collision when relevant. Use fresh agents when available; otherwise run and disclose separated scenario walkthroughs in the current context.
+5. Run separate Standards and Spec reviews. Use isolated reviewers without sharing conclusions when available. When isolation is unavailable, review the two authorities sequentially, keep their findings separate, and disclose the fallback; lack of subagents alone does not block validation.
 6. Run `git diff --check` after files are staged so new-file whitespace is included.
 
 The Standards review checks this file, `writing-great-skills`, `skill-creator`, portability, disclosure, duplication, metadata, and safety. The Spec review checks the user's requested outcome, intended selection, composition boundaries, and missing runtime behavior.

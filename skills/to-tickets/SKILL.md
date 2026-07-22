@@ -66,12 +66,12 @@ Reject or repair the draft if any of these checks fail:
 
 Only perform these mutations when publication is authorized.
 
-Before Phase 1, read back the repository label catalog and confirm every label the graph will use exists with the selected tracker meaning. Missing label setup is not part of ordinary ticket-publication authority: stop with the selected contract's exact labels and descriptions unless the user or repository workflow separately authorizes label creation.
+Before Phase 1, read the repository label catalog. Use applicable existing labels, but do not create them without separate authority. Missing optional labels do not block publication; encode each state with the selected tracker contract's body marker and continue.
 
 ### Phase 1: create an unready graph
 
 1. Assign each draft a stable key and include a non-secret reconciliation marker such as `<!-- to-tickets:v1 source=<parent> revision=<fingerprint> key=T1 -->` in its body. Search before every create for the exact marker and for the broader source/key pair. Reuse exactly one exact-revision match and create only when no source/key match exists. If another revision already uses that key, stop for an explicit supersession or migration decision instead of reusing or duplicating it.
-2. Create every child ticket without the `ready-for-agent` role. Under the default label vocabulary, use `상태: 분류 필요` during assembly. Read back the marker and state after each create.
+2. Create every child ticket without the `ready-for-agent` role. Under the fallback contract, use an existing `상태: 분류 필요` label or the `needs-triage` body marker during assembly. Read back the reconciliation marker and state after each create.
 3. Link every ticket to the planning parent when the tracker supports parent/child relationships.
 4. Add native blocking relationships. Under the Korean fallback, use a `먼저 끝나야 하는 작업` section only when the tracker lacks native dependencies.
 5. Replace draft keys with real tracker identifiers and verify every body update from the tracker, not from the local draft.
@@ -81,10 +81,10 @@ Before Phase 1, read back the repository label catalog and confirm every label t
 
 1. Re-run all graph checks against published identifiers and states.
 2. Confirm each ticket has a complete brief, acceptance criteria, exclusions, and valid blockers.
-3. Replace the assembly state with `상태: 에이전트 작업 가능` on implementation tickets that satisfy the fallback contract. Keep tickets requiring information or human action in `상태: 정보 필요` or `상태: 사람 검토 필요`, with a complete Human action block. Use repository-defined labels when its tracker contract overrides the fallback.
+3. Replace the assembly state with the `ready-for-agent` role on implementation tickets that satisfy the fallback contract, using an existing label or the body marker. Keep tickets requiring information or human action in the corresponding role with a complete Human action block. Use repository-defined labels or markers when its tracker contract overrides the fallback.
 4. Keep the planning parent out of the implementation frontier and do not close or relabel it unless the user separately requested that action.
 
-If any Phase 1 write fails or returns an ambiguous result, stop further writes. Reconcile creates by marker using both exact search and a complete paginated repository issue enumeration; reconcile parent links by parent field, blocker mutations by the exact dependency set, body changes by content/marker, and labels by the exact state role. Never retry an unknown result blindly. An empty search result or issue enumeration does not prove an ambiguous create was absent, because the original request may still become visible. Retry that create only when a durable provider response, request identifier, or transport record proves the original operation was rejected before creation; otherwise keep it unknown. Other mutations may resume only after each attempted operation is present exactly once or confirmed absent from its authoritative field. If reconciliation is impossible, keep and renew the planning lease while recovery is active, leave every created ticket unready, and report the partial graph, attempted operations, confirmed identifiers, unknown marker, and next safe action. Never delete successful creates automatically or make a partially linked graph claimable.
+If any Phase 1 write fails or returns an ambiguous result, stop further writes and reconcile by the authoritative field. For creates, perform exactly three complete marker/catalog reads over no more than 60 seconds and require the final two reads to agree. If the marker remains absent and no provider request is still pending, classify the create as absent and retry once with the same marker. Reconcile parent links, blockers, bodies, and states from their exact fields. If the retry is also unknown, preserve the recovery marker and partial graph, leave created tickets unready, stop writes, and stop renewing the planning lease indefinitely so a later takeover can reconcile it. Never delete successful creates automatically or expose a partially linked graph as claimable.
 
 ## Completion check
 

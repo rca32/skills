@@ -17,7 +17,7 @@ Treat every repository change made to satisfy an issue as issue-backed, includin
 
 1. Read the request, repository instructions, nearby tests, and domain or architecture documents relevant to the change.
 2. Name the public seam through which a caller observes the behavior: a public function, command, HTTP endpoint, event, rendered interaction, or another stable contract.
-3. Derive the seam from the existing contract when it is clear. When two or more materially different module seams would change the API, architecture, or test cost, use `codebase-design` to recommend one before the first Red. Do not start Red until the recommendation is resolved under that skill's acceptance contract. If the recommendation exceeds or changes approved behavior, architecture, ticket boundaries, dependencies, or another approval-gated contract, return control to the outer planning workflow instead of editing.
+3. Derive the seam from the existing contract when it is clear. When two or more materially different module seams would change a public API, accepted architecture, ticket boundaries, dependencies, or material test cost, use `codebase-design` before the first Red. Proceed with a resolved private in-bounds choice; return to planning only for an unresolved contract change.
 4. State the seam and first observable behavior before editing.
 
 Test behavior through that seam, not private methods or incidental call order. Read [references/tests.md](references/tests.md) when selecting assertions and [references/mocking.md](references/mocking.md) when the behavior crosses system boundaries.
@@ -26,9 +26,9 @@ Test behavior through that seam, not private methods or incidental call order. R
 
 Repeat this complete cycle for each behavior:
 
-### Red
+### Red or characterize
 
-1. Add the smallest test that specifies one externally observable behavior.
+1. Add the smallest test that specifies one externally observable behavior. For existing behavior being protected before refactoring, run a characterization test and record its baseline-green result instead of forcing an artificial failure.
 2. Use an expected value independent of the implementation: a specification example, known literal, protocol contract, or established oracle.
 3. Run the narrowest relevant test command.
 4. Confirm it fails for the missing or incorrect behavior. A syntax error, fixture failure, or unrelated failure is not a valid red.
@@ -59,7 +59,7 @@ Start the next slice only after this one is green and coherent. Do not write a h
 
 Report the seam, behaviors covered, and exact commands run. The slice is complete only when:
 
-- every new test was observed failing for the intended reason before its implementation;
+- every new behavior or regression test was observed failing for the intended reason before implementation, while characterization tests were observed baseline-green before refactoring;
 - focused tests pass after the implementation and refactor;
 - the risk-appropriate surrounding suite passes;
 - no unrelated behavior, tracker state, lease, commit, push, or publication was changed by this skill.

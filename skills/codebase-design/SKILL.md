@@ -14,11 +14,11 @@ Treat this as a read-only design workflow. Inspect code, tests, and architecture
 - Before `to-spec`, use this skill when the module interface or architectural seam is not settled. Pass the recommendation and its resolution status to `to-spec`; let that skill record a resolved decision or keep an unresolved recommendation open.
 - During issue-backed implementation, use this skill only after the outer `work-github-issue` workflow reports an already-held valid implementation lease. If no lease is held, return control without claiming one. Enter after a diagnosis or validated hotspot establishes that module reshaping is needed and before `tdd` when the ticket still needs a module-shape recommendation.
 - If the recommendation would change approved behavior, an accepted architecture decision, ticket boundaries, or dependencies, stop implementation and return the recommendation to the planning workflow before editing.
-- Treat a recommendation that exceeds or changes approved behavior, architecture, ticket boundaries, dependencies, or another approval-gated contract as proposed until explicit user or repository authority accepts it. When the governing Spec, ticket, or repository contract explicitly delegates an in-bounds module-shape choice to implementation, record that delegation and proceed without inventing another approval round. Do not present undelegated agent preference as an accepted decision.
+- Treat private, in-bounds implementation structure as delegated to the implementer by default when it preserves approved behavior, public interfaces, accepted architecture, ticket boundaries, and dependencies. Require explicit acceptance only when the recommendation changes one of those contracts or another approval-gated decision. Do not present an out-of-bounds agent preference as accepted.
 - Use `tdd` to implement the selected interface through observable behavior. Let `code-review` assess the result only against repository Standards and the originating Spec, not against an unapproved recommendation from this skill.
 - When the user explicitly requests a durable design decision, use `documenting-work` to resolve its authority, destination, metadata, and write authorization, then leave the actual write to the authorized outer workflow.
 
-A recommendation is **resolved** only when existing authority fixes the choice, an accepted source validly delegates it within named limits, or explicit user or repository authority accepts it. Every other recommendation remains **proposed** and unresolved.
+A recommendation is **resolved** when existing authority fixes it, it is a private in-bounds implementation choice, an accepted source delegates it within named limits, or explicit user or repository authority accepts it. Other recommendations remain **proposed**.
 
 Consuming-repository instructions and accepted domain language override this vocabulary. Use the terms below for design reasoning, but preserve existing identifiers, quoted contracts, and domain terms rather than renaming them mechanically.
 
@@ -26,7 +26,7 @@ Consuming-repository instructions and accepted domain language override this voc
 
 1. Read the request, applicable repository instructions, accepted architecture decisions, relevant callers, current interfaces, tests, and dependencies.
 2. Name the candidate module and the caller behavior it must support. Record invariants, ordering constraints, error modes, configuration, performance expectations, compatibility constraints, and dependencies that may vary.
-3. Identify whether the decision is still open. When an existing approved contract fixes the interface or seam, explain that constraint and design within it. When it explicitly delegates an in-bounds module-shape choice, name the delegation and its limits. When the recommendation exceeds approved behavior, architecture, ticket boundaries, dependencies, or another approval-gated contract, record who may accept it and mark it proposed until that authority does so. When missing information would materially change the public contract or architecture, report the exact unresolved decision instead of inventing it.
+3. Identify whether the decision is still open. When an approved contract fixes the interface or seam, design within it. Treat private in-bounds structure as resolved implementation discretion. When the recommendation changes public behavior, architecture, ticket boundaries, dependencies, or another approval-gated contract, name who may accept it and keep it proposed. Report missing information only when it materially changes one of those contracts.
 
 The framing is complete when the candidate, callers, constraints, current authority, and permissible design space are explicit.
 
@@ -94,7 +94,7 @@ Return:
 5. how callers and tests use the interface;
 6. alternatives considered and the decisive trade-offs;
 7. compatibility, migration, and unresolved risks;
-8. resolution status: fixed by existing authority, delegated within named limits, explicitly accepted, or proposed with the accepting authority named;
+8. resolution status: fixed by existing authority, private in-bounds implementation discretion, delegated within named limits, explicitly accepted, or proposed with the accepting authority named;
 9. the next owner: `to-spec` for unsettled planning, `tdd` for a resolved and authorized implementation, or the outer issue workflow when scope must be renegotiated.
 
 The design is complete when a caller can understand the full interface without reading the implementation, the recommendation is justified by depth, locality, seam placement, and testability, and the next workflow can proceed without silently making another architectural choice.

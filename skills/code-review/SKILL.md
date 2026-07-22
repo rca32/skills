@@ -1,12 +1,12 @@
 ---
 name: code-review
-description: "Review a branch, pull request, commit range, or work-in-progress change from a caller-supplied fixed point along two independent axes: repository Standards and originating Spec. Use when asked to review changes, review since a ref, compare work to an issue or PRD, or assess staged, unstaged, and untracked work before commit or publication."
+description: "Review a branch, pull request, commit range, or work-in-progress change from a caller-supplied fixed point along separate repository Standards and originating Spec axes. Use when asked to review changes, review since a ref, compare work to an issue or PRD, or assess staged, unstaged, and untracked work before commit or publication."
 ---
 
 # Code Review
 
 Review the complete change from a pinned base through the current worktree. Keep
-**Standards** and **Spec** independent so good conformance cannot hide wrong
+**Standards** and **Spec** separate so good conformance cannot hide wrong
 behavior, and correct behavior cannot hide a standards violation.
 
 This is a read-only workflow. Do not edit files, mutate an issue or pull request,
@@ -45,7 +45,7 @@ Record:
 - `HEAD` SHA and `git status --short`;
 - `git log <base>..HEAD --oneline`;
 - tracked changes from `<base>` through the current working tree;
-- untracked, non-ignored files from `git ls-files --others --exclude-standard`.
+- untracked, non-ignored files from `git ls-files --others --exclude-standard`, classified as in-scope or unrelated.
 
 The review target is the current worktree, not merely `HEAD`. Inspect all three
 tracked views so one layer cannot hide another:
@@ -54,16 +54,19 @@ tracked views so one layer cannot hide another:
 - `git diff --no-ext-diff --cached <base> --` for the exact base-to-index result;
 - `git diff --no-ext-diff --` for the exact index-to-worktree result.
 
-Inspect every untracked file separately. For large or binary files, inspect type,
-size, provenance, and relevant generated metadata without dumping unbounded
-contents. Never expose suspected credentials or secrets from any tracked or
-untracked file; identify the path and redact the value.
+Inspect untracked files that belong to the requested change, its tests, or an
+explicit path scope. List unrelated untracked paths as excluded without hashing
+their contents. For large or binary in-scope files, inspect type, size,
+provenance, and relevant generated metadata without dumping unbounded contents.
+Never expose suspected credentials or secrets; identify the path and redact the
+value.
 
-Fingerprint these three diffs and the size/content hash of each untracked file at
-the start, then repeat the fingerprints before reporting. If they changed, the
+Fingerprint these three diffs and each in-scope untracked file at the start, then
+repeat the fingerprints before reporting. If an in-scope fingerprint changed, the
 snapshot drifted: identify the drift and restart or clearly limit the review
-rather than combining observations from different worktree states. Hashing must
-be read-only and must not add objects to the repository.
+rather than combining observations from different worktree states. Unrelated
+untracked drift does not restart the review. Hashing must be read-only and must
+not add objects to the repository.
 
 Fail early on an unresolved ref. An empty tracked diff is not an empty review
 until the untracked-file list is also empty. If both are empty, report that there
@@ -91,7 +94,7 @@ tests. Record exactly which source is authoritative. Do not infer requirements
 from the implementation itself, and do not mutate the tracker while reading
 context.
 
-## 3. Run independent reviews
+## 3. Run separate reviews
 
 Delegate Standards and Spec to two clean subagents in parallel when capacity
 allows. Give both the same pinned scope (base SHA, `HEAD`, status, commit list,
@@ -100,10 +103,12 @@ only its own authority and brief. Tell both agents to inspect rather than edit.
 
 If parallel delegation is unavailable but isolated reviewers can be started
 sequentially, use separate fresh reviewer contexts. If no isolation mechanism is
-available, do not claim an independent two-axis review: return the pinned scope
-and report that independent review is blocked. Never run both axes in one
-contaminated context while labelling them independent. Do not show either
-reviewer the other one's conclusions before both reports are complete.
+available, review Standards first from only its authority, set those findings
+aside, then review Spec from only its authority. Label this a separated
+single-context fallback rather than an independent review. Keep the two finding
+sets and severities separate; unavailable delegation alone never blocks a report.
+When isolated reviewers are used, do not show either reviewer the other's
+conclusions before both reports are complete.
 
 ### Standards brief
 

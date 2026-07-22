@@ -6,6 +6,8 @@ Write the brief in the language selected by the tracker contract. The bundled
 fallback uses Korean headings and plain language:
 
 ```markdown
+<!-- work-github-issue:state role=ready-for-agent -->
+
 ## 에이전트 작업 설명
 
 **유형:** 버그 | 개선

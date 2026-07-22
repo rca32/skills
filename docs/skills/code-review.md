@@ -1,4 +1,4 @@
-# `code-review`: 두 기준으로 독립적인 코드 리뷰
+# `code-review`: 두 기준을 분리한 코드 리뷰
 
 정확한 실행 계약: [`skills/code-review/SKILL.md`](../../skills/code-review/SKILL.md)
 

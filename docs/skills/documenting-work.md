@@ -39,7 +39,7 @@
 - 새 문서가 이전 문서를 대체하면 양쪽에 서로의 링크를 남김
 - 파일과 인덱스를 다시 읽어 실제 반영 결과 확인
 
-이슈에 연결된 공유 문서를 변경하는 경우에는 `work-github-issue`의 planning 또는 implementation lease도 확인합니다.
+저장소 문서만 변경할 때는 대상 fingerprint와 dirty-worktree 보호를 사용하며 GitHub lease가 필요하지 않습니다. tracker 댓글·외부 pointer 같은 공유 외부 쓰기나 이미 lease가 잡힌 이슈 구현 안의 변경에만 해당 planning 또는 implementation lease를 확인합니다.
 
 ## 기본 저장 위치
 

@@ -30,6 +30,10 @@ STATE_ROLE_BY_LABEL = {
     for role, labels in STATE_LABELS_BY_ROLE.items()
     for label in labels
 }
+STATE_MARKER_RE = re.compile(
+    r"<!--\s*work-github-issue:state\s+role="
+    r"(needs-triage|needs-info|ready-for-agent|ready-for-human|wontfix)\s*-->"
+)
 EVIDENCE_SECTION_ALIASES = {
     "outcome": {"## Outcome", "## 결과"},
     "changes": {"## Changes", "## 변경 사항"},
@@ -577,6 +581,12 @@ def recognized_state_labels(labels: set[str]) -> dict[str, str]:
     }
 
 
+def recognized_state_roles(labels: set[str], body: str) -> tuple[dict[str, str], set[str]]:
+    state_labels = recognized_state_labels(labels)
+    roles = set(state_labels.values()) | set(STATE_MARKER_RE.findall(body))
+    return state_labels, roles
+
+
 def normalize_human_action_text(value: str) -> str:
     return re.sub(r"[\s.!?。，、]+", "", value).casefold()
 
@@ -806,22 +816,28 @@ def validate_issue_gate(
     if value["state"] != "OPEN":
         raise LeaseFailure(f"issue {args.issue} is not open")
     labels = {item["name"] for item in value["labels"]}
-    state_labels = recognized_state_labels(labels)
-    if len(state_labels) > 1:
+    state_labels, state_roles = recognized_state_roles(
+        labels, str(value.get("body", ""))
+    )
+    if len(state_labels) > 1 or len(state_roles) > 1:
         raise LeaseFailure(
-            f"issue {args.issue} has conflicting state labels",
+            f"issue {args.issue} has conflicting state roles",
             2,
             {
                 "stateLabels": sorted(state_labels),
-                "stateRoles": sorted(set(state_labels.values())),
+                "stateRoles": sorted(state_roles),
                 "issueUrl": value["url"],
             },
         )
-    if not (labels & STATE_LABELS_BY_ROLE["ready-for-agent"]) and not allow_unready:
+    if "ready-for-agent" not in state_roles and not allow_unready:
         raise LeaseFailure(
             f"issue {args.issue} is not ready-for-agent",
             2,
-            {"labels": sorted(labels), "issueUrl": value["url"]},
+            {
+                "labels": sorted(labels),
+                "stateRoles": sorted(state_roles),
+                "issueUrl": value["url"],
+            },
         )
     open_blockers = [
         {"number": item["number"], "title": item["title"], "url": item["url"]}
@@ -1004,11 +1020,12 @@ def github_release_precheck(args: argparse.Namespace) -> None:
     if args.outcome == "blocked":
         labels = {item["name"] for item in value["labels"]}
         open_blockers = [item for item in value["blockedBy"] if item.get("state") != "CLOSED"]
-        state_labels = recognized_state_labels(labels)
-        state_roles = set(state_labels.values())
-        if len(state_labels) != 1:
+        state_labels, state_roles = recognized_state_roles(
+            labels, str(value.get("body", ""))
+        )
+        if len(state_labels) > 1 or len(state_roles) > 1:
             raise LeaseFailure(
-                "blocked release requires exactly one recognized state role",
+                "blocked release has conflicting state roles",
                 2,
                 {
                     "stateLabels": sorted(state_labels),
@@ -1372,7 +1389,7 @@ def parser() -> argparse.ArgumentParser:
     claim.add_argument(
         "--allow-unready",
         action="store_true",
-        help="explicit user override for a missing ready-for-agent label; blockers still gate",
+        help="explicit user override for a missing ready-for-agent role; blockers still gate",
     )
     claim.set_defaults(handler=command_claim)
 

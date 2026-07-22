@@ -80,4 +80,4 @@ Create realistic prompts without embedding the intended answer. Include at least
 
 Observe the chosen steps, mutations, stop conditions, and completion claim. Repair the instruction that allowed an unsafe or unpredictable choice; do not merely document the bad outcome.
 
-Then run structural validation, every bundled deterministic test, and independent Standards and Spec reviews. A skill is ready only when its trigger is distinct, every branch reaches an observable terminal condition, resources are reachable, mutations match authority, and the consuming repository's publication gate is satisfied.
+Then run structural validation, every bundled deterministic test, and separate Standards and Spec reviews. Use isolated reviewers when available. Otherwise run the axes sequentially in the current context, keep their evidence and findings separate, and disclose that they were not independent; unavailable delegation alone does not block validation. A skill is ready only when its trigger is distinct, every branch reaches an observable terminal condition, resources are reachable, mutations match authority, and the consuming repository's publication gate is satisfied.

@@ -17,7 +17,7 @@
 | 원인을 모르는 오류나 성능 저하 조사 | `diagnosing-bugs` | [증거로 버그 원인 찾기](skills/diagnosing-bugs.md) |
 | 복잡도·성능 hotspot 분석 또는 안전한 최적화 | `complexity-optimizer` | [복잡도와 성능 hotspot 개선하기](skills/complexity-optimizer.md) |
 | 테스트를 먼저 작성해 기능 또는 수정 구현 | `tdd` | [작은 Red-Green-Refactor 반복](skills/tdd.md) |
-| 변경 사항이 규칙과 요구사항을 만족하는지 검토 | `code-review` | [두 기준으로 독립적인 코드 리뷰](skills/code-review.md) |
+| 변경 사항이 규칙과 요구사항을 만족하는지 검토 | `code-review` | [두 기준을 분리한 코드 리뷰](skills/code-review.md) |
 | 새 스킬을 만들거나 기존 스킬 개선 | `writing-great-skills` | [예측 가능한 스킬 작성하기](skills/writing-great-skills.md) |
 
 ## 대표적인 조합

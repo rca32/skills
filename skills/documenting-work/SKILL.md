@@ -55,12 +55,12 @@ The command returns the stable document ID, relative path, and fallback index. I
 ## 5. Persist safely
 
 1. Confirm persistence and external-write authorization.
-2. For issue-backed or shared durable writes, have `work-github-issue` acquire the appropriate `planning` or `implementation` lease. Use repository-wide planning key `0` only when no source issue exists.
+2. For tracker comments, external pointers, or other shared external writes, have `work-github-issue` acquire the appropriate `planning` or `implementation` lease. An authorized repository-document edit uses the local destination fingerprint and dirty-worktree checks without requiring GitHub; when an implementation lease is already active, continue to respect it.
 3. Record the destination's identity, content fingerprint, index entry, and Git status before editing.
 4. Create or update one authoritative document. Preserve unrelated edits and repository formatting.
 5. Add or update the nearest authoritative index. When the fallback contract is active, use `docs/README.md`.
 6. Put pointers—not duplicated bodies—in the source issue, parent spec, superseded document, or report as required.
-7. Read back the document, metadata, links, and index. Recheck the lease and working-tree fingerprint around consequential writes.
+7. Read back the document, metadata, links, and index. Recheck any applicable external lease and the working-tree fingerprint around consequential writes.
 
 An unknown write result is unresolved. Reconcile identity, content, and index state before retrying or releasing the lease.
 

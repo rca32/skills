@@ -5,6 +5,8 @@ neither specifies one, use Korean. Preserve quoted source text, code
 identifiers, API names, links, and protocol markers exactly.
 
 ```markdown
+<!-- work-github-issue:state role=<needs-triage|ready-for-human> -->
+
 # <결과 중심 제목>
 
 ## 상태와 근거

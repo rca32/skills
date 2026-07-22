@@ -45,13 +45,13 @@ If no valid loop can be built, stop with the attempts made and the smallest miss
 
 ## 3. Reproduce and minimize
 
-Observe the exact symptom, then remove inputs, configuration, callers, data, and steps one at a time. Re-run after each removal. The minimized case is ready when every remaining element is load-bearing.
+Observe the exact symptom, then remove inputs, configuration, callers, data, and steps while each removal remains discriminating and materially reduces the case. Stop when the cause is isolated or further minimization would add cost without changing the conclusion; not every remaining element must be proven load-bearing.
 
 Preserve the original scenario; it is needed to detect a fix that only satisfies the minimized harness.
 
 ## 4. Rank and falsify hypotheses
 
-List three to five plausible causes, ranked by current evidence. Give each a prediction:
+List one to five plausible causes, ranked by current evidence. When a stack trace, bisect, or direct observation already points decisively to one cause, confirm that cause with one discriminating prediction instead of manufacturing alternatives. Give each remaining candidate a prediction:
 
 > If X is the cause, changing or observing Y will produce Z.
 

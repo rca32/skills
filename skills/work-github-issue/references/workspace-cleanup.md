@@ -107,7 +107,7 @@ result must be reconciled before retrying.
 
 Put the cleanup result in the session evidence: removed worktree paths, deleted
 refs, retained recovery refs, and every preserved artifact with its reason and
-next safe action. Read back that evidence, apply the tracker outcome, close the
-issue only for a completed outcome, and release the lease. Do not begin a new
-automatic cleanup attempt after release because a successor session may already
-own or be inspecting the work.
+next safe action. Read back that evidence, apply the tracker outcome, ensure the
+issue is closed for a completed outcome without reopening a provider-closed
+issue, and release the lease. Do not begin a new automatic cleanup attempt after
+release because a successor session may already own or be inspecting the work.

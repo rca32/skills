@@ -4,42 +4,40 @@ Read this reference only when a consuming repository lacks an execution,
 publication, or tracker-label setup, or the user asks to inspect or initialize
 the standard `work-github-issue` repository contract.
 
-The initialization has two independently verified parts:
+The setup has two independently verified parts:
 
 - a managed `AGENTS.md` contract that grants standing authority for agent-owned
-  pull requests, local verification, independent review, autonomous merge,
-  evidence-backed issue closure, and safe session-worktree cleanup while
-  prohibiting GitHub Actions;
-- the seven Korean state and category labels defined by the bundled
+  pull requests, local verification, separate review axes, autonomous merge,
+  evidence-backed issue closure, and safe session-worktree cleanup without
+  requiring repository-side workflow or branch-protection changes;
+- the optional seven Korean state and category labels defined by the bundled
   [tracker contract](tracker-contract.md).
 
 Read the exact [managed contract template](consumer-agents-contract.md) before
 previewing or installing it. `check` operations are read-only. Installing the
 contract or creating labels are distinct durable mutations; initialize only
 when the user explicitly authorizes the corresponding repository-policy or
-remote-label mutation. Permission for one does not imply the other, and full
-initialization requires both.
+remote-label mutation. Permission for one does not imply the other; policy setup
+is complete without optional labels because body markers preserve automation
+state.
 
 Choose the branch from the granted authority:
 
 - **Read-only inspection:** run both checks when access permits and report each
   component independently; acquire no lease.
-- **Policy-only setup:** preview, snapshot, lease, install, and read back only the
-  managed `AGENTS.md` contract. Missing label authority or catalog access does
-  not block this previously supported branch; report tracker initialization as
-  incomplete.
+- **Policy-only setup:** preview, snapshot, install, and read back only the
+  managed `AGENTS.md` contract using local fingerprint protection. Missing label
+  authority or catalog access does not block completion.
 - **Label-only setup:** snapshot, lease, create, and read back only the bundled
   labels. Do not edit `AGENTS.md`; report policy initialization as incomplete.
-- **Full initialization:** require both mutation authorities, preflight both
+- **Policy plus labels:** require both mutation authorities, preflight both
   components before any write, and follow the labels-first sequence below.
 
-For initialization outside an active implementation lease, use the planning
-lease flow in the main skill: key it to the source issue, or to repository-wide
-key `0` when no source issue exists. A repository bootstrap normally uses key
-`0`. Check that lease before every mutation batch and release only after every
-authorized component is current and no result is unknown. Full initialization
-therefore requires both components to be current; a component-only branch does
-not wait for unauthorized setup.
+Use a planning lease only for remote label writes. The local policy installer
+uses its snapshot token, repository identity, and lock without requiring GitHub.
+When labels are authorized, key their planning lease to the source issue or key
+`0` when no source issue exists, and release after the label operation is read
+back.
 
 Before writing, read the existing target and the full applicable instruction
 chain, preview the exact managed block, and compare its merge, Actions, review,
@@ -121,18 +119,21 @@ missing/non-repository parent, or a target other than the selected Git root
 chain. A conflicting higher-authority or more-specific instruction remains
 unresolved; the managed block never silently overrides it.
 
-If a label-create result is unknown, keep the lease, preserve the reported list
-of confirmed labels, and reconcile the catalog before retrying. If labels become
-current but policy installation fails, leave them in place and rerun the
-snapshot-gated policy step; labels are harmless prerequisites, not rollback
-targets. Never delete successful initialization state automatically.
+If a label-create result is unknown, preserve the confirmed labels and read the
+complete catalog exactly three times over no more than 60 seconds. Retry one
+absent label create once only when the final two reads agree it is absent. If the
+retry remains unknown, stop writes and lease renewal so a successor can reconcile
+after expiry. If labels become current but policy installation fails, leave them
+in place and rerun the
+snapshot-gated policy step; labels are optional human-facing projections, not
+rollback targets. Never delete successful initialization state automatically.
 
-Initialization is complete only when both checks return `status=current`, the
-full instruction chain has no conflict, GitHub Actions and required hosted
-checks are disabled in repository settings, target-branch rules require no
-external human approval or other restriction the lease owner cannot satisfy, a
-provider-side rule or operation can atomically reject both a stale PR head and
-an out-of-date integration base without GitHub Actions, and the named
-integration target and merge method match the repository's actual publication
-design. Treat GitHub settings other than the bundled labels as a read-only
-preflight unless the user separately authorizes changing them.
+Policy setup is complete when its check returns `status=current`, the full
+instruction chain has no conflict, the named integration target and merge
+method match the repository's actual publication design, and the account can
+push its ticket branch, create its pull request, and submit a merge with the
+provider's expected-head precondition. Existing Actions, required checks,
+reviews, and branch rules are discovered publication gates, not initialization
+blockers and not authority to change repository settings. Record any gate the
+lease owner cannot satisfy so the runtime can request the exact external action
+instead of bypassing it.

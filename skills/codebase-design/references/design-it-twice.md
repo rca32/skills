@@ -39,6 +39,6 @@ Each alternative must include:
 
 Present each design separately, then compare them by depth, locality, seam placement, testability, compatibility, and dependency fit. Identify any constraint a candidate fails instead of averaging incompatible designs into a compromise.
 
-Recommend one design and explain the decisive trade-offs. Propose a hybrid only when its combined interface remains coherent and smaller than the knowledge it hides. Mark the recommendation proposed until the user or applicable repository architecture authority accepts it, unless an existing authority already fixes the choice or explicitly delegates this in-bounds design decision.
+Recommend one design and explain the decisive trade-offs. Propose a hybrid only when its combined interface remains coherent and smaller than the knowledge it hides. Treat private in-bounds implementation structure as resolved implementation discretion. Mark changes to public behavior, accepted architecture, ticket boundaries, or dependencies proposed until the applicable authority accepts them.
 
 This branch is complete when the alternatives are materially different, all satisfy the same fixed constraints or are explicitly rejected, one recommendation and its resolution status are clear, and the next workflow will not choose or implement an unresolved interface implicitly.

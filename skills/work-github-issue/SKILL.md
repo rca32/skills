@@ -37,11 +37,10 @@ read-only for publication-dependent work. If the user asks to inspect or
 initialize the bundled repository setup, read the
 [repository-initialization workflow](references/repository-contract.md) and the exact
 [managed contract template](references/consumer-agents-contract.md). Treat its
-`AGENTS.md` policy and GitHub tracker labels as one user-facing initialization,
-while using their separate deterministic installers and readbacks. Never insert
-standing merge authority or create repository-wide labels without explicit
-authority for the corresponding mutation class; complete initialization requires
-both.
+`AGENTS.md` policy and optional GitHub tracker labels as independent setup
+components. Never insert standing merge authority or create repository-wide
+labels without explicit authority for the corresponding mutation class; labels
+are not required for the managed policy to be usable.
 
 ## 0. Preflight and serialize planning writes
 
@@ -50,17 +49,17 @@ configured remote resolves to the intended canonical GitHub `owner/name`, `gh`
 is authenticated to the expected account, the tracker contract and state-label
 mapping are known and recognized by the lease helper or repository adapter, and
 the account may push atomic refs to the remote. Under the bundled fallback,
-publish Korean state labels and accept the legacy English aliases only for
-existing issues; never attach both aliases for one role. A claim fails closed
-when these prerequisites are absent.
+prefer existing Korean state labels and accept legacy English aliases on
+existing issues. When custom labels are unavailable, use the fallback issue-body
+state marker. A claim fails closed only when the tracker role is missing or
+conflicting, not merely because a label is absent.
 
-When the applicable repository contract prohibits GitHub Actions, verify before
-claim that Actions are disabled for the canonical repository and that no branch
-rule requires an Actions-hosted status check, external approving review, or
-restriction the lease-owning agent cannot satisfy autonomously. If any state
-conflicts or cannot be read reliably, do not claim publication-dependent work:
-pushing a branch or opening a pull request could trigger a prohibited service or
-lead to an unavoidable human wait.
+Before claim, inspect required checks, reviews, and branch restrictions that
+apply to the publication target. Treat existing GitHub Actions and other hosted
+checks as repository gates: observe their results, but do not create, edit,
+enable, disable, or rerun workflows unless separately authorized. A gate the
+lease owner cannot satisfy does not authorize a bypass; record the expected
+human or external action in the resolved publication contract.
 
 Resolve the human-facing tracker language before claim. The lease helper
 defaults new claim/release projection comments to Korean and records that
@@ -90,9 +89,11 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_leas
   release <issue-or-0> --session <session>
 ```
 
-Do not release while a write result is unknown. Preserve the session/key and
-reconcile tracker state first; an expired planning lease may be taken over only
-after inspecting markers and partial tracker state.
+Do not release while a write result is unknown. Reconcile tracker state with at
+most three complete reads over no more than 60 seconds. If the provider still
+cannot classify the write, preserve the recovery key and partial state, stop
+writes, and stop renewing indefinitely; let the lease expire so a successor can
+inspect and take over rather than blocking the planning key forever.
 
 ## 1. Establish readiness
 
@@ -108,19 +109,13 @@ requires.
 - Apply the configured tracker document's readiness, frontier, dependency, and
   override contract before selecting implementation work.
 
-Before an implementation claim, resolve the execution and publication contract
-from explicit user instructions, then applicable repository instructions and one
-unambiguous configured publish flow. Record:
+Before an implementation claim, resolve only the execution contract needed to
+edit safely. Record:
 
 - the ticket base and pre-work fixed point;
 - when the current worktree is eligible and where an isolated worktree may be
   created otherwise;
-- the authorized delivery surface: local commit, pushed branch, pull request,
-  or merge;
-- the pull-request target and, when integration or direct merge is in scope, the
-  integration target;
-- merge authority and strategy, required checks, and the repository-defined
-  completion point when publication is in scope;
+- local implementation authority and whether a local commit is allowed;
 - which branch and worktree already existed, which ones this session may create,
   and any repository or user cleanup override.
 
@@ -132,20 +127,20 @@ branches. This default resolves local cleanup policy; deleting a remote branch
 or a pre-existing local artifact still requires explicit repository or user
 authority.
 
-Do not select a merge target merely because it is the remote default branch or
-because a nearby pull request used it. A local-only request may mark publication
-fields `not authorized` only when the user explicitly scopes the outcome to local
-work; the configured tracker contract still owns its release outcome. If a field
-required for the requested outcome is missing or two authorities conflict,
-remain read-only and report the exact decision required instead of claiming.
-Do not ask the user to restate a field already resolved by a valid applicable
-repository contract.
+Resolve publication progressively. Before push, resolve the remote ticket branch
+and push authority. Before opening a pull request, resolve its target; when no
+instruction conflicts and exactly one remote default branch exists, use it as
+the PR target. Before merge, resolve integration target, merge authority and
+method, required checks, completion point, and cleanup. A default branch never
+grants merge or remote-deletion authority. Missing later publication fields do
+not block an authorized local implementation; stop only before the operation
+that needs the missing field and report the exact decision required.
 
 Completion criterion: the issue snapshot satisfies the tracker contract and its
 requested outcome plus acceptance criteria are present in the body or an
-identified brief/spec; the execution contract is resolved; and every publication
-field required by the requested outcome is either resolved or explicitly out of
-scope. Workspace provenance and the applicable cleanup policy are also recorded.
+identified brief/spec and the execution contract is resolved. Workspace
+provenance is recorded; publication and cleanup fields may remain deferred until
+their first consequential operation.
 
 ## 2. Acquire the implementation lease
 
@@ -242,20 +237,18 @@ session.
 Create or amend the final ticket commit before final verification and review,
 then require a clean execution workspace. Renew from that workspace and check
 ownership so the lease projection names the exact branch and ticket-head OID.
-Record the live integration-base OID used to build that candidate and require
-the candidate to incorporate that base. Run the final local verification for
-that `(integration-base OID, ticket-head OID)` pair and record it as the
-candidate reviewed-and-tested pair.
+Record the live integration-base OID used for final integration checks. Run the
+final local verification for the ticket-head OID against that base and record
+the reviewed-and-tested candidate.
 
-Review the pre-work fixed point through that candidate pair independently on both
-Standards and Spec, using `code-review` when available. Do not expose one
-reviewer's conclusions to the other before both reports are complete. Address
+Review the pre-work fixed point through that candidate on separate Standards and
+Spec axes, using `code-review` when available. Use isolated reviewers when
+available; otherwise use its disclosed separated single-context fallback. Address
 every blocker/high finding and every medium finding that affects safety,
 ownership, invocation, or predictable completion. Any finding-driven file or
-commit change creates a new candidate pair and invalidates local verification
-and both pair-bound reviews, regardless of which axis found it. A changed live
-integration base has the same effect: incorporate the new base, create the new
-ticket-head OID, and repeat every gate. Continue until one unchanged pair passes.
+commit change creates a new candidate and invalidates local verification and the
+reviews that cover the changed behavior. Continue until one unchanged ticket
+head passes.
 
 Push, open a pull request, or merge only to the extent authorized by the user or
 active repository workflow, and include only the ticket's files. An
@@ -275,40 +268,29 @@ back operation-specific state:
 
 When the applicable repository contract grants standing autonomous merge
 authority, do not pause for redundant human approval after local tests and both
-independent reviews satisfy its gates. Before merge, inspect the pull request and
-every included commit message plus the selected merge message for a closing
-keyword targeting the leased issue. Remove an authorized pull-request-body
-keyword and read back that edit. Rewrite a commit or merge message only within
-explicit publication authority and rerun invalidated verification and reviews;
-stop if any source could still close the issue before cleanup and final evidence.
-Re-read the live pull request head OID, live remote ticket ref, base, state,
-review result, and integration ref. Require the PR head and remote ticket ref to
-equal the reviewed ticket-head OID and the live integration ref to equal the
-reviewed integration-base OID. Any mismatch invalidates the pair; incorporate
-the new base or head and repeat local verification plus both reviews. Perform
-the authorized merge only when a provider-side rule or operation atomically
-rejects either a stale expected head or a stale expected integration base. On
-GitHub, pass the merge API's `sha` head precondition and require a branch rule or
-other recorded provider mechanism that rejects an out-of-date base without
-GitHub Actions. An unguarded merge, or a provider that cannot enforce both
-preconditions, is not authorized. Treat a mismatch as a stale-pair stop, not a
-retry with newly observed OIDs. Then verify that the pull request reports merged
-from the reviewed ticket-head OID and the live integration ref
-contains the reported integration commit. Record both OIDs; squash and rebase
-merge need not preserve the ticket head as an ancestor. A contract that
-prohibits GitHub Actions makes hosted Actions and required Actions checks
-unavailable rather than optional: run its local verification and stop on
-conflicting branch rules instead of enabling, triggering, rerunning, or bypassing
-Actions.
+review axes satisfy its gates. A closing keyword may close the issue as
+part of the authorized merge. Provider-side closure alone is not session
+completion: retain the lease and finish cleanup, evidence, and release whether
+the issue is open or closed. Re-read the live pull request head OID, live remote
+ticket ref, base, state, mergeability, required checks, review result, and
+integration ref. Require the PR head and remote ticket ref to equal the reviewed
+ticket-head OID. A changed head invalidates the candidate and requires relevant
+verification and review again. If only the integration base advanced, inspect
+the effective merge diff and run risk-relevant integration checks; repeat Spec
+review only when behavior or the effective diff changes, and Standards review
+only when ticket files change. When the pull request is open, mergeable, and
+its required repository gates pass, perform the authorized merge using every
+expected-head precondition the provider supports. On GitHub, pass the merge
+API's `sha` head precondition. A separate branch rule that atomically pins the
+integration-base OID is optional, not a prerequisite. Then verify that the pull
+request reports merged from the reviewed ticket-head OID and the live
+integration ref contains the reported integration commit. Record both OIDs;
+squash and rebase merge need not preserve the ticket head as an ancestor.
 
 An unknown publication result remains unresolved. Keep the lease, inspect the
 remote branch, pull request, or integration target, and classify the operation
 as present exactly once or absent before retrying. If tracker writes are
 prohibited, remain read-only and do not claim.
-If merge unexpectedly closes the leased issue before cleanup and final evidence,
-reconcile it back to open while the implementation lease is still owned and
-verify that state before continuing. Treat an unknown reopen result like any
-other unresolved tracker mutation.
 
 Once the acceptance criteria and resolved repository completion point establish
 that implementation is publishable, including every publication readback
@@ -323,7 +305,7 @@ failed condition plus next safe action; never force removal.
 
 Post the configured tracker document's structured evidence comment only after
 the cleanup result or safe preservation disposition is settled. Include both
-independent review results, the ticket-head and integration OIDs, the live
+review-axis results, the ticket-head and integration OIDs, the live
 ticket-head recovery ref, and cleanup disposition. Use the contract's
 human-facing language. Under the bundled fallback, use the Korean evidence
 headings while preserving the protocol marker; legacy English headings remain
@@ -335,7 +317,9 @@ Read back every implementation tracker write as well. Reconcile an evidence
 comment by the exact `rca-issue-evidence:v1` session/outcome marker: reuse exactly
 one match, create only when no match exists, and stop on duplicates or an unknown
 search result. Verify labels, parent state, and closure from their exact tracker
-fields. Never repeat an ambiguous tracker mutation before this readback.
+fields. For a completed outcome, close the issue only if it remains open after
+publication and evidence. Never repeat an ambiguous tracker mutation before this
+readback.
 
 Completion criterion: the reviewed diff contains only the ticket's scope; every
 authorized publication and tracker step has an exact readback; and the issue

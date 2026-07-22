@@ -537,6 +537,36 @@ class GitHubContractTest(unittest.TestCase):
         with mock.patch.object(issue_lease, "github_issue_snapshot", return_value=ready):
             self.assertEqual(issue_lease.github_precheck(args, "octocat"), ready)
 
+    def test_ready_body_marker_allows_claim_without_custom_labels(self) -> None:
+        args = issue_lease.argparse.Namespace(
+            no_github_sync=False,
+            issue=50,
+            repo="octo-org/example-repo",
+            allow_unready=False,
+            allow_shared_assignee=False,
+            takeover_expired=False,
+        )
+        ready = {
+            "state": "OPEN",
+            "assignees": [],
+            "url": "https://github.com/octo-org/example-repo/issues/50",
+            "labels": [],
+            "body": "<!-- work-github-issue:state role=ready-for-agent -->",
+            "blockedBy": [],
+            "comments": [],
+            "parent": None,
+        }
+        with mock.patch.object(issue_lease, "github_issue_snapshot", return_value=ready):
+            self.assertEqual(issue_lease.github_precheck(args, "octocat"), ready)
+
+        conflicting = dict(ready)
+        conflicting["labels"] = [{"name": "needs-info"}]
+        with mock.patch.object(
+            issue_lease, "github_issue_snapshot", return_value=conflicting
+        ):
+            with self.assertRaises(issue_lease.LeaseFailure):
+                issue_lease.github_precheck(args, "octocat")
+
     def test_claim_rejects_multiple_state_labels_and_aliases(self) -> None:
         args = issue_lease.argparse.Namespace(
             no_github_sync=False,
@@ -729,6 +759,17 @@ class GitHubContractTest(unittest.TestCase):
         ]
         with mock.patch.object(
             issue_lease, "github_issue_snapshot", return_value=needs_info
+        ):
+            issue_lease.github_release_precheck(args)
+
+        marker_only = dict(opened)
+        marker_only["labels"] = []
+        marker_only["body"] = (
+            "<!-- work-github-issue:state role=needs-info -->"
+        )
+        marker_only["comments"] = needs_info["comments"]
+        with mock.patch.object(
+            issue_lease, "github_issue_snapshot", return_value=marker_only
         ):
             issue_lease.github_release_precheck(args)
 

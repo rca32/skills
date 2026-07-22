@@ -6,22 +6,26 @@ document. Repository instructions override it.
 ## Readiness and frontier
 
 - Treat the `ready-for-agent` role (`상태: 에이전트 작업 가능`) as specified
-  work, not an active claim.
+  work, not an active claim. When the repository lacks that custom label, store
+  `<!-- work-github-issue:state role=ready-for-agent -->` in the authoritative
+  issue body instead.
 - Use GitHub native blocking dependencies; use a `먼저 끝나야 하는 작업:` body
   line only when native dependencies are unavailable. Read the legacy `Blocked
   by:` heading on existing issues. If both headings exist and name different
   blockers, stop on a dependency conflict; publish only the Korean heading.
 - Define the frontier as open `ready-for-agent` role issues with no open
   blocker, no other-account assignee, and no active issue/session lease pair.
-- Permit a missing readiness label only after an explicit user override.
+- Read the body state marker as the fallback automation identity; labels remain
+  optional human-facing projections.
 - Treat a same-account assignee without a lease as ambiguous legacy work. Read
   comments, branches, commits, and PRs; require an explicit handoff before
   `--allow-shared-assignee`.
 
 ## Tracker states
 
-Treat the role key as automation vocabulary and the label as human-facing text.
-Under this fallback, publish exactly one Korean state label:
+Treat the role key or body marker as automation vocabulary and the label as an
+optional human-facing projection. Prefer one Korean state label when it already
+exists or label creation is separately authorized:
 
 | Role key | Publish label | Legacy read alias | Description | Suggested color |
 | --- | --- | --- | --- | --- |
@@ -43,10 +47,13 @@ Colors are setup suggestions, not automation identity. Read the legacy category
 aliases on existing issues, but never add a Korean category label beside its
 English alias. Conflicting recognized categories require issue preparation.
 
-The bundled lease helper also reads the legacy English labels `needs-triage`,
+When a state label is unavailable, put exactly one marker in the issue body:
+`<!-- work-github-issue:state role=<role-key> -->`. Replace that marker during a
+state transition and never publish conflicting role markers. The bundled lease
+helper also reads the legacy English labels `needs-triage`,
 `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. Use those only
 for existing issue compatibility. Never attach both the Korean label and its
-English alias; two recognized state labels are a conflict.
+English alias; conflicting recognized labels or markers are a conflict.
 
 ## Human action contract
 
@@ -128,22 +135,19 @@ records the required evidence and closes the issue.
 
 Do not enter `ready-for-human` for a review or merge already covered by an
 applicable standing repository authorization. Complete the authorized local
-tests, independent reviews, publication, and readbacks autonomously instead.
+tests, separate review axes, publication, and readbacks autonomously instead.
 
 ## Publication and completion
 
-This fallback does not choose a base branch, pull-request target, integration
-target, merge method, or merge authority for the consuming repository. Before an
-implementation claim, resolve the fields required by the requested outcome from
-explicit user and repository instructions as described in the main skill. A
-remote default branch is discovery evidence, not publication authority.
+Resolve fields progressively as described in the main skill. An unambiguous
+remote default branch may supply the ticket base and pull-request target when no
+instruction conflicts, but it never grants push, merge, integration-target, or
+remote-deletion authority.
 
-If a required publication field or completion point is missing or conflicting,
-do not claim for an outcome that requires it. A local-only implementation may
-proceed only when that scope is explicit; it ends in `handoff` unless the
-repository separately defines local work as complete. If the ambiguity is found
-after claim, stop consequential writes, preserve the workspace, publish the
-blocker or handoff evidence, and release with the matching non-complete outcome.
+Missing publication fields do not block authorized local implementation. Stop
+before the first push, PR, merge, or cleanup operation that needs an unresolved
+field, preserve the workspace, and apply the matching completion or handoff
+outcome.
 
 ## Session outcomes
 
@@ -152,9 +156,11 @@ release writes on that issue. If tracker writes are prohibited, remain
 read-only and do not claim. Code publication requires separate authorization.
 
 - **Complete:** reach the resolved repository completion point, post reproducible
-  evidence, close only when every acceptance criterion holds, update the parent
-  pointer, then release as `completed`. A pushed branch or open pull request is
-  complete only when the repository contract explicitly says so.
+  evidence, update the parent pointer, ensure the issue is closed, then release
+  as `completed`. A provider may close the issue during authorized publication;
+  retain the lease and finish evidence and cleanup without reopening it. A pushed
+  branch or open pull request is complete only when the repository contract
+  explicitly says so.
 - **Blocked:** post the blocker and next action, add a native dependency or an
   exclusive `needs-info|ready-for-human` role, fill the Human action contract
   when either human-wait role is used, keep the issue open, then release as

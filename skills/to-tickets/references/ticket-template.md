@@ -7,6 +7,7 @@ non-specialist can act on.
 
 ```markdown
 <!-- to-tickets:v1 source=<parent identifier> revision=<source fingerprint> key=<draft key> -->
+<!-- work-github-issue:state role=<needs-triage|needs-info|ready-for-agent|ready-for-human> -->
 
 ## 상위 항목
 
