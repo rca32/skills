@@ -1,6 +1,6 @@
 ---
 name: work-github-issue
-description: Coordinate collision-safe GitHub issue implementation and planning mutations through readiness, remote session leases, review, evidence, and resolution. Use before starting, resuming, publishing planning state, handing off, or finishing issue-backed work when agents may share one account. Also use to inspect or install a consuming repository's execution and publication contract; policy writes require explicit repository-policy mutation authority.
+description: Coordinate collision-safe GitHub issue implementation and planning mutations through readiness, remote session leases, review, evidence, and resolution. Use before starting, resuming, publishing planning state, handing off, or finishing issue-backed work when agents may share one account. Also use to inspect or initialize a consuming repository's execution, publication, and bundled tracker-label setup; repository initialization requires explicit policy and remote-label mutation authority.
 ---
 
 # Work GitHub Issue
@@ -33,12 +33,15 @@ for genuinely missing requirements or authority, unavailable access, a safety
 decision outside the ticket, or an external write that cannot be reconciled.
 
 When a consuming repository lacks an execution and publication contract, remain
-read-only for publication-dependent work. If the user asks to install the
-bundled autonomous policy, read both the
-[repository-contract workflow](references/repository-contract.md) and the exact
-[managed contract template](references/consumer-agents-contract.md), then use
-its `AGENTS.md` workflow; never insert standing merge authority without explicit
-repository-policy mutation authorization.
+read-only for publication-dependent work. If the user asks to inspect or
+initialize the bundled repository setup, read the
+[repository-initialization workflow](references/repository-contract.md) and the exact
+[managed contract template](references/consumer-agents-contract.md). Treat its
+`AGENTS.md` policy and GitHub tracker labels as one user-facing initialization,
+while using their separate deterministic installers and readbacks. Never insert
+standing merge authority or create repository-wide labels without explicit
+authority for the corresponding mutation class; complete initialization requires
+both.
 
 ## 0. Preflight and serialize planning writes
 

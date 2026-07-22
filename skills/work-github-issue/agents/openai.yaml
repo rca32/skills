@@ -1,4 +1,4 @@
 interface:
   display_name: "Work GitHub Issue"
-  short_description: "Claim and complete issues without collisions"
-  default_prompt: "Use $work-github-issue to claim and complete the next ready GitHub issue safely."
+  short_description: "Initialize and complete issues without collisions"
+  default_prompt: "Use $work-github-issue to initialize or safely complete GitHub issue work."
