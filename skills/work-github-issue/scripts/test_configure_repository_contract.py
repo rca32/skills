@@ -80,6 +80,27 @@ class ConfigureRepositoryContractTest(unittest.TestCase):
         self.assertIn("Observe existing GitHub Actions", result.stdout)
         self.assertIn("required repository gates", result.stdout)
         self.assertIn("closing keyword may close the issue", result.stdout)
+        self.assertIn("Issue-backed autonomous implementation only", result.stdout)
+        self.assertIn("dormant unless all of these activation conditions", result.stdout)
+        self.assertIn("explicitly backed by a GitHub issue", result.stdout)
+        self.assertIn("`work-github-issue` is active for that issue", result.stdout)
+        self.assertIn("holds a valid implementation lease", result.stdout)
+        self.assertIn("It does not apply to ad-hoc maintenance", result.stdout)
+        normalized = " ".join(result.stdout.split())
+        self.assertIn(
+            "ordinary Git operations authorized directly by the user",
+            normalized,
+        )
+        self.assertIn(
+            "Outside those activation conditions, ignore this block and follow "
+            "the other applicable repository and user publication instructions.",
+            normalized,
+        )
+        self.assertIn(
+            "For an active leased issue implementation, use a pull request",
+            result.stdout,
+        )
+        self.assertNotIn("\n- Use a pull request targeting", result.stdout)
         self.assertNotIn("atomically rejects", result.stdout)
         self.assertNotIn("Do not create, enable, trigger", result.stdout)
         self.assertNotIn("reconcile it back to open", result.stdout)
