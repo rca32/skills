@@ -9,7 +9,9 @@ The setup has two independently verified parts:
 - a managed `AGENTS.md` contract that grants standing authority for agent-owned
   pull requests, local verification, separate review axes, autonomous merge,
   evidence-backed issue closure, and safe session-worktree cleanup without
-  requiring repository-side workflow or branch-protection changes;
+  requiring repository-side workflow or branch-protection changes; the
+  installed contract remains dormant until an explicitly issue-backed
+  `work-github-issue` session holds a valid implementation lease;
 - the optional seven Korean state and category labels defined by the bundled
   [tracker contract](tracker-contract.md).
 

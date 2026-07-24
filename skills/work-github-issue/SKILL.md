@@ -9,6 +9,13 @@ Treat an issue as a **leased unit of work**. The GitHub assignee shows the human
 owner; the remote lease ref elects exactly one active agent session even when
 every session uses the same account.
 
+Do not activate or apply a consuming repository's managed publication contract
+merely because a task mentions GitHub, branches, commits, pushes, pull requests,
+or merges. That contract is dormant unless the current task is explicitly
+issue-backed, this skill is active for that issue, and the session holds a valid
+implementation lease for it. Non-issue repository work follows the other
+applicable repository instructions and direct user authority.
+
 Read the repository's configured issue-tracker document before the first
 tracker write. If none exists, use
 [references/tracker-contract.md](references/tracker-contract.md). Read

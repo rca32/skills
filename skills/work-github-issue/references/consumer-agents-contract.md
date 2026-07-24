@@ -1,16 +1,27 @@
 <!-- work-github-issue:publication-contract:v1:start -->
-## Autonomous issue implementation
+## Issue-backed autonomous implementation only
 
 This block is the repository's standing execution and publication contract for
 `work-github-issue`.
+
+This block is dormant unless all of these activation conditions are true:
+
+- the current task is explicitly backed by a GitHub issue;
+- `work-github-issue` is active for that issue;
+- the session holds a valid implementation lease for that issue.
+
+It does not apply to ad-hoc maintenance, documentation-only changes, or ordinary
+Git operations authorized directly by the user. Outside those activation
+conditions, ignore this block and follow the other applicable repository and
+user publication instructions.
 
 - Minimize human intervention. Continue autonomously when repository evidence,
   existing instructions, and this standing authority determine the next safe
   action. Ask a person only for genuinely missing requirements or authority,
   unavailable credentials or access, an unresolved safety decision, or an
   external write whose result cannot be reconciled.
-- Use a pull request targeting `{{INTEGRATION_TARGET}}`; do not push
-  implementation commits directly to `{{INTEGRATION_TARGET}}`.
+- For an active leased issue implementation, use a pull request targeting `{{INTEGRATION_TARGET}}`;
+  do not push its implementation commits directly to `{{INTEGRATION_TARGET}}`.
 - Run the repository-defined focused and full tests, lint, typechecking, and
   builds in the owned local execution workspace. Observe existing GitHub Actions
   and other required hosted checks, but do not create, edit, enable, disable, or
