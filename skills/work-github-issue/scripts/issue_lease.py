@@ -570,7 +570,14 @@ def github_issue_snapshot(args: argparse.Namespace) -> dict[str, Any]:
     result = run(
         gh_args(args, "issue", "view", str(args.issue), "--json", fields)
     )
-    return json.loads(result.stdout)
+    value = json.loads(result.stdout)
+    blocked_by = value.get("blockedBy")
+    if isinstance(blocked_by, dict):
+        blocked_by = blocked_by.get("nodes")
+    if not isinstance(blocked_by, list):
+        raise LeaseFailure("GitHub returned an invalid blockedBy connection", 2)
+    value["blockedBy"] = blocked_by
+    return value
 
 
 def recognized_state_labels(labels: set[str]) -> dict[str, str]:

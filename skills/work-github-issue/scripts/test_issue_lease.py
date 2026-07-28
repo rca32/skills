@@ -516,6 +516,45 @@ class GitHubContractTest(unittest.TestCase):
             with self.assertRaises(issue_lease.LeaseFailure):
                 issue_lease.github_precheck(args, "octocat")
 
+    def test_github_snapshot_normalizes_blocked_by_connection(self) -> None:
+        args = issue_lease.argparse.Namespace(
+            issue=50,
+            repo="octo-org/example-repo",
+        )
+        snapshot = {
+            "state": "OPEN",
+            "assignees": [],
+            "url": "https://github.com/octo-org/example-repo/issues/50",
+            "labels": [{"name": "ready-for-agent"}],
+            "blockedBy": {
+                "nodes": [
+                    {
+                        "number": 49,
+                        "title": "Closed prerequisite",
+                        "url": "https://github.com/octo-org/example-repo/issues/49",
+                        "state": "CLOSED",
+                    }
+                ],
+                "totalCount": 1,
+            },
+            "comments": [],
+            "parent": None,
+            "body": "",
+        }
+        completed = subprocess.CompletedProcess(
+            [], 0, json.dumps(snapshot), ""
+        )
+        with mock.patch.object(issue_lease, "run", return_value=completed):
+            normalized = issue_lease.github_issue_snapshot(args)
+
+        self.assertEqual(normalized["blockedBy"], snapshot["blockedBy"]["nodes"])
+        issue_lease.validate_issue_gate(
+            args,
+            normalized,
+            "octocat",
+            allow_unready=False,
+        )
+
     def test_korean_ready_label_allows_claim(self) -> None:
         args = issue_lease.argparse.Namespace(
             no_github_sync=False,
