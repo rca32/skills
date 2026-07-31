@@ -1,0 +1,6 @@
+interface:
+  display_name: "Quality Gauntlet"
+  short_description: "독립 작업자와 평가자로 산출물 품질을 반복 수렴합니다"
+  default_prompt: "$quality-gauntlet을 사용해 이 산출물을 독립 작업자와 평가자 루프로 품질 기준까지 개선해 줘."
+policy:
+  allow_implicit_invocation: false

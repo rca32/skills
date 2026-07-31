@@ -11,6 +11,7 @@
 - 버그의 원인을 추측으로 고치지 않고 재현과 증거로 찾습니다.
 - 큰 코드베이스에서 복잡도와 성능 hotspot을 찾고 동작을 보존하며 최적화합니다.
 - 테스트를 먼저 작성해 새 기능과 버그 수정을 안전하게 진행합니다.
+- 실제 산출물을 구체적인 품질 기준과 비교하고, 독립 작업자와 평가자로 반복 개선합니다.
 - 구현이 요구사항과 저장소 규칙을 모두 만족하는지 따로 검토합니다.
 - 같은 GitHub 계정을 공유하는 여러 에이전트 세션이 같은 이슈를 동시에 수정하지 못하게 막습니다.
 
@@ -27,6 +28,7 @@
 | `diagnosing-bugs` | 오류, 간헐적 실패, 속도 저하의 원인을 찾을 때 | 재현 방법을 만들고 가능한 원인을 하나씩 반증해 실제 원인을 찾습니다. “진단만” 요청했다면 코드를 고치지 않습니다. |
 | `complexity-optimizer` | 비효율적인 반복·재계산·N+1과 알고리즘 hotspot을 찾거나 개선할 때 | scanner와 코드 문맥으로 후보를 순위화하고, 동작을 보존하는 작은 최적화와 검증 방법을 제안하거나 구현합니다. |
 | `tdd` | 기능을 만들거나 버그를 테스트부터 고칠 때 | 실패하는 테스트를 먼저 확인하고, 최소 구현과 정리를 작은 단위로 반복합니다. |
+| `quality-gauntlet` | 레퍼런스·benchmark·rubric과 비교하며 산출물을 여러 차례 개선할 때 | 실제 산출물을 고정해 독립 builder와 critic이 가장 큰 품질 격차를 하나씩 줄이도록 조정합니다. |
 | `code-review` | 커밋이나 PR 전 변경 전체를 검토할 때 | 저장소 규칙 준수 여부와 원래 요구사항 충족 여부를 서로 섞지 않고 따로 검토합니다. |
 | `writing-great-skills` | Codex 스킬을 새로 만들거나 기존 스킬을 다듬을 때 | 호출 조건, 작업 분기, 완료 기준, 안전 경계를 점검해 스킬이 매번 예측 가능한 절차를 따르게 합니다. |
 
@@ -43,11 +45,12 @@
       → complexity-optimizer 복잡도·성능 hotspot을 분석하거나 최적화
       → codebase-design?   티켓 범위 안의 module 구조 결정이 필요할 때
       → tdd                테스트부터 구현
+      → quality-gauntlet?  명시된 비교 품질 기준까지 반복 개선
       → code-review        규칙과 요구사항을 분리된 두 축으로 검토
   → work-github-issue      검증 증거를 남기고 완료 또는 인계
 ```
 
-모든 작업에 전부 사용할 필요는 없습니다. `codebase-design`은 interface나 seam 선택이 실제로 열려 있을 때만 사용합니다. 계획 단계에서는 `to-spec` 전에 추천안을 만들고, 이슈 구현 중에는 `work-github-issue`가 점유한 범위 안에서 `tdd` 전에 사용합니다. 승인된 동작·공개 interface·architecture·티켓 경계·의존성을 보존하는 내부 module-shape 선택은 구현자에게 기본 위임됩니다. 이 경계를 넘는 변경만 사용자 또는 저장소 권위의 수락이 필요합니다. 작은 로컬 변경은 `tdd`와 `code-review`만으로 충분할 수 있습니다. 성능 증상의 원인을 모르면 `diagnosing-bugs`부터 사용하고, 코드베이스 전반의 hotspot을 찾거나 이미 확인된 병목을 개선할 때는 `complexity-optimizer`를 사용합니다. GitHub 이슈를 여러 에이전트가 다룬다면 반드시 `work-github-issue`를 바깥 작업 흐름으로 사용합니다.
+모든 작업에 전부 사용할 필요는 없습니다. `codebase-design`은 interface나 seam 선택이 실제로 열려 있을 때만 사용합니다. 계획 단계에서는 `to-spec` 전에 추천안을 만들고, 이슈 구현 중에는 `work-github-issue`가 점유한 범위 안에서 `tdd` 전에 사용합니다. 승인된 동작·공개 interface·architecture·티켓 경계·의존성을 보존하는 내부 module-shape 선택은 구현자에게 기본 위임됩니다. 이 경계를 넘는 변경만 사용자 또는 저장소 권위의 수락이 필요합니다. 작은 로컬 변경은 `tdd`와 `code-review`만으로 충분할 수 있습니다. `quality-gauntlet`은 사용자가 직접 호출했고 실제 산출물·검사 방법·비교 품질 기준이 있을 때만 그 사이에 넣습니다. 성능 증상의 원인을 모르면 `diagnosing-bugs`부터 사용하고, 코드베이스 전반의 hotspot을 찾거나 이미 확인된 병목을 개선할 때는 `complexity-optimizer`를 사용합니다. GitHub 이슈를 여러 에이전트가 다룬다면 반드시 `work-github-issue`를 바깥 작업 흐름으로 사용합니다.
 
 각 스킬의 동작과 안전 경계를 더 쉽게 풀어 쓴 설명은 [한국어 스킬 안내서](docs/README.md)에서 볼 수 있습니다.
 
@@ -87,7 +90,7 @@ GitHub의 담당자 표시만으로는 부족합니다. 여러 세션이 같은 
 
 Codex에게 다음처럼 요청하면 됩니다.
 
-> `rca32/skills` 저장소에서 `work-github-issue`, `prepare-issue`, `codebase-design`, `to-spec`, `to-tickets`, `documenting-work`, `diagnosing-bugs`, `complexity-optimizer`, `tdd`, `code-review`, `writing-great-skills` 스킬을 설치해 줘.
+> `rca32/skills` 저장소에서 `work-github-issue`, `prepare-issue`, `codebase-design`, `to-spec`, `to-tickets`, `documenting-work`, `diagnosing-bugs`, `complexity-optimizer`, `tdd`, `quality-gauntlet`, `code-review`, `writing-great-skills` 스킬을 설치해 줘.
 
 또는 이미 설치된 `skill-installer`로 `skills/<스킬 이름>` 경로를 선택해 설치할 수 있습니다. 설치가 끝난 뒤 새 세션을 시작하면 스킬 목록이 갱신됩니다.
 
@@ -155,11 +158,12 @@ $work-github-issue 현재 시작할 수 있는 이슈 하나를 안전하게 맡
 $diagnosing-bugs 간헐적인 타임아웃의 원인만 진단해 줘. 아직 수정하지 마.
 $complexity-optimizer 이 코드베이스의 복잡도와 성능 hotspot을 분석하고 전체 보고서를 작성해 줘.
 $tdd 이 변경을 공개 인터페이스 테스트부터 구현해 줘.
+$quality-gauntlet 이 대시보드를 승인된 레퍼런스와 나란히 비교하며 독립 builder와 critic으로 반복 개선해 줘.
 $code-review 커밋 전 현재 작업 전체를 규칙과 명세 기준으로 검토해 줘.
 $writing-great-skills 이 스킬의 호출 조건과 완료 기준을 더 예측 가능하게 고쳐 줘.
 ```
 
-`prepare-issue`, `to-spec`, `to-tickets`는 의도하지 않은 이슈 변경을 피하기 위해 이름을 직접 불러 사용하는 방식입니다. 또한 “검토해 줘”, “초안을 만들어 줘”는 외부 게시 권한을 뜻하지 않습니다. 이슈 생성·라벨 변경·게시까지 원한다면 요청에 분명히 포함해야 합니다.
+`prepare-issue`, `to-spec`, `to-tickets`는 의도하지 않은 이슈 변경을 피하기 위해, `quality-gauntlet`은 고비용 다중 에이전트 반복을 뜻하기 때문에 이름을 직접 불러 사용하는 방식입니다. 또한 “검토해 줘”, “초안을 만들어 줘”는 외부 게시 권한을 뜻하지 않습니다. 이슈 생성·라벨 변경·게시까지 원한다면 요청에 분명히 포함해야 합니다.
 
 ## 저장소를 관리할 때
 

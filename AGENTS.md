@@ -43,6 +43,7 @@ Companion skills have deliberately narrower authority:
 | `diagnosing-bugs` | Reproduction, minimization, falsifiable diagnosis, and an authorized fix branch | Tracker or lease mutation, unsafe production reproduction, fixes under diagnose-only authorization |
 | `complexity-optimizer` | Read-only hotspot analysis and explicitly authorized behavior-preserving optimization | Unknown-cause performance diagnosis, tracker or lease mutation, commit, push, publication |
 | `tdd` | Public-seam red-green-refactor implementation after outer authorization | Lease management, tracker mutation, commit, push, publication |
+| `quality-gauntlet` | Explicitly authorized artifact-quality convergence against an inspectable bar through isolated builder and critic loops | Requirement invention, tracker or lease mutation, publication, final Standards or Spec review |
 | `code-review` | Read-only Standards and Spec review of a pinned complete worktree snapshot | Edits, tracker mutation, lease management, commit, push |
 
 Planning skills may prepare tracker metadata only when the user authorized those external writes. They must leave runtime claim enforcement to `work-github-issue`.
@@ -68,7 +69,7 @@ GitHub issue workflows require Git, Python 3, an authenticated GitHub CLI, a can
 ## Invocation policy
 
 - Keep `codebase-design`, `tdd`, `diagnosing-bugs`, `complexity-optimizer`, `code-review`, `documenting-work`, and `work-github-issue` eligible for implicit discovery when their trigger descriptions are specific enough to avoid overlap.
-- Keep `prepare-issue`, `to-spec`, and `to-tickets` explicit by setting `policy.allow_implicit_invocation: false` in `agents/openai.yaml`; these workflows can mutate durable planning state when explicitly asked.
+- Keep `prepare-issue`, `to-spec`, `to-tickets`, and `quality-gauntlet` explicit by setting `policy.allow_implicit_invocation: false` in `agents/openai.yaml`; the planning workflows can mutate durable state when explicitly asked, while `quality-gauntlet` can start high-cost multi-agent work and authorized local edits.
 - A request to inspect, review, draft, or explain is read-only. It does not authorize issue creation, label changes, comments, closure, commit, push, or PR publication.
 - A request to publish tickets authorizes the validated publication workflow, not implementation or parent closure.
 

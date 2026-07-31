@@ -215,6 +215,13 @@ practical. Run typechecking and focused tests regularly, then the full relevant
 suite once. Keep the ticket a tracer bullet: deliver its end-to-end acceptance
 criteria without absorbing adjacent tickets.
 
+When the user explicitly invokes `quality-gauntlet` and the authorized ticket
+or request supplies an inspectable comparative bar, run it as an inner loop
+after the behavior and inspection seam are resolved and before final review.
+Keep its improvement cells ephemeral rather than turning them into tracker
+tickets. The comparative bar cannot widen acceptance criteria or replace final
+tests and `code-review`.
+
 Renew before the TTL expires and before a long unattended operation:
 
 ```bash
