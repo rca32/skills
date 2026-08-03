@@ -15,7 +15,7 @@ Codex의 현재 Goal 사용법은 [Long-running work](https://learn.chatgpt.com/
 
 아래 kickoff의 `<...>`를 실제 값으로 바꿉니다.
 
-- canonical GitHub 저장소와 `to-tickets`의 source/parent issue
+- canonical GitHub 저장소와 `to-tickets:v2`의 source/parent issue, fingerprint algorithm과 revision
 - ticket base, PR target, 최종 integration target
 - merge 방식, 필수 checks와 사람 승인 필요 여부
 - remote ticket branch 삭제 허용 여부
@@ -37,8 +37,13 @@ $work-github-issue를 사용해 아래 `to-tickets` 티켓 그래프를 저장�
 대상
 - canonical repository: <owner/name>
 - source/parent issue: #<번호>
-- 범위: 위 parent에 연결되고 동일한 `to-tickets:v1` source/revision에서 생성된
-  구현 child issue. 관련 없는 이슈와 새 요구사항은 포함하지 않는다.
+- fingerprint algorithm: <예: to-tickets-source-v1>
+- source revision: <64자리 fingerprint>
+- 범위: 위 parent에 연결되고 `to-tickets:v2` marker의 source, algorithm,
+  revision 필드가 위 세 값과 정확히 일치하는 구현 child issue. key 값만 child마다
+  다를 수 있다. 관련 없는 이슈와 새 요구사항은 포함하지 않는다.
+  `to-tickets:v1`은 algorithm-unknown legacy이므로 명시적인 adoption 또는 migration
+  결정 없이 이 v2 범위에 포함하지 않는다.
 
 실행·게시 계약
 - ticket base: <branch 또는 저장소 계약>

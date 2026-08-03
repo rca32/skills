@@ -22,7 +22,9 @@
 
 ## 실제로 무엇을 하나요?
 
-승인된 명세와 관련 결정 기록을 모두 읽고, 미해결 질문이 티켓 경계를 바꾸지 않는지 확인합니다. 질문이 범위나 의존성을 바꾼다면 `to-spec`으로 돌아갑니다.
+승인된 명세, 관련 결정 기록과 저장소의 domain 문서를 읽고 새 공개 동작·interface·architecture·dependency를 선택하지 않아도 안정적인 티켓 경계, 검증 seam과 blocker를 만들 수 있는지 먼저 확인합니다. 내부 helper처럼 승인된 경계를 보존하는 private 구현 선택은 작업자에게 맡기고 분해를 계속합니다.
+
+반대로 새 계획 결정이 필요하면 티켓 초안이나 planning lease를 만들지 않고 `decomposition-blocked`로 끝냅니다. 승인 대상 계약을 새로 정하거나 바꾸는 module interface나 architectural seam은 `codebase-design`의 읽기 전용 추천을 거쳐 `to-spec`에서 확정하고, 제품 동작·authority·안전·인수 조건과 그 밖의 공개 interface·protocol·dependency 선택은 `to-spec`과 해당 승인 권위로 돌려보냅니다. 승인된 원본이나 결정 집합이 갱신되어 새 fingerprint가 생긴 뒤에만 처음부터 다시 분해합니다. 기존 계약을 보존하는 private helper나 내부 library 선택은 차단하지 않습니다.
 
 이슈 제목과 본문은 저장소 또는 사용자가 정한 언어로 작성하고, 별도 지정이 없으면 한국어를 사용합니다. 제목, 완료 조건, 제외 범위와 안내 문구는 이해하기 쉬운 한국어로 쓰되 API 이름, 코드 식별자, 링크와 자동화 marker는 원문 그대로 유지합니다.
 
@@ -65,7 +67,7 @@
 
 ## 권한과 책임 경계
 
-초안이나 검토만 요청하면 GitHub를 수정하지 않습니다. 게시가 명시적으로 요청된 경우에만 `work-github-issue`의 planning lease 아래에서 이슈, 관계와 준비 상태를 변경합니다.
+초안이나 검토만 요청하면 GitHub를 수정하지 않습니다. 분해 준비가 안 된 경우에는 게시 요청이 있어도 planning lease나 임시 티켓을 만들지 않습니다. 준비된 graph의 게시가 명시적으로 요청되면 lease 직전과 획득 직후에 원본을 다시 확인한 뒤 `work-github-issue`의 planning lease 아래에서 이슈, 관계와 준비 상태를 변경합니다. 티켓을 준비 상태로 공개하기 전에도 원본을 다시 확인하며, 달라졌다면 생성된 티켓은 준비 중으로 남기고 후속 변경을 중단합니다.
 
 이 스킬은 티켓을 claim하거나 구현하지 않으며, 코드 커밋, 구현 증거, 부모 이슈 종료도 담당하지 않습니다. 그 이후의 생명주기는 `work-github-issue`가 담당합니다.
 

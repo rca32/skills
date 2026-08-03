@@ -27,6 +27,7 @@
 
 ```text
 prepare-issue → codebase-design? → to-spec → to-tickets → work-github-issue
+                                          ↳ 분해 불가: codebase-design?/to-spec 후 재시작
                                                         ├─ diagnosing-bugs
                                                         ├─ complexity-optimizer
                                                         ├─ codebase-design?
@@ -38,7 +39,7 @@ prepare-issue → codebase-design? → to-spec → to-tickets → work-github-is
 - `prepare-issue`는 요청이 실제로 작업할 준비가 됐는지 확인합니다.
 - `codebase-design`은 interface나 seam 선택이 열려 있을 때 구현 전에 설계안을 비교하고 하나를 추천합니다. 승인 범위를 넘는 공개 계약 변경은 사용자나 저장소 권위가 수락한 뒤에만 구현하고, 티켓이 범위 안의 설계 재량을 명시적으로 위임했다면 그 안에서는 바로 이어갑니다.
 - `to-spec`은 합의된 범위를 명세로 고정합니다.
-- `to-tickets`는 명세를 의존성이 분명한 작은 작업으로 나눕니다.
+- `to-tickets`는 새 계획 결정 없이 분해 가능한지 먼저 확인합니다. 가능하면 의존성이 분명한 작은 작업으로 나누고, 불가능하면 티켓을 만들지 않은 채 적절한 설계·명세 workflow로 돌려보냅니다.
 - `work-github-issue`는 한 세션만 이슈를 맡도록 조정하고 완료나 인계까지 책임집니다.
 - 원인을 모르면 `diagnosing-bugs`, 복잡도·성능 hotspot을 찾거나 개선하면 `complexity-optimizer`, module 구조 선택이 남아 있으면 `codebase-design`, 구현할 행동과 seam이 정해졌으면 `tdd`, 명시된 비교 품질 기준까지 반복 개선해야 하면 `quality-gauntlet`, 구현이 끝났으면 `code-review`를 안쪽 과정으로 사용합니다.
 

@@ -22,7 +22,7 @@
 | `prepare-issue` | 새 이슈가 모호하거나 정말 작업할 준비가 됐는지 모르겠을 때 | 버그인지 기능 요청인지 분류하고, 실제 문제인지 확인한 뒤 작업 설명을 완성합니다. |
 | `codebase-design` | module interface나 seam을 결정하거나 얕은 구조를 합치고 싶을 때 | 여러 설계안을 depth·locality·testability로 비교해 구현 전에 하나를 추천합니다. |
 | `to-spec` | 대화에서 결정한 내용을 문서로 정리하고 싶을 때 | 이미 합의된 내용만 모아 제품·개발 명세를 만듭니다. 모르는 요구사항을 임의로 만들지 않습니다. |
-| `to-tickets` | 하나의 명세가 커서 여러 작업으로 나눠야 할 때 | 각각 완성 결과를 확인할 수 있는 작은 이슈로 나누고, 먼저 끝나야 하는 작업을 연결합니다. |
+| `to-tickets` | 하나의 명세가 커서 여러 작업으로 나눠야 할 때 | 새 설계 결정을 하지 않고 분해 가능한지 먼저 확인한 뒤 작은 이슈와 선행 관계를 만듭니다. 설계가 미정이면 티켓 생성 전에 중단합니다. |
 | `documenting-work` | 명세·결정·진단·리뷰를 어디에 남겨야 할지 정할 때 | 대화, GitHub, 저장소 문서, 실행 artifact 중 원본 하나를 정하고 표준 위치·이름·인덱스를 적용합니다. |
 | `work-github-issue` | GitHub 이슈를 실제로 시작하거나 지속 goal에서 여러 이슈를 처리할 때 | goal thread는 조정만 맡고 이슈마다 새 worker를 시작합니다. worker는 전용 임대로 충돌을 막으며 검증·리뷰·PR 병합·정리까지 한 이슈만 완료합니다. |
 | `diagnosing-bugs` | 오류, 간헐적 실패, 속도 저하의 원인을 찾을 때 | 재현 방법을 만들고 가능한 원인을 하나씩 반증해 실제 원인을 찾습니다. “진단만” 요청했다면 코드를 고치지 않습니다. |
@@ -40,6 +40,7 @@
   → codebase-design?       interface·seam이 미정일 때 추천안을 마련
   → to-spec                합의 내용을 명세로 정리
   → to-tickets             큰 명세를 작은 이슈로 분해
+      ↳ 분해 불가          codebase-design/to-spec으로 결정 후 새 source에서 재시작
   → work-github-issue      goal coordinator가 이슈별 새 worker를 시작
       → diagnosing-bugs    버그라면 먼저 원인을 확인
       → complexity-optimizer 복잡도·성능 hotspot을 분석하거나 최적화
@@ -50,7 +51,7 @@
   → work-github-issue      검증 증거를 남기고 완료 또는 인계
 ```
 
-모든 작업에 전부 사용할 필요는 없습니다. `codebase-design`은 interface나 seam 선택이 실제로 열려 있을 때만 사용합니다. 계획 단계에서는 `to-spec` 전에 추천안을 만들고, 이슈 구현 중에는 `work-github-issue`가 점유한 범위 안에서 `tdd` 전에 사용합니다. 승인된 동작·공개 interface·architecture·티켓 경계·의존성을 보존하는 내부 module-shape 선택은 구현자에게 기본 위임됩니다. 이 경계를 넘는 변경만 사용자 또는 저장소 권위의 수락이 필요합니다. 작은 로컬 변경은 `tdd`와 `code-review`만으로 충분할 수 있습니다. `quality-gauntlet`은 사용자가 직접 호출했고 실제 산출물·검사 방법·비교 품질 기준이 있을 때만 그 사이에 넣습니다. 성능 증상의 원인을 모르면 `diagnosing-bugs`부터 사용하고, 코드베이스 전반의 hotspot을 찾거나 이미 확인된 병목을 개선할 때는 `complexity-optimizer`를 사용합니다. GitHub 이슈를 여러 에이전트가 다룬다면 반드시 `work-github-issue`를 바깥 작업 흐름으로 사용합니다.
+모든 작업에 전부 사용할 필요는 없습니다. `codebase-design`은 interface나 seam 선택이 실제로 열려 있을 때만 사용합니다. 계획 단계에서는 `to-spec` 전에 추천안을 만들고, `to-tickets`가 새 설계 결정 없이는 안정적인 경계·검증 seam·의존 관계를 만들 수 없다고 판정하면 티켓을 만들지 않은 채 다시 이 경로로 돌려보냅니다. 이슈 구현 중에는 `work-github-issue`가 점유한 범위 안에서 `tdd` 전에 사용합니다. 승인된 동작·공개 interface·architecture·티켓 경계·의존성을 보존하는 내부 module-shape 선택은 구현자에게 기본 위임됩니다. 이 경계를 넘는 변경만 사용자 또는 저장소 권위의 수락이 필요합니다. 작은 로컬 변경은 `tdd`와 `code-review`만으로 충분할 수 있습니다. `quality-gauntlet`은 사용자가 직접 호출했고 실제 산출물·검사 방법·비교 품질 기준이 있을 때만 그 사이에 넣습니다. 성능 증상의 원인을 모르면 `diagnosing-bugs`부터 사용하고, 코드베이스 전반의 hotspot을 찾거나 이미 확인된 병목을 개선할 때는 `complexity-optimizer`를 사용합니다. GitHub 이슈를 여러 에이전트가 다룬다면 반드시 `work-github-issue`를 바깥 작업 흐름으로 사용합니다.
 
 각 스킬의 동작과 안전 경계를 더 쉽게 풀어 쓴 설명은 [한국어 스킬 안내서](docs/README.md)에서 볼 수 있습니다.
 
@@ -189,6 +190,7 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_
 ```bash
 python3 skills/work-github-issue/scripts/test_issue_lease.py -v
 python3 skills/work-github-issue/scripts/test_configure_luna_worker.py -v
+python3 skills/to-tickets/scripts/test_source_fingerprint.py -v
 python3 skills/documenting-work/scripts/test_resolve_document_path.py -v
 python3 skills/complexity-optimizer/scripts/test_analyze_complexity.py -v
 python3 skills/complexity-optimizer/scripts/analyze_complexity.py . --format json

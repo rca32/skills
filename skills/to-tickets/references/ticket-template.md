@@ -6,7 +6,7 @@ links, and protocol markers exactly. Use this shell and plain terms that a
 non-specialist can act on.
 
 ```markdown
-<!-- to-tickets:v1 source=<parent identifier> revision=<source fingerprint> key=<draft key> -->
+<!-- to-tickets:v2 source=<parent identifier> algorithm=<fingerprint algorithm> revision=<source fingerprint> key=<draft key> -->
 <!-- work-github-issue:state role=<needs-triage|needs-info|ready-for-agent|ready-for-human> -->
 
 ## 상위 항목
@@ -75,3 +75,8 @@ it adds no value.
 Read `Blocked by` as the legacy alias of `먼저 끝나야 하는 작업` on existing
 issues. If both sections exist and disagree, stop on a dependency conflict;
 publish only the Korean section under the fallback contract.
+
+Read `to-tickets:v1` as an algorithm-unknown legacy reconciliation marker.
+Never infer that its digest matches a v2 fingerprint or rewrite it in place.
+When the same source/key already has a v1 marker, require explicit adoption,
+supersession, or migration authority before publishing a v2 replacement.
