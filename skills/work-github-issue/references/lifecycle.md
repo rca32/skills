@@ -25,3 +25,26 @@ Read the latest durable evidence before resuming. Reuse an active lease only
 with its exact session token. For an expired lease, inspect the named branch,
 commit/PR links, tests, and handoff comment, then acquire with
 `--takeover-expired`. Preserve useful work and record any superseded branch.
+
+## Integration context changed before publication
+
+Enter this branch whenever the live integration-base OID differs from the
+pre-work fixed point at initial final verification or moves after review while
+the ticket head is unchanged. Keep the pre-work review base immutable. Resolve the
+repository's exact merge method, then use a disposable repository, worktree, or
+index to construct the effective integration tree for the reviewed ticket head
+on the new live integration base. Do not mutate the ticket workspace.
+
+Record the live integration-base OID, merge method, construction command or
+provider adapter version, resulting tree OID when available, and a binary-safe
+fingerprint plus reconstructable diff of that tree against the live integration
+base. Pass this pinned artifact to `code-review`; both axes must inspect its diff
+and include it in their review-context identities. Re-resolve applicable scope and authority
+identities against the integration context, then rerun every gate or axis whose
+behavior, effective diff, authority, or context evidence changed. Carry an axis
+forward only with explicit unchanged-context evidence.
+
+Exit only when the artifact still matches the live candidate and integration
+base and every affected gate is valid. If the merge result conflicts, the merge
+method is unresolved, the artifact cannot be reconstructed, or provider state
+changes during inspection, fail closed and return a bounded non-complete outcome.

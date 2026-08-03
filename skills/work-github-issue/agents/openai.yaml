@@ -1,4 +1,4 @@
 interface:
   display_name: "Work GitHub Issue"
-  short_description: "Initialize and complete issues without collisions"
-  default_prompt: "Use $work-github-issue to initialize or safely complete GitHub issue work."
+  short_description: "Coordinate fresh issue workers without collisions"
+  default_prompt: "Use $work-github-issue to coordinate a fresh worker or safely complete one GitHub issue."

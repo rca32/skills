@@ -22,20 +22,35 @@ user publication instructions.
   external write whose result cannot be reconciled.
 - For an active leased issue implementation, use a pull request targeting `{{INTEGRATION_TARGET}}`;
   do not push its implementation commits directly to `{{INTEGRATION_TARGET}}`.
-- Run the repository-defined focused and full tests, lint, typechecking, and
-  builds in the owned local execution workspace. Observe existing GitHub Actions
-  and other required hosted checks, but do not create, edit, enable, disable, or
-  rerun workflows unless separately authorized.
+- Run repository-defined focused checks while developing and the required full
+  relevant tests, lint, typechecking, and builds once for the final
+  behavior-affecting candidate in the owned local execution workspace. After a
+  candidate changes, rerun only the gates whose evidence the changed behavior,
+  artifact, or integration assumption can affect unless repository policy
+  explicitly requires a complete rerun. When carrying evidence forward after a
+  non-behavioral change, record the tested prior candidate, final candidate,
+  unaffected-scope rationale, and targeted validator run on the final candidate.
+  Observe existing GitHub Actions and other required hosted checks, but do not
+  create, edit, enable, disable, or rerun workflows unless separately authorized.
 - Create or amend the final ticket commit before final verification and review,
   require a clean workspace, and record its ticket-head OID plus the live
   integration-base OID used for integration checks. Run final local verification,
   then separate Standards and Spec reviews from the pinned pre-work fixed point.
-  Use isolated reviewers when available; otherwise disclose a separated
-  single-context fallback.
+  Pass both the immutable review-base OID and current integration-base OID.
+  If those bases differ, first pin and inspect the effective integration result
+  as required by the target-advance branch below.
+  Apply the required catalog companion `code-review` and its fresh
+  candidate-scoped context boundary; use its disclosed separated single-context
+  fallback only when reviewer isolation is unavailable. If the skill itself is
+  unavailable, stop before publication, report the missing required package,
+  apply the tracker contract's `blocked|handoff` state, preserve the workspace,
+  post and read back structured evidence plus its handoff pointer, and release
+  the lease only after that readback; never report completed.
   Resolve every blocker/high finding and every safety-, ownership-, or
   completion-relevant medium finding. Any finding-driven file or commit change
-  creates a new candidate and invalidates the checks and reviews that cover the
-  changed behavior.
+  creates a new candidate and invalidates every check and review axis whose
+  evidence the changed behavior, artifact, integration assumption, or files
+  could affect.
 - The lease-owning agent has standing authority to push its ticket branch,
   create or update its pull request, and merge that pull request into
   `{{INTEGRATION_TARGET}}` using {{MERGE_METHOD}} after all gates above pass.
@@ -46,9 +61,12 @@ user publication instructions.
 - Immediately before merge, require the live pull request head OID and live
   remote ticket ref to equal the reviewed ticket-head OID. A changed head
   invalidates the candidate. If only the target advanced, inspect the effective
-  merge diff and run risk-relevant integration checks; repeat Spec review only
-  when behavior or the effective diff changes, and Standards only when ticket
-  files change. Require the pull request to be open and mergeable with its
+  integration result in a disposable workspace using the resolved merge method.
+  Retain the immutable review base; pin the live integration-base OID, merge
+  method, effective tree/diff fingerprint, and reconstructable diff, then pass
+  that artifact to both review axes. Re-resolve scope and authority identities,
+  rerun every affected gate or axis, and fail closed if the result cannot be
+  reconstructed. Require the pull request to be open and mergeable with its
   required repository gates satisfied, then use every expected-head precondition
   the provider supports. On GitHub, pass the merge API's `sha` head precondition.
   A branch rule that also pins the integration base is optional, not a
@@ -67,10 +85,18 @@ user publication instructions.
   worktree from a retained control worktree, then delete its eligible local
   ticket branch with ordinary safe deletion. Never force cleanup. Preserve and
   report any artifact that fails a safety check.
-- Post and read back final evidence including local verification, both reviews,
-  the ticket-head and integration OIDs, merge state, recovery ref, and cleanup
-  disposition. If the issue remains open, close it after that evidence and
-  cleanup disposition are settled, then release the implementation lease.
+- Post and read back final evidence including local verification, both reviews
+  with each axis's explicit review-context identity, candidate, base, path scope,
+  authority provenance, and any carry-forward rationale, plus the ticket-head
+  and integration OIDs, merge state, recovery ref, and cleanup disposition.
+  Preserve any effective-integration construction method or adapter, tree OID,
+  fingerprint, and reconstructable diff or a durable artifact pointer.
+  Record every required verification gate's command, result, tested candidate,
+  covered scope or artifact, and integration/base assumptions; for carried
+  evidence also record the final candidate, rationale, and final targeted-validator
+  result. For a hosted gate, record its check name, provider run/status URL or
+  immutable ID, and observed head OID. If the issue remains open, close it after that evidence and cleanup
+  disposition are settled, then release the implementation lease.
   Remote branch deletion remains unauthorized unless a separate repository rule
   grants it.
 <!-- work-github-issue:publication-contract:v1:end -->

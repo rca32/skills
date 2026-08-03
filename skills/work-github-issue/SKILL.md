@@ -1,6 +1,6 @@
 ---
 name: work-github-issue
-description: Coordinate collision-safe GitHub issue implementation and planning mutations through readiness, remote session leases, review, evidence, and resolution. Use before starting, resuming, publishing planning state, handing off, or finishing issue-backed work when agents may share one account. Also use to inspect or initialize a consuming repository's execution, publication, and bundled tracker-label setup; repository initialization requires explicit policy and remote-label mutation authority.
+description: Coordinate collision-safe GitHub issue implementation and planning mutations through readiness, remote session leases, review, evidence, and resolution. Use before starting, resuming, publishing planning state, handing off, or finishing issue-backed work when agents may share one account, and when a persistent goal selects one or more issues for fresh workers. Also use to inspect or initialize a consuming repository's execution, publication, and bundled tracker-label setup; repository initialization requires explicit policy and remote-label mutation authority.
 ---
 
 # Work GitHub Issue
@@ -21,7 +21,8 @@ tracker write. If none exists, use
 [references/tracker-contract.md](references/tracker-contract.md). Read
 [references/lifecycle.md](references/lifecycle.md) only when the issue is not
 already in the configured `ready-for-agent` role, belongs to a Wayfinder map, or must be split,
-prepared, handed off, or resolved into a parent.
+prepared, handed off, resolved into a parent, or the integration target advances
+from the pre-work fixed point before or after review.
 
 Read [references/workspace-cleanup.md](references/workspace-cleanup.md) only
 when an implementation session used a ticket branch or worktree and is ready to
@@ -48,6 +49,45 @@ initialize the bundled repository setup, read the
 components. Never insert standing merge authority or create repository-wide
 labels without explicit authority for the corresponding mutation class; labels
 are not required for the managed policy to be usable.
+
+## Goal and implementation context boundary
+
+When a persistent goal-owning thread selects an issue—whether the first, only,
+or one of several—keep that thread as a lightweight **coordinator**. It may read
+tracker state, select the next ready
+frontier issue, create a bounded worker brief, and collect the outcome. It must
+not claim an implementation lease on behalf of a worker, edit the ticket
+workspace, run implementation verification, or retain raw command and test
+logs.
+
+Run each issue in one context-isolated implementation worker without inherited
+conversation history (for example, Codex `fork_turns: "none"`).
+The brief contains only the canonical repository, issue identifier, readiness
+and dependency evidence, fixed point, acceptance/spec authority, execution and
+publication constraints, and any known dirty-worktree exclusions. The worker
+rereads the repository instructions and this skill, then owns readiness
+revalidation, lease claim, implementation, review, publication, cleanup,
+evidence, and release end to end.
+
+A session invoked directly and dedicated to one named issue may itself be the
+implementation worker only when it is not also acting as a goal coordinator and
+does not carry another issue's implementation transcript. It still owns exactly
+one issue and the complete lease lifecycle below.
+
+Do not reuse an implementation worker for another issue, use a review or design
+agent as the worker, or hand a lease between parent and child sessions. After
+release, return only a bounded outcome containing the issue state, ticket and
+integration OIDs, PR/evidence pointers, verification and review summaries,
+preserved artifacts, and next blocker or frontier signal. The coordinator then
+starts a new worker for the next issue. If no context-isolated worker mechanism
+is available, the coordinator must not implement the issue. Return the bounded
+brief as a handoff, stop before claim or mutation, and require a separately
+started implementation session to resume that one issue.
+
+Completion criterion: the coordinator carries only goal-level decisions and
+bounded outcomes; every implementation worker owns exactly one issue and one
+lease lifecycle, and no next issue inherits the previous issue's transcript or
+review contexts.
 
 ## 0. Preflight and serialize planning writes
 
@@ -164,8 +204,10 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_leas
 Capture the returned `session` value in the working context. The command
 atomically creates `refs/notes/rca-issue-leases/<issue>` and then assigns/comments
 on the issue. If another active session owns the lease, report its public
-metadata and choose another frontier ticket. If the lease expired, inspect the
-issue, branch, and latest comment before using `--takeover-expired`.
+metadata and return a bounded non-claim outcome; do not select or claim another
+issue in this worker. A goal coordinator may then select another frontier issue
+and start a fresh worker. If the lease expired, inspect the issue, branch, and
+latest comment before using `--takeover-expired`.
 Apply the tracker document's legacy ambiguous-claim rule before using
 `--allow-shared-assignee`.
 
@@ -211,8 +253,21 @@ contract. If it exceeds or changes approved behavior,
 architecture, ticket boundaries, dependencies, or another approval-gated
 contract, stop and return to the planning workflow rather than widening the
 ticket. At the agreed highest test seam, make behavior changes test-first where
-practical. Run typechecking and focused tests regularly, then the full relevant
-suite once. Keep the ticket a tracer bullet: deliver its end-to-end acceptance
+practical. Keep a verification ledger keyed to the candidate OID or worktree
+fingerprint: command, covered behavior, result, and reusable build artifact. A
+clean committed candidate uses its OID. A WIP fingerprint binds `HEAD`, the
+fixed review base, all three tracked-diff layers required by `code-review`, and
+each in-scope untracked path's type, mode, and payload or symlink target. It is
+valid only inside the current worker while every component remains unchanged.
+Never carry WIP evidence across a worker, restart, or candidate change;
+candidate-to-candidate carry-forward requires clean committed OIDs. Recompute
+the local fingerprint before reusing same-candidate ledger evidence.
+Run typechecking and focused tests while developing, then each repository-required
+full relevant suite at most once for the final behavior-affecting candidate unless
+repository policy explicitly requires another run. Batch deterministic checks and reuse safe
+compiled artifacts. For long commands, prefer one bounded execution and the
+runtime's longest practical wait interval over repeated short model-visible
+polls. Keep the ticket a tracer bullet: deliver its end-to-end acceptance
 criteria without absorbing adjacent tickets.
 
 When the user explicitly invokes `quality-gauntlet` and the authorized ticket
@@ -242,9 +297,9 @@ lease owner. Resume only after reacquiring or receiving an explicit handoff.
 
 Completion criterion: the execution workspace is isolated at the recorded fixed
 point; its branch and HEAD match the current lease projection; each acceptance
-criterion maps to a changed behavior, test, or named evidence artifact; the
-focused and final suites are green; and `check` returns `status=owned` for this
-session.
+criterion maps to a changed behavior, test, or named evidence artifact; every
+required gate has green evidence valid for the final candidate; and `check`
+returns `status=owned` for this session.
 
 ## 4. Review and publish evidence
 
@@ -252,17 +307,38 @@ Create or amend the final ticket commit before final verification and review,
 then require a clean execution workspace. Renew from that workspace and check
 ownership so the lease projection names the exact branch and ticket-head OID.
 Record the live integration-base OID used for final integration checks. Run the
-final local verification for the ticket-head OID against that base and record
-the reviewed-and-tested candidate.
+final local verification for the behavior-affecting ticket-head OID against that
+base and record the reviewed-and-tested candidate. If that base differs from the
+pre-work fixed point, first follow the integration-context branch in
+[references/lifecycle.md](references/lifecycle.md).
 
 Review the pre-work fixed point through that candidate on separate Standards and
-Spec axes, using `code-review` when available. Use isolated reviewers when
-available; otherwise use its disclosed separated single-context fallback. Address
-every blocker/high finding and every medium finding that affects safety,
+Spec axes using the required catalog companion `code-review`; pass both the
+immutable review-base OID and current integration-base OID. If that skill is
+unavailable, stop before publication and report the missing required package;
+do not substitute an incomplete review or mark the issue completed. Route through
+the selected tracker contract and section 5: set `blocked|handoff`, preserve the
+workspace, post and read back structured evidence plus its handoff pointer, then
+release the lease only through the non-complete outcome protocol.
+Address every blocker/high finding and every medium finding that affects safety,
 ownership, invocation, or predictable completion. Any finding-driven file or
-commit change creates a new candidate and invalidates local verification and the
-reviews that cover the changed behavior. Continue until one unchanged ticket
-head passes.
+commit change creates a new candidate. Compare that change with the verification
+ledger and invalidate only the commands, integration assumptions, and review
+axes whose evidence it could affect. Rerun the full relevant suite only when the
+change crosses its covered behavior or the repository explicitly makes every
+candidate rerun mandatory; documentation, evidence, or metadata-only corrections
+use their matching validators unless they bind executable bytes or runtime
+behavior. Apply `code-review`'s re-review contract: use fresh candidate-scoped
+reviewers when isolation is available; otherwise inspect each affected axis anew
+under its disclosed separated single-context fallback. Do not describe the
+fallback as a fresh-reviewer result. Continue until one unchanged ticket head
+passes every affected gate.
+
+When evidence is carried forward after a non-behavioral candidate change, the
+final ledger and handoff must name the tested prior candidate, the final
+candidate, the unaffected-scope rationale, and the targeted validator run on the
+final candidate. Never state that a carried-forward full suite ran at the final
+ticket head.
 
 Push, open a pull request, or merge only to the extent authorized by the user or
 active repository workflow, and include only the ticket's files. An
@@ -290,9 +366,9 @@ ticket ref, base, state, mergeability, required checks, review result, and
 integration ref. Require the PR head and remote ticket ref to equal the reviewed
 ticket-head OID. A changed head invalidates the candidate and requires relevant
 verification and review again. If only the integration base advanced, inspect
-the effective merge diff and run risk-relevant integration checks; repeat Spec
-review only when behavior or the effective diff changes, and Standards review
-only when ticket files change. When the pull request is open, mergeable, and
+the target-advance branch in [references/lifecycle.md](references/lifecycle.md).
+Retain the immutable review base and merge only after that branch pins an
+effective-integration artifact and validates every affected gate and axis. When the pull request is open, mergeable, and
 its required repository gates pass, perform the authorized merge using every
 expected-head precondition the provider supports. On GitHub, pass the merge
 API's `sha` head precondition. A separate branch rule that atomically pins the
@@ -319,8 +395,19 @@ failed condition plus next safe action; never force removal.
 
 Post the configured tracker document's structured evidence comment only after
 the cleanup result or safe preservation disposition is settled. Include both
-review-axis results, the ticket-head and integration OIDs, the live
-ticket-head recovery ref, and cleanup disposition. Use the contract's
+review-axis results with each axis's explicit review-context identity, reviewed
+candidate, final candidate, resolved base, exact path scope, authority
+identities, and any carry-forward rationale or single-context fallback
+disclosure. Include any effective-integration construction method or adapter,
+tree OID, fingerprint, and reconstructable diff or a durable artifact pointer
+resolved through `documenting-work`. Also include the ticket-head and integration
+OIDs, the live ticket-head recovery ref, and cleanup disposition. For every required
+verification gate, record the command, result, tested candidate, covered
+behavior or artifact, and relevant integration/base assumptions. For a carried
+gate, additionally record its final candidate, unaffected-scope rationale, and
+targeted-validator result from the final candidate. For a hosted gate, record
+its check name, provider run/status URL or immutable ID, and observed head OID.
+Use the contract's
 human-facing language. Under the bundled fallback, use the Korean evidence
 headings while preserving the protocol marker; legacy English headings remain
 read-compatible.
@@ -398,6 +485,9 @@ every intentionally preserved path or ref and its next safe action are reported.
 - Take over only an expired lease after inspecting durable work evidence.
 - Keep the atomic issue ref and session ref pair as the enforced one-issue per
   session and one-session per issue invariant.
+- Keep one implementation worker thread to one issue even after release; a goal
+  coordinator selects every issue, including the first or only one, and starts a
+  fresh worker.
 - Use `--no-github-sync` only for isolated tests against a disposable remote.
 
 For command fields, exit codes, stale recovery, and failure behavior, read

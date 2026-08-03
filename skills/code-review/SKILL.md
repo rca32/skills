@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: "Review a branch, pull request, commit range, or work-in-progress change from a caller-supplied fixed point along separate repository Standards and originating Spec axes. Use when asked to review changes, review since a ref, compare work to an issue or PRD, or assess staged, unstaged, and untracked work before commit or publication."
+description: "Review a branch, pull request, commit range, or work-in-progress change from a caller-supplied fixed point along separate repository Standards and originating Spec axes. Use when asked to review changes, re-review a corrected candidate, review since a ref, compare work to an issue or PRD, or assess staged, unstaged, and untracked work before commit or publication."
 ---
 
 # Code Review
@@ -22,13 +22,23 @@ authorized outer workflow so this review remains read-only.
 Accept these from the caller when supplied:
 
 - a fixed point: commit, tag, branch, merge-base target, or explicit base SHA;
+- an integration-base OID when merge-context evidence is part of the review;
+- a pinned effective-integration artifact: merge method, tree/diff fingerprint,
+  and reconstructable read-only diff command or artifact pointer;
 - a spec source: issue/PR context, PRD text, acceptance criteria, or file path;
-- a narrower path scope or an explicit comparison mode.
+- a narrower path scope or an explicit comparison mode;
+- for a re-review, the prior candidate, new candidate, corrected findings, and
+  axes whose evidence may have changed.
 
 Do not replace supplied context with an inferred source. Resolve missing context
 from the repository when possible; ask only when the choice would materially
 change the review. If no authoritative spec exists, still run Standards and mark
 Spec `Not evaluated — no authoritative spec supplied or found`.
+
+When an effective-integration artifact is supplied, reconstruct and inspect its
+exact diff alongside the ticket diff, include its changed paths in authority
+discovery, and require both axes to evaluate integration-only effects. Fail
+closed if its method, fingerprint, or diff cannot be reconstructed as supplied.
 
 ## 1. Pin the review snapshot
 
@@ -62,11 +72,30 @@ Never expose suspected credentials or secrets; identify the path and redact the
 value.
 
 Fingerprint these three diffs and each in-scope untracked file at the start, then
-repeat the fingerprints before reporting. If an in-scope fingerprint changed, the
+repeat the complete candidate identity, including `HEAD`, before reporting. If an in-scope fingerprint or `HEAD` changed, the
 snapshot drifted: identify the drift and restart or clearly limit the review
 rather than combining observations from different worktree states. Unrelated
 untracked drift does not restart the review. Hashing must be read-only and must
 not add objects to the repository.
+
+Define the candidate identity as the `HEAD` SHA plus the three tracked-diff
+fingerprints and the sorted `(path, fingerprint)` set for every in-scope
+untracked file. Include each untracked path's file type, executable mode, and
+payload bytes or symlink target; treat a special file or nested repository that
+cannot be inspected safely as unreconstructable. A clean committed candidate
+uses its `HEAD` SHA. A WIP fingerprint is only a local drift token for one review
+run, not a portable identity: never carry an axis forward from or into a WIP
+candidate. Candidate-to-candidate carry-forward is allowed only between clean
+committed OIDs whose delta is reconstructable; otherwise start fresh reviewers
+for both axes.
+
+Define one review-context identity per axis from the candidate identity,
+resolved review-base SHA, any supplied integration-base OID and effective-integration
+artifact, exact path scope, and that axis's authority identities. Use
+a content fingerprint or immutable version for authority text that is not
+pinned by the repository. Carry an axis forward only when its base, path scope,
+and authority identity are unchanged and reconstructable; otherwise inspect
+that axis anew.
 
 Fail early on an unresolved ref. An empty tracked diff is not an empty review
 until the untracked-file list is also empty. If both are empty, report that there
@@ -96,10 +125,30 @@ context.
 
 ## 3. Run separate reviews
 
-Delegate Standards and Spec to two clean subagents in parallel when capacity
-allows. Give both the same pinned scope (base SHA, `HEAD`, status, commit list,
-tracked diff command, untracked paths, and any path restriction), but give each
-only its own authority and brief. Tell both agents to inspect rather than edit.
+Treat reviewer cleanliness as a **context boundary**, not merely a clean
+worktree. Delegate Standards and Spec to two fresh subagents in parallel when
+capacity allows. Start them without inherited conversation history when the
+runtime supports it (for example, Codex `fork_turns: "none"`). Give both the
+same pinned scope (base SHA, candidate identity, status, commit list, tracked diff
+command, effective-integration artifact, untracked paths, and any path restriction), but give each only its own
+authority and brief. Tell both agents to inspect rather than edit.
+
+When isolated reviewers are available, do not reuse an implementer, designer,
+test worker, reviewer of another issue, or reviewer of an earlier candidate.
+One reviewer evaluates one axis of one candidate and returns one report. If the
+candidate changes, retire the old review context and start a fresh reviewer for
+every axis whose evidence could have changed. A re-review brief may name the
+previous finding and correction, but must not include another reviewer's
+conclusions or the caller's expected verdict.
+
+For a re-review, inspect the delta from the prior candidate to the new candidate
+before accepting the caller's affected-axis list. An axis may carry forward only
+when that delta cannot affect its authority, reviewed files, requirements,
+execution path, or other evidence. Record each axis as either freshly reviewed
+at the final candidate or carried forward from a named prior candidate with that
+rationale. Never present a carried-forward result as though its reviewer
+inspected the final candidate. The final gate is coherent only when both axes
+have explicit candidate provenance.
 
 If parallel delegation is unavailable but isolated reviewers can be started
 sequentially, use separate fresh reviewer contexts. If no isolation mechanism is
@@ -109,6 +158,21 @@ single-context fallback rather than an independent review. Keep the two finding
 sets and severities separate; unavailable delegation alone never blocks a report.
 When isolated reviewers are used, do not show either reviewer the other's
 conclusions before both reports are complete.
+
+In the no-isolation fallback, inspect each affected axis anew at the current
+candidate in the same context and record that axis as a separated
+single-context inspection, never as an independent or fresh-reviewer result.
+Prior observations may identify corrected findings but cannot substitute for
+this new inspection.
+
+Keep each reviewer bounded to the pinned diff and its authority. Expand into
+unchanged code only to trace a dependency or execution path needed to validate
+a finding. Do not rerun the caller's full verification suite, wait on long
+builds, perform implementation or architectural design, or continue exploring
+after the axis can be reported. A reviewer may run a cheap targeted read-only
+probe when that probe is necessary to distinguish a supported finding from a
+question. Treat the caller's recorded test results as evidence, not as a reason
+to reproduce every command.
 
 ### Standards brief
 
@@ -170,12 +234,17 @@ Return:
 ```markdown
 ## Review scope
 - Requested fixed point / resolved base: ...
+- Integration-base OID, when supplied: ...
+- Effective-integration merge method, tree/diff fingerprint, and artifact: ...
+- Final candidate identity: HEAD + tracked and in-scope untracked fingerprints ...
 - Reviewed: commits + staged + unstaged + untracked ...
 - Standards sources: ...
 - Spec source: ...
 - Report authority: conversation | PR | recommended repository path ...
 
 ## Standards
+- Standards review-context identity: candidate + base + path scope + Standards authorities ...
+- Axis provenance: freshly reviewed at <candidate> | separated single-context inspection at <candidate> | carried forward from <candidate>; rationale ...
 ### [severity] Short title
 - Location: path:line
 - Authority: standards-file:rule or "smell heuristic"
@@ -184,6 +253,8 @@ Return:
 - Correction: smallest credible fix
 
 ## Spec
+- Spec review-context identity: candidate + base + path scope + Spec authorities ...
+- Axis provenance: freshly reviewed at <candidate> | separated single-context inspection at <candidate> | carried forward from <candidate>; rationale ...
 ### [severity] Short title
 - Location: path:line
 - Requirement: spec-source:line or acceptance criterion
