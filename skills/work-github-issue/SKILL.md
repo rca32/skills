@@ -1,6 +1,6 @@
 ---
 name: work-github-issue
-description: Coordinate collision-safe GitHub issue implementation and planning mutations through readiness, remote session leases, review, evidence, and resolution. Use before starting, resuming, publishing planning state, handing off, or finishing issue-backed work when agents may share one account, and when a persistent goal selects one or more issues for fresh workers. Also use to inspect or initialize a consuming repository's execution, publication, and bundled tracker-label setup; repository initialization requires explicit policy and remote-label mutation authority.
+description: Coordinate collision-safe GitHub issue implementation and planning mutations through readiness, remote session leases, review, evidence, and resolution. Use before starting, resuming, publishing planning state, handing off, or finishing issue-backed work when agents may share one account, and when a persistent goal selects one or more issues for fresh workers. Also use to inspect or initialize a consuming repository's execution, publication, and bundled tracker-label setup, or when explicitly asked to check or install its personal Luna worker profile; setup mutations require explicit authority.
 ---
 
 # Work GitHub Issue
@@ -16,13 +16,14 @@ issue-backed, this skill is active for that issue, and the session holds a valid
 implementation lease for it. Non-issue repository work follows the other
 applicable repository instructions and direct user authority.
 
-Read the repository's configured issue-tracker document before the first
-tracker write. If none exists, use
-[references/tracker-contract.md](references/tracker-contract.md). Read
-[references/lifecycle.md](references/lifecycle.md) only when the issue is not
+Read the configured issue-tracker document before the first tracker write; if
+none exists, use [references/tracker-contract.md](references/tracker-contract.md).
+Read [references/lifecycle.md](references/lifecycle.md) only when the issue is not
 already in the configured `ready-for-agent` role, belongs to a Wayfinder map, or must be split,
 prepared, handed off, resolved into a parent, or the integration target advances
 from the pre-work fixed point before or after review.
+
+When explicitly asked to check or install the personal `luna_worker`, follow [references/luna-worker-setup.md](references/luna-worker-setup.md); never run this user-level mutation as an implicit issue preflight.
 
 Read [references/workspace-cleanup.md](references/workspace-cleanup.md) only
 when an implementation session used a ticket branch or worktree and is ready to
@@ -52,16 +53,17 @@ are not required for the managed policy to be usable.
 
 ## Goal and implementation context boundary
 
-When a persistent goal-owning thread selects an issue—whether the first, only,
-or one of several—keep that thread as a lightweight **coordinator**. It may read
-tracker state, select the next ready
-frontier issue, create a bounded worker brief, and collect the outcome. It must
+When a persistent goal-owning thread selects any issue, keep that thread as a
+lightweight **coordinator**. It may read tracker state, select the next ready
+frontier, create a bounded worker brief, and collect the outcome. It must
 not claim an implementation lease on behalf of a worker, edit the ticket
 workspace, run implementation verification, or retain raw command and test
 logs.
 
-Run each issue in one context-isolated implementation worker without inherited
-conversation history (for example, Codex `fork_turns: "none"`).
+Run each issue in one context-isolated implementation worker without inherited conversation history (for example, Codex `fork_turns: "none"`).
+When `luna_worker` is discovered, select it for bounded analysis, validation, or
+small implementation work matching its description. Otherwise use another
+context-isolated worker and disclose why; never weaken this section's boundaries.
 The brief contains only the canonical repository, issue identifier, readiness
 and dependency evidence, fixed point, acceptance/spec authority, execution and
 publication constraints, and any known dirty-worktree exclusions. The worker

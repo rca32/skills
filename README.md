@@ -96,6 +96,8 @@ Codex에게 다음처럼 요청하면 됩니다.
 
 설치된 `${CODEX_HOME:-$HOME/.codex}/skills`는 사용용 복사본입니다. 스킬을 수정할 때는 이 저장소를 고치고 검증·push한 뒤 다시 설치합니다.
 
+`work-github-issue` 스킬 설치만으로 개인 Codex 설정을 바꾸지는 않습니다. 이슈별 context-isolated worker에 번들된 Luna 프로필을 사용하려면 “`$work-github-issue`로 개인 `luna_worker` 호환성을 점검하고 diff를 보여준 뒤 설치해 줘”라고 명시적으로 요청합니다. 스킬은 설치된 Codex 버전과 `gpt-5.6-luna`의 `max` reasoning 지원을 확인하고, 기존 `${CODEX_HOME:-$HOME/.codex}/agents/luna-worker.toml`이 다르면 덮어쓰지 않고 중단합니다. 설치가 끝난 뒤 새 Codex 세션을 시작해야 프로필이 검색됩니다.
+
 ## 처음 사용할 프로젝트의 준비 사항
 
 GitHub 이슈 작업을 시작하기 전에 프로젝트에 다음이 준비되어 있어야 합니다.
@@ -186,6 +188,7 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_
 
 ```bash
 python3 skills/work-github-issue/scripts/test_issue_lease.py -v
+python3 skills/work-github-issue/scripts/test_configure_luna_worker.py -v
 python3 skills/documenting-work/scripts/test_resolve_document_path.py -v
 python3 skills/complexity-optimizer/scripts/test_analyze_complexity.py -v
 python3 skills/complexity-optimizer/scripts/analyze_complexity.py . --format json
