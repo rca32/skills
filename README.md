@@ -110,40 +110,39 @@ GitHub 이슈 작업을 시작하기 전에 프로젝트에 다음이 준비되�
 - 프로젝트 문서에 이슈 상태 라벨과 선행 작업 표시 방법이 정의되어 있어야 합니다. 별도 규칙이 없다면 `work-github-issue`의 기본 계약은 `상태: 분류 필요`, `상태: 정보 필요`, `상태: 에이전트 작업 가능`, `상태: 사람 검토 필요`, `상태: 진행하지 않음` 중 하나를 상태로 사용합니다. 기존 영문 라벨은 호환을 위해 읽을 수 있지만 새 이슈에는 한국어 라벨을 사용합니다.
 - 구현 전에는 ticket base와 worktree 조건만 확정하고, push·PR·merge에 필요한 값은 해당 작업 직전에 단계적으로 확정합니다. 충돌하는 지침이 없고 원격 기본 branch가 하나뿐이면 base와 PR target으로 사용할 수 있지만 merge나 remote branch 삭제 권한을 뜻하지 않습니다. 별도 정리 규칙이 없으면 완료한 세션이 직접 만든 안전한 linked worktree와 local ticket branch만 기본 정리합니다.
 
-소비 저장소가 로컬 검증과 분리된 Standards/Spec 리뷰를 통과한 에이전트에게 `main` PR 자동 병합 및 안전한 worktree 정리 권한을 상시 부여하려면 관리형 정책을 설치합니다. tracker 라벨은 선택 사항이며, 별도 생성 권한이 있을 때 함께 준비할 수 있습니다.
+`work-github-issue`는 소비 저장소의 `AGENTS.md`에 publication 정책을 설치하거나 merge 권한을 부여하지 않습니다. push·PR·merge 권한과 방식은 기존 저장소 지침 또는 현재 사용자 요청에서 확인하며, 필요한 권한이 없으면 그 작업 직전에 멈춰 정확한 결정을 요청합니다.
+
+기본 tracker 라벨은 선택 사항입니다. 사람이 보기 편한 한국어 상태·유형 라벨을 준비하려면 먼저 읽기 전용으로 전체 label catalog를 확인합니다.
 
 ```bash
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/configure_repository_contract.py" \
-  check /absolute/path/to/repository/AGENTS.md \
-  --integration-target main --merge-method squash
-
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/configure_tracker_labels.py" \
   check /absolute/path/to/repository --remote origin
+```
 
+누락 라벨 생성을 명시적으로 허가한 경우에만 다음 초기화 절차를 실행합니다. source 또는 parent 이슈가 있으면 그 번호를 `LEASE_KEY`로 사용하고, source가 없는 저장소 전체 설정 요청에만 `0`을 사용합니다.
+
+```bash
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_lease.py" \
-  claim 0 --purpose planning --ttl-minutes 10 --remote origin
+  claim LEASE_KEY --purpose planning --ttl-minutes 10 --remote origin
 
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/configure_tracker_labels.py" \
   install /absolute/path/to/repository --remote origin \
+  --lease-key LEASE_KEY \
   --lease-session SESSION_FROM_CLAIM \
   --expected-snapshot LABEL_SNAPSHOT_FROM_CHECK
 
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_lease.py" \
-  check 0 --session SESSION_FROM_CLAIM --remote origin
+  check LEASE_KEY --session SESSION_FROM_CLAIM --remote origin
 
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/configure_repository_contract.py" \
-  install /absolute/path/to/repository/AGENTS.md \
-  --expected-snapshot POLICY_SNAPSHOT_FROM_CHECK \
-  --integration-target main --merge-method squash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/configure_tracker_labels.py" \
+  check /absolute/path/to/repository --remote origin
 
-# 위의 두 check 명령을 다시 실행해 모두 current인지 확인한 뒤 해제합니다.
+# 위 check가 current를 반환한 뒤 해제합니다.
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_lease.py" \
-  release 0 --session SESSION_FROM_CLAIM --remote origin
+  release LEASE_KEY --session SESSION_FROM_CLAIM --remote origin
 ```
 
-먼저 `render`로 문구를 보고 기존 지침과의 충돌을 해결한 뒤, 각 `check`가 반환한 opaque `snapshot` 값을 대응하는 `install`에 전달합니다. 정책과 선택적 라벨 설정은 독립적으로 완료할 수 있으며 tracker 외부 쓰기만 planning lease로 보호합니다. 정책 token은 렌더된 계약, 저장소 root와 대상 파일 identity, 내용 hash를 묶습니다. 이 기능은 Git 저장소 root의 `AGENTS.md`에만 versioned managed block을 추가하며 기존 다른 내용을 교체하지 않습니다. 기존 Actions, required checks, review와 branch rule은 게시 시 충족할 gate입니다. 병합 직전에는 PR head를 다시 확인하고 GitHub merge API의 head SHA 조건을 사용하지만 integration base를 고정하는 별도 branch rule은 요구하지 않습니다.
-
-확신이 없다면 Codex에게 “이 저장소에서 `work-github-issue`를 쓰기 위한 준비 상태를 읽기 전용으로 점검해 줘”라고 요청하면 됩니다. 관리형 `AGENTS.md` 계약만 설치해도 자동화에 필요한 상태 marker를 사용할 수 있습니다. 사람이 보기 편한 기본 tracker 라벨까지 함께 준비하려면 “이 저장소를 `work-github-issue` 기본 계약으로 초기화해 줘. 정책 설치와 선택적 GitHub 라벨 생성을 허가한다”라고 요청합니다. 이 경우 두 상태를 먼저 점검하고, 라벨 외부 쓰기만 repository-wide planning lease 아래에서 수행한 뒤 관리형 계약을 설치하고 각각 다시 읽어 확인합니다. 실제 첫 구현 임대는 인증·원격 주소·원자적 ref push와 구현에 즉시 필요한 계약만 확인합니다. PR 대상, 병합 방식, 완료 지점처럼 나중 단계에 필요한 publication 값은 그 단계 전에 확정하면 됩니다.
+`check`가 반환한 opaque `snapshot`을 `install`에 전달합니다. 라벨 외부 쓰기는 repository-wide planning lease로 보호하며, installer는 누락 라벨만 생성하고 기존 라벨을 수정·이름 변경·삭제하지 않습니다. 설치 뒤 전체 catalog가 `current`인지 다시 읽은 후 lease를 해제합니다. 확신이 없다면 Codex에게 “이 저장소의 `work-github-issue` tracker 라벨 상태를 읽기 전용으로 점검해 줘”라고 요청하면 됩니다. 라벨을 만들지 않아도 이슈 body marker를 사용해 계속 작업할 수 있습니다.
 
 `상태: 정보 필요`나 `상태: 사람 검토 필요`인 이슈에는 라벨만 붙이지 않습니다. 이슈 본문 또는 최신 댓글에 요청 종류와 정확한 대상, 사람이 해야 할 일, 답변 위치, 완료 조건, 완료 후 상태와 전환 담당 스킬을 함께 적습니다. `상태: 사람 검토 필요`라면 사람이 작업 후 바로 수정해 남길 수 있는 추천 댓글도 제공합니다. 예를 들어 “검토 필요” 대신 “PR #128의 권한 변경을 검토하고 승인 또는 수정 요청을 PR 리뷰로 남긴 뒤, 권한 있는 `prepare-issue`에 재검증을 요청해 주세요”처럼 작성합니다.
 

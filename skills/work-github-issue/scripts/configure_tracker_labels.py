@@ -52,6 +52,12 @@ class UnknownMutation(LabelError):
         self.created = list(created)
 
 
+class KnownPartialMutation(LabelError):
+    def __init__(self, message: str, created: Sequence[str]) -> None:
+        super().__init__(message)
+        self.created = list(created)
+
+
 def emit(status: str, **details: object) -> None:
     print(json.dumps({"status": status, **details}, ensure_ascii=False, sort_keys=True))
 
@@ -190,13 +196,18 @@ def validate_snapshot(value: str) -> str:
     raise LabelError("expected label snapshot token is malformed")
 
 
-def check_planning_lease(root: pathlib.Path, remote: str, session: str) -> None:
+def check_planning_lease(
+    root: pathlib.Path,
+    remote: str,
+    session: str,
+    lease_key: int,
+) -> None:
     result = run(
         [
             sys.executable,
             str(LEASE_SCRIPT),
             "check",
-            "0",
+            str(lease_key),
             "--remote",
             remote,
             "--session",
@@ -213,7 +224,7 @@ def check_planning_lease(root: pathlib.Path, remote: str, session: str) -> None:
         or payload.get("status") != "owned"
         or payload.get("lease", {}).get("purpose") != "planning"
     ):
-        raise LabelError("repository-wide planning lease is not owned by this session")
+        raise LabelError("selected planning lease is not owned by this session")
 
 
 def create_label(root: pathlib.Path, repository: str, spec: LabelSpec) -> subprocess.CompletedProcess[str]:
@@ -241,6 +252,7 @@ def install_labels(
     repository: str,
     session: str,
     expected_snapshot: str,
+    lease_key: int,
 ) -> tuple[str, list[str]]:
     expected_snapshot = validate_snapshot(expected_snapshot)
     catalog = fetch_catalog(root, repository)
@@ -258,7 +270,15 @@ def install_labels(
     for spec in LABELS:
         if spec.name not in missing:
             continue
-        check_planning_lease(root, remote, session)
+        try:
+            check_planning_lease(root, remote, session, lease_key)
+        except (LabelError, OSError, subprocess.SubprocessError) as error:
+            if created:
+                raise KnownPartialMutation(
+                    "planning lease check failed after confirmed label creates",
+                    created,
+                ) from error
+            raise
         try:
             attempted = create_label(root, repository, spec)
         except (OSError, subprocess.SubprocessError):
@@ -304,6 +324,7 @@ def parser() -> argparse.ArgumentParser:
         if name == "install":
             command.add_argument("--expected-snapshot", required=True)
             command.add_argument("--lease-session", required=True)
+            command.add_argument("--lease-key", type=int, required=True)
     return result
 
 
@@ -326,9 +347,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             repository,
             args.lease_session,
             args.expected_snapshot,
+            args.lease_key,
         )
         emit(status, created=created, repository=repository)
         return 0
+    except KnownPartialMutation as error:
+        emit("error", created=error.created, error=str(error))
+        return 2
     except UnknownMutation as error:
         emit("unknown", created=error.created, error=str(error))
         return 3

@@ -75,13 +75,16 @@ class ConfigureTrackerLabelsTest(unittest.TestCase):
             mock.patch.object(labels, "create_label", side_effect=create) as create_mock,
         ):
             status, created = labels.install_labels(
-                self.root, "origin", "owner/repo", "session-1", expected
+                self.root, "origin", "owner/repo", "session-1", expected, lease_key=42
             )
 
         self.assertEqual(status, "initialized")
         self.assertEqual(created, [item.name for item in labels.LABELS[-2:]])
         self.assertEqual(create_mock.call_count, 2)
         self.assertEqual(lease_check.call_count, 2)
+        lease_check.assert_has_calls(
+            [mock.call(self.root, "origin", "session-1", 42)] * 2
+        )
         self.assertEqual(dirty.read_text(encoding="utf-8"), "preserve\n")
 
     def test_install_is_idempotent_when_every_label_exists(self) -> None:
@@ -93,7 +96,7 @@ class ConfigureTrackerLabelsTest(unittest.TestCase):
             mock.patch.object(labels, "create_label") as create_mock,
         ):
             status, created = labels.install_labels(
-                self.root, "origin", "owner/repo", "session-1", expected
+                self.root, "origin", "owner/repo", "session-1", expected, 0
             )
         self.assertEqual((status, created), ("unchanged", []))
         lease_check.assert_not_called()
@@ -109,7 +112,7 @@ class ConfigureTrackerLabelsTest(unittest.TestCase):
         ):
             with self.assertRaisesRegex(labels.LabelError, "inspected snapshot"):
                 labels.install_labels(
-                    self.root, "origin", "owner/repo", "session-1", expected
+                self.root, "origin", "owner/repo", "session-1", expected, 0
                 )
         create_mock.assert_not_called()
 
@@ -123,7 +126,7 @@ class ConfigureTrackerLabelsTest(unittest.TestCase):
         ):
             with self.assertRaisesRegex(labels.LabelError, "conflict"):
                 labels.install_labels(
-                    self.root, "origin", "owner/repo", "session-1", expected
+                self.root, "origin", "owner/repo", "session-1", expected, 0
                 )
         create_mock.assert_not_called()
 
@@ -141,7 +144,7 @@ class ConfigureTrackerLabelsTest(unittest.TestCase):
         ):
             with self.assertRaisesRegex(labels.LabelError, "not owned"):
                 labels.install_labels(
-                    self.root, "origin", "owner/repo", "session-1", expected
+                self.root, "origin", "owner/repo", "session-1", expected, 0
                 )
         create_mock.assert_not_called()
 
@@ -156,7 +159,7 @@ class ConfigureTrackerLabelsTest(unittest.TestCase):
         ):
             with self.assertRaises(labels.UnknownMutation) as caught:
                 labels.install_labels(
-                    self.root, "origin", "owner/repo", "session-1", expected
+                self.root, "origin", "owner/repo", "session-1", expected, 0
                 )
         self.assertEqual(caught.exception.created, [])
         create_mock.assert_called_once()
@@ -179,7 +182,7 @@ class ConfigureTrackerLabelsTest(unittest.TestCase):
             mock.patch.object(labels, "create_label", side_effect=timeout_after_create),
         ):
             status, created = labels.install_labels(
-                self.root, "origin", "owner/repo", "session-1", expected
+                self.root, "origin", "owner/repo", "session-1", expected, 0
             )
         self.assertEqual(status, "initialized")
         self.assertEqual(created, [labels.LABELS[-1].name])
@@ -220,10 +223,39 @@ class ConfigureTrackerLabelsTest(unittest.TestCase):
         ):
             with self.assertRaises(labels.UnknownMutation) as caught:
                 labels.install_labels(
-                    self.root, "origin", "owner/repo", "session-1", expected
+                self.root, "origin", "owner/repo", "session-1", expected, 0
                 )
         self.assertEqual(caught.exception.created, [labels.LABELS[-2].name])
         self.assertEqual(create_mock.call_count, 2)
+
+    def test_later_lease_failure_preserves_confirmed_creates(self) -> None:
+        catalog = current_catalog()[:-2]
+        expected = labels.snapshot_token("owner/repo", labels.inspect(catalog))
+        checks = 0
+
+        def check(*_args: object) -> None:
+            nonlocal checks
+            checks += 1
+            if checks == 2:
+                raise labels.LabelError("lease lost")
+
+        def create(_root: pathlib.Path, _repository: str, spec: labels.LabelSpec):
+            catalog.append(
+                {"name": spec.name, "description": spec.description, "color": spec.color}
+            )
+            return subprocess.CompletedProcess([], 0, "{}", "")
+
+        with (
+            mock.patch.object(labels, "fetch_catalog", side_effect=lambda *_: list(catalog)),
+            mock.patch.object(labels, "check_planning_lease", side_effect=check),
+            mock.patch.object(labels, "create_label", side_effect=create) as create_mock,
+        ):
+            with self.assertRaises(labels.KnownPartialMutation) as caught:
+                labels.install_labels(
+                    self.root, "origin", "owner/repo", "session-1", expected, 42
+                )
+        self.assertEqual(caught.exception.created, [labels.LABELS[-2].name])
+        create_mock.assert_called_once()
 
     def test_readback_timeout_preserves_confirmed_creates(self) -> None:
         catalog = current_catalog()[:-2]
@@ -250,7 +282,7 @@ class ConfigureTrackerLabelsTest(unittest.TestCase):
         ):
             with self.assertRaises(labels.UnknownMutation) as caught:
                 labels.install_labels(
-                    self.root, "origin", "owner/repo", "session-1", expected
+                self.root, "origin", "owner/repo", "session-1", expected, 0
                 )
         self.assertEqual(caught.exception.created, [labels.LABELS[-2].name])
 
@@ -277,7 +309,7 @@ class ConfigureTrackerLabelsTest(unittest.TestCase):
         ):
             with self.assertRaises(labels.UnknownMutation) as caught:
                 labels.install_labels(
-                    self.root, "origin", "owner/repo", "session-1", expected
+                self.root, "origin", "owner/repo", "session-1", expected, 0
                 )
         self.assertEqual(caught.exception.created, [])
         create_mock.assert_called_once()
@@ -294,6 +326,71 @@ class ConfigureTrackerLabelsTest(unittest.TestCase):
             result = labels.main(["check", str(self.root)])
         self.assertEqual(result, 1)
         self.assertIn('"status": "missing"', output.getvalue())
+
+    def test_install_command_forwards_selected_lease_key(self) -> None:
+        snapshot = "A" * 43
+        output = io.StringIO()
+        with (
+            mock.patch.object(labels, "repository_root", return_value=self.root),
+            mock.patch.object(labels, "resolve_repository", return_value="owner/repo"),
+            mock.patch.object(
+                labels,
+                "install_labels",
+                return_value=("unchanged", []),
+            ) as install,
+            contextlib.redirect_stdout(output),
+        ):
+            result = labels.main(
+                [
+                    "install",
+                    str(self.root),
+                    "--expected-snapshot",
+                    snapshot,
+                    "--lease-session",
+                    "session-1",
+                    "--lease-key",
+                    "42",
+                ]
+            )
+        self.assertEqual(result, 0)
+        install.assert_called_once_with(
+            self.root,
+            "origin",
+            "owner/repo",
+            "session-1",
+            snapshot,
+            42,
+        )
+
+    def test_install_command_reports_known_partial_creates(self) -> None:
+        snapshot = "A" * 43
+        created = [labels.LABELS[-1].name]
+        output = io.StringIO()
+        with (
+            mock.patch.object(labels, "repository_root", return_value=self.root),
+            mock.patch.object(labels, "resolve_repository", return_value="owner/repo"),
+            mock.patch.object(
+                labels,
+                "install_labels",
+                side_effect=labels.KnownPartialMutation("lease lost", created),
+            ),
+            contextlib.redirect_stdout(output),
+        ):
+            result = labels.main(
+                [
+                    "install",
+                    str(self.root),
+                    "--expected-snapshot",
+                    snapshot,
+                    "--lease-session",
+                    "session-1",
+                    "--lease-key",
+                    "42",
+                ]
+            )
+        self.assertEqual(result, 2)
+        self.assertIn('"status": "error"', output.getvalue())
+        self.assertIn(created[0], output.getvalue())
 
     def test_remote_parser_accepts_canonical_forms_and_rejects_others(self) -> None:
         self.assertEqual(

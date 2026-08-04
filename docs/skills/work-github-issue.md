@@ -51,9 +51,9 @@ lease는 특정 이슈와 에이전트 세션을 묶는 임시 작업권입니�
 
 이슈 본문, 댓글, 라벨, 담당자, 부모와 blocker를 모두 읽습니다. 요청과 인수 조건이 완전하고, 저장소가 정한 frontier와 readiness 규칙을 만족해야 합니다. 원시 신고라면 `prepare-issue`, 큰 승인 계획이라면 `to-spec`과 `to-tickets`로 먼저 보냅니다.
 
-구현을 claim하기 전에는 [준비 조건](../../skills/work-github-issue/SKILL.md#1-establish-readiness)에 따라 작업 시작점, 실행 공간, PR과 integration 대상, 단계별 게시 권한, 필수 검사, 완료 지점과 정리 정책을 해석합니다. 별도 정리 규칙이 없을 때는 현재 세션이 새로 만든 안전한 local 작업공간만 정리하는 번들 기본값을 사용합니다. 원격 기본 branch는 참고 정보일 뿐 merge 권한·대상이나 remote branch 삭제 권한을 자동으로 결정하지 않습니다. 요청 결과에 필요한 값이 없거나 충돌하면 claim 전에 멈추고 필요한 결정을 보고합니다.
+구현을 claim하기 전에는 [준비 조건](../../skills/work-github-issue/SKILL.md#1-establish-readiness)에 따라 작업 시작점, 실행 공간, 로컬 구현 권한과 정리 경계를 먼저 해석합니다. 별도 정리 규칙이 없을 때는 현재 세션이 새로 만든 안전한 local 작업공간만 정리하는 번들 기본값을 사용합니다. PR 대상, push·merge 권한과 방식, 필수 hosted gate, 완료 지점은 해당 publication 작업 직전에 단계적으로 확정합니다. 원격 기본 branch는 base와 PR target을 찾는 근거일 수 있지만 merge 권한이나 remote branch 삭제 권한을 자동으로 부여하지 않습니다.
 
-소비 저장소에 이 계약이 없다면 사용자의 명시적인 저장소 정책 변경 요청으로 [표준 관리형 계약](../../skills/work-github-issue/references/repository-contract.md)을 `AGENTS.md`에 설치할 수 있습니다. 기본 문구는 기존 hosted check를 게시 gate로 존중하면서 로컬 검증과 분리된 리뷰의 blocker/high 지적을 해결한 lease 소유 에이전트에게 `main` 대상 squash merge 권한을 부여합니다. integration base를 원자적으로 고정하는 별도 branch rule은 요구하지 않습니다. 대상 branch와 merge 방식은 설치 명령에서 바꿀 수 있습니다.
+이 스킬은 소비 저장소의 `AGENTS.md`에 publication 정책이나 상시 merge 권한을 설치하지 않습니다. push·PR·merge에 필요한 권한과 방식은 기존 저장소 지침 또는 현재 사용자 요청에서 단계적으로 확인합니다. 필요한 값이 없으면 로컬 구현 전체를 막지 않고 그 publication 작업 직전에 멈춰 정확한 결정을 요청합니다. 선택적인 한국어 tracker 라벨만 별도 [label setup 절차](../../skills/work-github-issue/references/tracker-label-setup.md)로 확인하거나 초기화할 수 있습니다.
 
 ### 2. 구현 lease 획득
 

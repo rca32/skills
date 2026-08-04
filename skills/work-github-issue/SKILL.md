@@ -1,6 +1,6 @@
 ---
 name: work-github-issue
-description: Coordinate collision-safe GitHub issue implementation and planning mutations through readiness, remote session leases, review, evidence, and resolution. Use before starting, resuming, publishing planning state, handing off, or finishing issue-backed work when agents may share one account, and when a persistent goal selects one or more issues for fresh workers. Also use to inspect or initialize a consuming repository's execution, publication, and bundled tracker-label setup, or when explicitly asked to check or install its personal Luna worker profile; setup mutations require explicit authority.
+description: Coordinate collision-safe GitHub issue implementation and planning mutations through readiness, remote session leases, review, evidence, and resolution. Use before starting, resuming, publishing planning state, handing off, or finishing issue-backed work when agents may share one account, and when a persistent goal selects one or more issues for fresh workers. Also use to inspect or initialize a consuming repository's bundled tracker labels, or when explicitly asked to check or install its personal Luna worker profile; setup mutations require explicit authority. Do not use it to install repository publication authority.
 ---
 
 # Work GitHub Issue
@@ -8,13 +8,6 @@ description: Coordinate collision-safe GitHub issue implementation and planning 
 Treat an issue as a **leased unit of work**. The GitHub assignee shows the human
 owner; the remote lease ref elects exactly one active agent session even when
 every session uses the same account.
-
-Do not activate or apply a consuming repository's managed publication contract
-merely because a task mentions GitHub, branches, commits, pushes, pull requests,
-or merges. That contract is dormant unless the current task is explicitly
-issue-backed, this skill is active for that issue, and the session holds a valid
-implementation lease for it. Non-issue repository work follows the other
-applicable repository instructions and direct user authority.
 
 Read the configured issue-tracker document before the first tracker write; if
 none exists, use [references/tracker-contract.md](references/tracker-contract.md).
@@ -41,15 +34,13 @@ existing standing authorization determine the next safe action. Escalate only
 for genuinely missing requirements or authority, unavailable access, a safety
 decision outside the ticket, or an external write that cannot be reconciled.
 
-When a consuming repository lacks an execution and publication contract, remain
-read-only for publication-dependent work. If the user asks to inspect or
-initialize the bundled repository setup, read the
-[repository-initialization workflow](references/repository-contract.md) and the exact
-[managed contract template](references/consumer-agents-contract.md). Treat its
-`AGENTS.md` policy and optional GitHub tracker labels as independent setup
-components. Never insert standing merge authority or create repository-wide
-labels without explicit authority for the corresponding mutation class; labels
-are not required for the managed policy to be usable.
+Resolve execution and publication authority from the consuming repository and
+the user's current request. If an operation lacks that authority, remain
+read-only for that operation and report the exact missing decision; never install
+standing publication authority into repository instructions. If the user asks
+to inspect or initialize the bundled GitHub tracker labels, read the
+[tracker-label setup workflow](references/tracker-label-setup.md). Label setup is
+optional and requires explicit repository-wide label mutation authority.
 
 ## Goal and implementation context boundary
 
