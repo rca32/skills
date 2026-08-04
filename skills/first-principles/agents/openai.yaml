@@ -1,0 +1,6 @@
+interface:
+  display_name: "First Principles"
+  short_description: "Challenge assumptions before consequential decisions"
+  default_prompt: "Use $first-principles to reframe this decision from observed facts and fixed constraints."
+policy:
+  allow_implicit_invocation: false
