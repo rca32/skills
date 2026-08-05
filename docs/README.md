@@ -8,6 +8,7 @@
 
 | 하고 싶은 일 | 사용할 스킬 | 쉬운 설명 |
 | --- | --- | --- |
+| 마지막 답변을 쉽게 다시 표현 | `bro` | [마지막 메시지를 쉽게 다시 말하기](skills/bro.md) |
 | 새 이슈를 분류하고 작업 가능한 상태인지 확인 | `prepare-issue` | [개발 이슈 준비하기](skills/prepare-issue.md) |
 | 중요한 결정의 문제 정의와 상속된 전제를 재검토 | `first-principles` | [근본 사실에서 결정을 다시 세우기](skills/first-principles.md) |
 | module interface나 seam을 설계 | `codebase-design` | [깊은 module interface 설계하기](skills/codebase-design.md) |

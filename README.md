@@ -20,6 +20,7 @@
 
 | 스킬 | 이런 때 사용합니다 | 하는 일 |
 | --- | --- | --- |
+| `bro` | 마지막 메시지를 쉽게 다시 말해 달라고 할 때 | 전문 용어를 빼고 핵심 의미를 유지한 채 더 간단하고 자연스럽게 다시 씁니다. |
 | `prepare-issue` | 새 이슈가 모호하거나 정말 작업할 준비가 됐는지 모르겠을 때 | 버그인지 기능 요청인지 분류하고, 실제 문제인지 확인한 뒤 작업 설명을 완성합니다. |
 | `first-principles` | 중요한 제품·기술·업무 결정의 문제 정의나 상속된 전제를 원점에서 다시 검토할 때 | 관측 사실·고정 제약·가정·추론·선호를 분리해 최소 방안과 남은 검증을 제안합니다. 명시적으로 호출하며 설계나 구현은 맡지 않습니다. |
 | `codebase-design` | module interface나 seam을 결정하거나 얕은 구조를 합치고 싶을 때 | 여러 설계안을 depth·locality·testability로 비교해 구현 전에 하나를 추천합니다. |
@@ -38,6 +39,7 @@
 
 ```text
 새 요청
+  → bro?                  마지막 메시지를 평이한 말로 다시 표현
   → first-principles?      명시 호출 시 문제 framing과 상속된 전제를 재검토
   → prepare-issue           요청이 실제로 준비됐는지 확인
   → codebase-design?       interface·seam이 미정일 때 추천안을 마련
@@ -94,7 +96,7 @@ GitHub의 담당자 표시만으로는 부족합니다. 여러 세션이 같은 
 
 Codex에게 다음처럼 요청하면 됩니다.
 
-> `rca32/skills` 저장소에서 `work-github-issue`, `prepare-issue`, `first-principles`, `codebase-design`, `to-spec`, `to-tickets`, `documenting-work`, `diagnosing-bugs`, `complexity-optimizer`, `tdd`, `quality-gauntlet`, `code-review`, `writing-great-skills` 스킬을 설치해 줘.
+> `rca32/skills` 저장소에서 `bro`, `work-github-issue`, `prepare-issue`, `first-principles`, `codebase-design`, `to-spec`, `to-tickets`, `documenting-work`, `diagnosing-bugs`, `complexity-optimizer`, `tdd`, `quality-gauntlet`, `code-review`, `writing-great-skills` 스킬을 설치해 줘.
 
 또는 이미 설치된 `skill-installer`로 `skills/<스킬 이름>` 경로를 선택해 설치할 수 있습니다. 설치가 끝난 뒤 새 세션을 시작하면 스킬 목록이 갱신됩니다.
 
@@ -155,6 +157,7 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/work-github-issue/scripts/issue_leas
 
 ```text
 $prepare-issue 이슈 #42가 에이전트가 작업할 만큼 구체적인지 확인해 줘.
+$bro 방금 답변을 전문 용어 없이 더 쉽게 다시 말해 줘.
 $first-principles 마이크로서비스 전환이 정말 필요한지 관측 사실과 고정 제약부터 다시 검토해 줘.
 $codebase-design 이 결제 흐름의 module interface와 seam 대안을 비교하고 하나를 추천해 줘.
 $to-spec 지금까지 합의한 결제 재시도 정책을 명세로 정리해 줘.
@@ -169,7 +172,7 @@ $code-review 커밋 전 현재 작업 전체를 규칙과 명세 기준으로 �
 $writing-great-skills 이 스킬의 호출 조건과 완료 기준을 더 예측 가능하게 고쳐 줘.
 ```
 
-`prepare-issue`, `first-principles`, `to-spec`, `to-tickets`는 의도하지 않은 workflow 선택이나 이슈 변경을 피하기 위해, `quality-gauntlet`은 고비용 다중 에이전트 반복을 뜻하기 때문에 이름을 직접 불러 사용하는 방식입니다. 또한 “검토해 줘”, “초안을 만들어 줘”는 외부 게시 권한을 뜻하지 않습니다. 이슈 생성·라벨 변경·게시까지 원한다면 요청에 분명히 포함해야 합니다.
+`bro`, `prepare-issue`, `first-principles`, `to-spec`, `to-tickets`는 의도하지 않은 workflow 선택이나 이슈 변경을 피하기 위해, `quality-gauntlet`은 고비용 다중 에이전트 반복을 뜻하기 때문에 이름을 직접 불러 사용하는 방식입니다. 또한 “검토해 줘”, “초안을 만들어 줘”는 외부 게시 권한을 뜻하지 않습니다. 이슈 생성·라벨 변경·게시까지 원한다면 요청에 분명히 포함해야 합니다.
 
 ## 저장소를 관리할 때
 
