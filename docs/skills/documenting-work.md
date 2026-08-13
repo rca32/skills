@@ -4,7 +4,7 @@
 
 ## 한마디로
 
-도메인 모델, 명세, 결정, 조사, 진단, 리뷰 같은 개발 지식을 **어디에 얼마나 오래 보관하고 무엇을 원본으로 삼을지** 결정하는 스킬입니다.
+도메인 모델, 명세, 결정, 조사, 진단, 리뷰와 통제된 파생 설명을 **어디에 얼마나 오래 보관하고 무엇을 원본으로 삼을지** 결정하는 스킬입니다.
 
 같은 내용을 GitHub, Markdown 파일과 실행 결과에 여러 벌로 복사하면 곧 서로 달라집니다. 이 스킬은 권위 있는 원본을 정확히 하나만 두고 다른 위치에는 링크만 남기게 합니다.
 
@@ -49,6 +49,7 @@
 docs/README.md
 docs/domain.md
 docs/specs/
+docs/spec-explainers/
 docs/decisions/
 docs/research/
 docs/reports/diagnostics/
@@ -58,6 +59,8 @@ docs/reports/reviews/
 원시 로그나 screenshot을 편의상 `docs/`에 넣지는 않습니다. 그런 결과는 artifact 정책을 따릅니다.
 
 `docs/domain.md`는 프로젝트 전체의 안정적인 도메인 모델 ID `domain:project`를 사용하고 날짜나 이슈별 복사본을 만들지 않습니다. 용어·불변식·관계·상태·경계의 실제 내용은 `domain-modeling`이 다루며, 이 스킬은 그 문서의 위치와 수명주기만 결정합니다.
+
+`docs/spec-explainers/`에는 `to-spec`이 만든 사람용 설명만 둡니다. Resolver는 authoritative spec의 `document_id`를 필수 입력으로 받아 같은 source key와 slug를 사용하므로, 설명 제목이 바뀌어도 별도 identity를 만들지 않습니다. 각 파일은 `normative: false`, 원본 spec ID와 정확한 본문 fingerprint를 가지며 독립적으로 수정할 수 없습니다. 원본이 바뀌면 전체를 다시 생성하고, fingerprint가 다르면 오래된 설명으로 취급합니다. 이 예외는 다른 문서 복제를 허용하지 않습니다.
 
 ## 하지 않는 일
 

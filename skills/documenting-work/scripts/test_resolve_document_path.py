@@ -77,6 +77,71 @@ class ResolveDocumentPathTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("project-wide stable identity", result.stderr)
 
+    def test_issue_linked_spec_explainer_mirrors_source_key_and_slug(self) -> None:
+        value = self.resolve(
+            "--kind",
+            "spec-explainer",
+            "--title",
+            "A title that no longer matches the spec",
+            "--issue",
+            "42",
+            "--source-document-id",
+            "spec:issue-42:payment-retry-policy",
+        )
+        self.assertEqual(
+            value["relativePath"],
+            "docs/spec-explainers/issue-42-payment-retry-policy.md",
+        )
+        self.assertEqual(
+            value["documentId"],
+            "spec-explainer:issue-42:payment-retry-policy",
+        )
+        self.assertEqual(value["derivedFrom"], "spec:issue-42:payment-retry-policy")
+        self.assertEqual(
+            value["sourcePath"],
+            "docs/specs/issue-42-payment-retry-policy.md",
+        )
+
+    def test_spec_explainer_rejects_missing_source_spec(self) -> None:
+        result = subprocess.run(
+            [
+                "python3",
+                str(SCRIPT),
+                "--kind",
+                "spec-explainer",
+                "--title",
+                "Orphan",
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("requires --source-document-id", result.stderr)
+
+    def test_spec_explainer_rejects_issue_mismatch(self) -> None:
+        result = subprocess.run(
+            [
+                "python3",
+                str(SCRIPT),
+                "--kind",
+                "spec-explainer",
+                "--title",
+                "Mismatch",
+                "--issue",
+                "41",
+                "--source-document-id",
+                "spec:issue-42:payment-retry-policy",
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("must match", result.stderr)
+
     def test_unlinked_report_uses_date_and_kind_directory(self) -> None:
         value = self.resolve(
             "--kind",

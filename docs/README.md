@@ -13,7 +13,7 @@
 | 중요한 결정의 문제 정의와 상속된 전제를 재검토 | `first-principles` | [근본 사실에서 결정을 다시 세우기](skills/first-principles.md) |
 | 도메인 용어·불변식·상태·경계를 능동적으로 다듬기 | `domain-modeling` | [edge case로 도메인 모델 다듬기](skills/domain-modeling.md) |
 | module interface나 seam을 설계 | `codebase-design` | [깊은 module interface 설계하기](skills/codebase-design.md) |
-| 대화에서 합의한 내용을 명세로 정리 | `to-spec` | [대화를 명세로 바꾸기](skills/to-spec.md) |
+| 합의 내용을 개발 명세와 별도 쉬운 설명으로 정리 | `to-spec` | [대화를 명세로 바꾸기](skills/to-spec.md) |
 | 큰 명세를 작은 구현 이슈로 분해 | `to-tickets` | [명세를 티켓으로 나누기](skills/to-tickets.md) |
 | 문서의 원본 위치와 수명 결정 | `documenting-work` | [개발 문서의 자리 정하기](skills/documenting-work.md) |
 | GitHub 이슈를 충돌 없이 구현 | `work-github-issue` | [GitHub 이슈를 안전하게 맡아 처리하기](skills/work-github-issue.md) |
@@ -44,7 +44,7 @@ first-principles? → prepare-issue → domain-modeling? → codebase-design? �
 - `prepare-issue`는 요청이 실제로 작업할 준비가 됐는지 확인합니다.
 - `domain-modeling`은 설계가 도메인 용어, 불변식, 관계, 상태나 경계를 실제로 바꾸거나 모호함을 해소해야 할 때 예시와 반례로 모델을 검증합니다. 기존 `domain.md`의 어휘를 읽는 것만으로는 실행하지 않습니다.
 - `codebase-design`은 interface나 seam 선택이 열려 있을 때 구현 전에 설계안을 비교하고 하나를 추천합니다. 승인 범위를 넘는 공개 계약 변경은 사용자나 저장소 권위가 수락한 뒤에만 구현하고, 티켓이 범위 안의 설계 재량을 명시적으로 위임했다면 그 안에서는 바로 이어갑니다.
-- `to-spec`은 합의된 범위를 명세로 고정합니다.
+- `to-spec`은 합의된 범위를 작은 개발 명세로 고정하고 별도의 쉬운 설명을 생성합니다. 후속 workflow는 가능하면 설명의 제한된 metadata만 확인하며, 설명 본문을 구현 권위로 소비하지 않습니다.
 - `to-tickets`는 새 계획 결정 없이 분해 가능한지 먼저 확인합니다. 가능하면 의존성이 분명한 작은 작업으로 나누고, 불가능하면 티켓을 만들지 않은 채 적절한 설계·명세 workflow로 돌려보냅니다.
 - `work-github-issue`는 한 세션만 이슈를 맡도록 조정하고 완료나 인계까지 책임집니다.
 - 원인을 모르면 `diagnosing-bugs`, 복잡도·성능 hotspot을 찾거나 개선하면 `complexity-optimizer`, 도메인 의미를 바꿔야 하는 모호함이 드러나면 `domain-modeling`, module 구조 선택이 남아 있으면 `codebase-design`, 구현할 행동과 seam이 정해졌으면 `tdd`, 명시된 비교 품질 기준까지 반복 개선해야 하면 `quality-gauntlet`, 구현이 끝났으면 `code-review`를 안쪽 과정으로 사용합니다.

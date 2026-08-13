@@ -15,7 +15,9 @@ Treat every repository change made to satisfy an issue as issue-backed, includin
 
 ## Establish the seam
 
-1. Read the request, repository instructions, nearby tests, and domain or architecture documents relevant to the change.
+Before deriving behavior, reject a source that declares `kind: "spec-explainer"`, `normative: false`, or an equivalent non-normative warning. Read only enough metadata to resolve `derived_from`; never use explainer prose as a requirement, expected value, edge case, or test oracle. Continue only from the exact authoritative spec or ticket. If it is absent or ambiguous, return to planning without editing.
+
+1. Read the request, authoritative ticket or spec, repository instructions, nearby tests, and domain or architecture documents relevant to the change.
 2. Name the public seam through which a caller observes the behavior: a public function, command, HTTP endpoint, event, rendered interaction, or another stable contract.
 3. Derive the seam from the existing contract when it is clear. When two or more materially different module seams would change a public API, accepted architecture, ticket boundaries, dependencies, or material test cost, use `codebase-design` before the first Red. Proceed with a resolved private in-bounds choice; return to planning only for an unresolved contract change.
 4. State the seam and first observable behavior before editing.

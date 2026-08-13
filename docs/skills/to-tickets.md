@@ -24,6 +24,8 @@
 
 승인된 명세, 관련 결정 기록과 저장소의 domain 문서를 읽고 새 공개 동작·interface·architecture·dependency를 선택하지 않아도 안정적인 티켓 경계, 검증 seam과 blocker를 만들 수 있는지 먼저 확인합니다. 내부 helper처럼 승인된 경계를 보존하는 private 구현 선택은 작업자에게 맡기고 분해를 계속합니다.
 
+`kind: spec-explainer` 또는 `normative: false`인 사람용 설명은 명세 원본으로 사용하지 않습니다. 그런 문서가 입력되면 본문을 요구사항으로 읽지 않고 `derived_from`이 가리키는 authoritative spec을 정확히 찾은 뒤에만 분해를 다시 시작합니다.
+
 반대로 새 계획 결정이 필요하면 티켓 초안이나 planning lease를 만들지 않고 `decomposition-blocked`로 끝냅니다. 승인 대상 계약을 새로 정하거나 바꾸는 module interface나 architectural seam은 `codebase-design`의 읽기 전용 추천을 거쳐 `to-spec`에서 확정하고, 제품 동작·authority·안전·인수 조건과 그 밖의 공개 interface·protocol·dependency 선택은 `to-spec`과 해당 승인 권위로 돌려보냅니다. 승인된 원본이나 결정 집합이 갱신되어 새 fingerprint가 생긴 뒤에만 처음부터 다시 분해합니다. 기존 계약을 보존하는 private helper나 내부 library 선택은 차단하지 않습니다.
 
 이슈 제목과 본문은 저장소 또는 사용자가 정한 언어로 작성하고, 별도 지정이 없으면 한국어를 사용합니다. 제목, 완료 조건, 제외 범위와 안내 문구는 이해하기 쉬운 한국어로 쓰되 API 이름, 코드 식별자, 링크와 자동화 marker는 원문 그대로 유지합니다.

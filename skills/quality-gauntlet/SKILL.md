@@ -29,6 +29,13 @@ authority.
 - Keep final Standards and Spec assessment with `code-review`. A gauntlet critic
   judges comparative quality; it does not certify repository compliance or
   requirement completeness.
+- A document declaring `kind: "spec-explainer"`, `normative: false`, or an
+  equivalent warning cannot define mandatory requirements or a quality bar for
+  another artifact. Resolve and use its authoritative `derived_from` source.
+  The explainer may itself be evaluated, but a builder must not edit it
+  independently. Any accepted candidate must be regenerated from the frozen
+  authority through the `to-spec` explainer and fingerprint lifecycle; its
+  prose still cannot change product behavior.
 - Do not commit, push, open or merge a pull request, mutate a tracker, publish
   evidence, or create a durable progress document. Use `documenting-work` when
   the user explicitly requests a persistent progress surface or report.

@@ -25,7 +25,7 @@
 | `first-principles` | 중요한 제품·기술·업무 결정의 문제 정의나 상속된 전제를 원점에서 다시 검토할 때 | 관측 사실·고정 제약·가정·추론·선호를 분리해 최소 방안과 남은 검증을 제안합니다. 명시적으로 호출하며 설계나 구현은 맡지 않습니다. |
 | `domain-modeling` | 설계 중 도메인 용어·불변식·상태·경계의 의미를 적극적으로 다듬을 때 | 예시·반례·edge case로 모델을 검증하고, 합의된 변경과 제안을 구분해 다음 명세와 구현이 같은 의미를 사용하게 합니다. |
 | `codebase-design` | module interface나 seam을 결정하거나 얕은 구조를 합치고 싶을 때 | 여러 설계안을 depth·locality·testability로 비교해 구현 전에 하나를 추천합니다. |
-| `to-spec` | 대화에서 결정한 내용을 문서로 정리하고 싶을 때 | 이미 합의된 내용만 모아 제품·개발 명세를 만듭니다. 모르는 요구사항을 임의로 만들지 않습니다. |
+| `to-spec` | 대화에서 결정한 내용을 문서로 정리하고 싶을 때 | 개발 기준이 되는 작은 명세와, 그 명세에서만 파생된 별도의 쉬운 설명을 만듭니다. |
 | `to-tickets` | 하나의 명세가 커서 여러 작업으로 나눠야 할 때 | 새 설계 결정을 하지 않고 분해 가능한지 먼저 확인한 뒤 작은 이슈와 선행 관계를 만듭니다. 설계가 미정이면 티켓 생성 전에 중단합니다. |
 | `documenting-work` | 명세·결정·진단·리뷰를 어디에 남겨야 할지 정할 때 | 대화, GitHub, 저장소 문서, 실행 artifact 중 원본 하나를 정하고 표준 위치·이름·인덱스를 적용합니다. |
 | `work-github-issue` | GitHub 이슈를 실제로 시작하거나 지속 goal에서 여러 이슈를 처리할 때 | goal thread는 조정만 맡고 이슈마다 새 worker를 시작합니다. worker는 전용 임대로 충돌을 막으며 검증·리뷰·PR 병합·정리까지 한 이슈만 완료합니다. |
@@ -80,13 +80,14 @@
 docs/README.md                          문서 인덱스
 docs/domain.md                          프로젝트 도메인 모델과 용어
 docs/specs/                             제품·개발 명세
+docs/spec-explainers/                   명세에서 파생된 비규범적 쉬운 설명
 docs/decisions/                         아키텍처·제품 결정
 docs/research/                          장기 보관할 조사 결과
 docs/reports/diagnostics/               요청받은 진단 보고서
 docs/reports/reviews/                   요청받은 코드 리뷰 보고서
 ```
 
-이슈와 연결된 파일은 `issue-42-payment-retry.md`, 연결된 이슈가 없으면 `2026-07-13-payment-retry.md`처럼 이름을 만듭니다. 같은 지식을 GitHub와 Markdown 양쪽에 복사하지 않고, 원본이 아닌 쪽에는 링크만 남깁니다. 프로젝트의 `AGENTS.md`, 문서 인덱스, 기존 ADR 규칙이 있다면 항상 그 규칙이 fallback보다 우선합니다.
+이슈와 연결된 파일은 `issue-42-payment-retry.md`, 연결된 이슈가 없으면 `2026-07-13-payment-retry.md`처럼 이름을 만듭니다. 같은 지식을 GitHub와 Markdown 양쪽에 복사하지 않고, 원본이 아닌 쪽에는 링크만 남깁니다. 단, `to-spec`의 쉬운 설명은 원본 명세 ID와 정확한 본문 fingerprint에 묶인 명시적 파생물로 허용됩니다. 구현·티켓·테스트·리뷰는 `docs/spec-explainers/`를 요구사항 원본으로 읽지 않습니다. 프로젝트의 `AGENTS.md`, 문서 인덱스, 기존 ADR 규칙이 있다면 항상 그 규칙이 fallback보다 우선합니다.
 
 ## 같은 계정을 쓰는 여러 에이전트가 왜 충돌하지 않나요?
 
@@ -202,6 +203,8 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_
 python3 skills/work-github-issue/scripts/test_issue_lease.py -v
 python3 skills/work-github-issue/scripts/test_configure_luna_worker.py -v
 python3 skills/to-tickets/scripts/test_source_fingerprint.py -v
+python3 skills/to-spec/scripts/test_fingerprint_spec.py -v
+python3 skills/to-spec/scripts/test_envelope_artifact.py -v
 python3 skills/documenting-work/scripts/test_resolve_document_path.py -v
 python3 skills/complexity-optimizer/scripts/test_analyze_complexity.py -v
 python3 skills/complexity-optimizer/scripts/analyze_complexity.py . --format json

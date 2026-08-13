@@ -16,6 +16,8 @@
 
 원인을 아직 모르는 실패라면 먼저 `diagnosing-bugs`를 사용합니다.
 
+`to-spec`이 만든 쉬운 설명은 테스트 근거가 아닙니다. `kind: spec-explainer` 또는 `normative: false` 문서가 주어지면 설명 본문에서 동작이나 기대값을 가져오지 않고 `derived_from`이 가리키는 authoritative spec 또는 승인된 티켓을 사용합니다.
+
 ## 공개 seam부터 정합니다
 
 seam은 외부 호출자가 동작을 관찰하는 안정적인 접점입니다. 예를 들면 다음과 같습니다.

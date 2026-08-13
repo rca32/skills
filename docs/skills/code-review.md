@@ -31,6 +31,8 @@
 
 사용자가 준 이슈, PRD, 인수 조건 또는 명세를 기준으로 봅니다. 구현 코드를 보고 요구사항을 거꾸로 추측하지 않습니다. 권위 있는 명세를 찾지 못하면 합격으로 처리하지 않고 `Not evaluated`라고 표시합니다.
 
+`kind: spec-explainer` 또는 `normative: false`인 쉬운 설명은 Spec 기준이 될 수 없습니다. 해당 파일의 `derived_from`으로 authoritative spec을 정확히 찾지 못하면 설명을 요구사항으로 바꾸지 않고 Spec 축을 `Not evaluated`로 둡니다.
+
 가능하면 두 개의 깨끗한 reviewer context가 같은 고정 snapshot을 서로의 결론을 보지 않고 각각 검토합니다. 독립 검토가 불가능하면 한 사람이 두 기준을 봤다고 가장하지 않고 그 제한을 보고합니다.
 
 ## 어떤 내용만 finding이 되나요?

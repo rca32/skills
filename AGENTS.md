@@ -38,9 +38,9 @@ Companion skills have deliberately narrower authority:
 | `prepare-issue` | Intake, claim verification, category/state recommendation, authorized labels/comments, durable readiness brief | Implementation lease, code changes, completion evidence |
 | `domain-modeling` | Active domain-language, example, invariant, relationship, state, and boundary analysis with explicit resolution status | Requirements invention, module-interface design, document placement, tracker or lease mutation, implementation |
 | `codebase-design` | Read-only module-interface and architectural-seam exploration, comparison, and recommendation | Code edits, spec or ticket persistence, tracker or lease mutation, implementation, completed-change review |
-| `to-spec` | Conversation synthesis, planning spec, settled verification-seam recording, explicit assumptions/open questions | Invented requirements, unresolved module-interface design, implementation readiness, ticket claim |
+| `to-spec` | Conversation synthesis, compact normative planning spec, settled verification-seam recording, explicit assumptions/open questions, fingerprint-bound non-normative explainer | Invented requirements, unresolved module-interface design, implementation readiness, ticket claim, explainer-as-authority |
 | `to-tickets` | Authorized two-phase ticket creation, parent/dependency links, graph validation, readiness-state preparation | Ticket claim, implementation evidence, parent completion |
-| `documenting-work` | Persistence tier, single authority, repository fallback path, document identity, metadata, index, pointers, and document lifecycle | Domain content, tracker lifecycle, leases, publication authorization |
+| `documenting-work` | Persistence tier, single authority, repository fallback path, document identity, metadata, index, pointers, document lifecycle, and controlled derived-representation identity/fingerprint | Domain content, tracker lifecycle, leases, publication authorization |
 | `diagnosing-bugs` | Reproduction, minimization, falsifiable diagnosis, and an authorized fix branch | Tracker or lease mutation, unsafe production reproduction, fixes under diagnose-only authorization |
 | `complexity-optimizer` | Read-only hotspot analysis and explicitly authorized behavior-preserving optimization | Unknown-cause performance diagnosis, tracker or lease mutation, commit, push, publication |
 | `tdd` | Public-seam red-green-refactor implementation after outer authorization | Lease management, tracker mutation, commit, push, publication |
@@ -53,15 +53,17 @@ Every tracker or other shared external planning mutation must be serialized by a
 
 ## Document-output contract
 
-`documenting-work` is the single source of truth for where durable development documents live. Before another skill writes a domain model, spec, decision, research note, diagnosis, review, handoff, or evidence artifact, it must resolve:
+`documenting-work` is the single source of truth for where durable development documents and controlled derived representations live. Before another skill writes a domain model, spec, spec explainer, decision, research note, diagnosis, review, handoff, or evidence artifact, it must resolve:
 
 1. persistence tier: conversation, tracker, repository, or artifact;
 2. exactly one authoritative body;
 3. repository path/document ID only when repository persistence is selected;
-4. metadata, index, pointer, update, and supersession behavior;
+4. metadata, index, pointer, derived-representation binding, update, and supersession behavior;
 5. write authorization, plus an outer planning/implementation lease only for tracker, other shared external, or already-leased issue implementation writes.
 
 Consuming-repository documentation instructions override the bundled fallback. Without a local convention, use `documenting-work/references/document-contract.md` and its resolver. Tracker-authoritative briefs, tickets, evidence, and issue handoffs must not be copied into editable Markdown bodies. Conversation-only reports create no file. Generated runtime output follows the repository artifact/retention contract, not `docs/`.
+
+A `spec-explainer` is the only bundled richer derived-document exception. It must be stored separately from the normative spec, declare `normative: false`, identify the source authority, bind to its exact body fingerprint, and remain excluded from ticket decomposition, module design, implementation, test derivation, quality bars, and Spec review authority. It may summarize but never add normative meaning.
 
 ## Runtime prerequisites
 

@@ -1,6 +1,6 @@
 interface:
   display_name: "Conversation to Spec"
-  short_description: "Synthesize settled discussion into a decomposition-ready spec"
-  default_prompt: "Use $to-spec to turn this settled discussion into a precise spec without inventing requirements."
+  short_description: "Create a precise spec and separate human explainer"
+  default_prompt: "Use $to-spec to turn this settled discussion into a precise spec and separate non-normative human explainer."
 policy:
   allow_implicit_invocation: false

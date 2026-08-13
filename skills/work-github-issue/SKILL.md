@@ -62,6 +62,16 @@ rereads the repository instructions and this skill, then owns readiness
 revalidation, lease claim, implementation, review, publication, cleanup,
 evidence, and release end to end.
 
+Before loading an external acceptance/spec body into the brief or treating it
+as readiness evidence, inspect its bounded metadata or warning. A source marked
+`kind: "spec-explainer"`, `normative: false`, or equivalently non-authoritative
+is never implementation authority. Do not load or summarize its prose. Resolve
+its `derived_from` exactly once, require that identity to select one current
+authoritative spec, and continue only from that source. Do not follow another
+derived chain. If the authority is absent, ambiguous, stale, or itself
+non-normative, the issue is not ready and no implementation lease may be
+claimed. Put only the authoritative spec identity in the worker brief.
+
 A session invoked directly and dedicated to one named issue may itself be the
 implementation worker only when it is not also acting as a goal coordinator and
 does not carry another issue's implementation transcript. It still owns exactly
@@ -178,7 +188,8 @@ that needs the missing field and report the exact decision required.
 
 Completion criterion: the issue snapshot satisfies the tracker contract and its
 requested outcome plus acceptance criteria are present in the body or an
-identified brief/spec and the execution contract is resolved. Workspace
+identified authoritative brief/spec and the execution contract is resolved. A
+non-normative explainer cannot satisfy this criterion. Workspace
 provenance is recorded; publication and cleanup fields may remain deferred until
 their first consequential operation.
 

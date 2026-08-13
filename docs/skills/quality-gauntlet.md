@@ -33,6 +33,8 @@
 
 레퍼런스가 요구사항을 새로 만들거나 보호된 표현을 그대로 복사할 권한을 주지는 않습니다.
 
+`kind: spec-explainer` 또는 `normative: false`인 쉬운 설명은 다른 산출물의 필수 조건이나 품질 기준이 될 수 없습니다. 그 경우 `derived_from`의 authoritative spec을 사용합니다. 쉬운 설명 자체는 평가할 수 있지만 독립 편집하지 않으며, 채택할 후보는 고정된 원본 명세에서 `to-spec`의 fingerprint lifecycle로 다시 생성해야 합니다.
+
 ## 어떻게 반복하나요?
 
 lead는 산출물을 독립적으로 바꾸고 평가할 수 있는 임시 improvement cell로 나눕니다. 이 cell은 실행 중 메모일 뿐 GitHub 티켓이 아닙니다.

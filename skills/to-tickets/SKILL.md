@@ -9,15 +9,18 @@ Turn an approved source into small, verifiable tracer bullets. This skill may cr
 
 ## Preconditions
 
-1. Read the full approved spec or plan, including comments and linked decisions.
-2. Read repository tracker instructions and domain documentation. The repository contract overrides all label and dependency examples here.
-3. Pass the decomposition-readiness gate below before drafting.
-4. Resolve the human-facing prose language from repository instructions, then the user's request, and otherwise use Korean. Keep protocol markers, code identifiers, API names, and role keys stable, but write titles, bodies, comments, and human instructions in the resolved language. Resolve label identity only from the selected tracker contract; the bundled fallback publishes Korean labels and accepts legacy English labels only for compatibility. The approved source's language alone is not an output-language request.
-5. Draft only unless the user explicitly requested tracker publication.
-6. For authorized publication, follow the source revalidation and `planning` lease sequence under **Publish in two phases**. Check the lease before every mutation batch, renew around long publication, and release only after all tracker writes have been read back with no unknown result.
-7. Treat the tracker graph as authoritative. If the user requests a local export or pointer, resolve it with `documenting-work`; never maintain a second editable ticket body.
+1. Inspect candidate metadata and apply the non-normative-source gate below before loading its body.
+2. Read the full approved authoritative spec or plan, including comments and linked decisions.
+3. Read repository tracker instructions and domain documentation. The repository contract overrides all label and dependency examples here.
+4. Pass the decomposition-readiness gate below before drafting.
+5. Resolve the human-facing prose language from repository instructions, then the user's request, and otherwise use Korean. Keep protocol markers, code identifiers, API names, and role keys stable, but write titles, bodies, comments, and human instructions in the resolved language. Resolve label identity only from the selected tracker contract; the bundled fallback publishes Korean labels and accepts legacy English labels only for compatibility. The approved source's language alone is not an output-language request.
+6. Draft only unless the user explicitly requested tracker publication.
+7. For authorized publication, follow the source revalidation and `planning` lease sequence under **Publish in two phases**. Check the lease before every mutation batch, renew around long publication, and release only after all tracker writes have been read back with no unknown result.
+8. Treat the tracker graph as authoritative. If the user requests a local export or pointer, resolve it with `documenting-work`; never maintain a second editable ticket body.
 
 ## Gate decomposition readiness
+
+Before reading a candidate as planning authority, inspect its metadata and warning banner. If it declares `kind: "spec-explainer"`, `normative: false`, or otherwise identifies itself as a derived human explanation, do not use its body, fingerprint it as a source, draft tickets, or acquire a lease. Return `status=non-normative-source`, its `derived_from` pointer, the authoritative source that must be selected, and `resume_condition=authoritative-source-read`. If that source cannot be resolved exactly once, stop rather than inferring requirements from the explanation.
 
 Before drafting, reject any selected source or decision body containing credentials,
 tokens, private issue data, or other sensitive material. Do not hash or redact it

@@ -8,6 +8,8 @@
 
 `codebase-design`은 코드를 직접 고치지 않습니다. 현재 호출자, 테스트, dependency와 architecture 결정을 읽고 설계안을 추천한 뒤, 명세화는 `to-spec`, 구현은 `tdd`, 이슈 생명주기는 `work-github-issue`에 넘깁니다. 승인된 동작·공개 interface·architecture·티켓 경계·dependency를 보존하는 private module-shape 선택은 구현자에게 기본 위임됩니다. 이 경계를 넘는 변경만 해당 권위가 수락하기 전까지 제안 상태로 둡니다.
 
+`kind: spec-explainer` 또는 `normative: false`인 쉬운 설명은 설계 제약이 아닙니다. `derived_from`의 authoritative spec만 읽어 interface와 seam을 결정합니다.
+
 ## 언제 사용하나요?
 
 - 여러 shallow module에 흩어진 정책을 하나의 deep module로 모을 때

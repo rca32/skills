@@ -1,68 +1,56 @@
-# Spec template
+# Authoritative spec template
 
-Write the spec in the language requested by the repository or user. When
-neither specifies one, use Korean. Preserve quoted source text, code
-identifiers, API names, links, and protocol markers exactly.
+Write a compact development contract, not an onboarding narrative. Use the language requested by the repository or user; otherwise use Korean. Preserve quoted source text, identifiers, API names, links, and protocol markers exactly.
 
 ```markdown
 <!-- work-github-issue:state role=<needs-triage|ready-for-human> -->
 
 # <결과 중심 제목>
 
-## 상태와 근거
+## 권위와 상태
 
 - 상태: 초안 | 승인됨 | 미해결 질문으로 차단됨
-- 원본 대화 또는 상위 이슈:
-- 관련 도메인 또는 아키텍처 결정:
+- 원본: <대화, 상위 이슈 또는 결정>
+- 적용 결정: <도메인·아키텍처 결정 ID 또는 링크>
 
-## 문제
+## 문제와 결과
 
-<사용자 또는 운영자가 겪는 문제와 실제로 존재한다는 증거>
+- EVID-001: <문제가 실제로 존재한다는 관찰 또는 권위 있는 근거>
+- OUT-001: <구현 방법을 정하지 않은 관찰 가능한 성공 상태>
 
-## 원하는 결과
+## 동작 계약
 
-<내부 구현 방법을 정하지 않고 성공한 상태를 설명>
+- REQ-001: <정상 동작과 적용 조건>
+- REQ-002: <실패·복구·권한·호환성 경계>
+- REQ-003: <이미 승인된 데이터 또는 공개 인터페이스 계약>
 
-## 사용자와 시나리오
+## 시나리오
 
-1. <구체적인 사용자>는 <동작>을 원한다. 그러면 <얻는 효과>가 있다.
+- SCN-001 [REQ-001]: Given <상태>, when <행동>, then <관찰 결과>.
+- SCN-002 [REQ-002]: Given <경계 또는 실패 상태>, when <행동>, then <안전한 결과>.
 
-<관련 있는 정상·실패·복구·권한·호환성 시나리오만 포함>
+## 구현 제약
 
-## 동작 요구사항
+- CON-001: <승인된 아키텍처, 소유권 또는 호환성 제약> — 근거: <authority>
 
-- <필수 동작과 경계 조건>
-- <오류·안전·호환성 동작>
-- <이미 결정된 데이터 또는 인터페이스 계약>
+## 검증 계약
 
-## 구현 결정
-
-- <승인된 아키텍처 또는 소유권 결정>
-- <구현이 지켜야 하는 제약>
-
-## 테스트 결정
-
-- 가장 높은 공개 검증 지점:
-- 기존 테스트 선례:
-- 필요한 실패·회귀 검증:
-
-## 완료 조건
-
-- [ ] <관찰 가능한 제품 또는 시스템 결과>
-- [ ] <관찰 가능한 실패 또는 호환성 결과>
-- [ ] <필요한 검증 증거>
+- 검증 seam: <가장 높은 기존 공개 지점과 충분한 이유>
+- AC-001 [REQ-001, SCN-001]: <관찰 가능한 완료 조건>
+- AC-002 [REQ-002, SCN-002]: <관찰 가능한 실패·호환성 조건>
+- 증거: <필요한 테스트, 명령 또는 artifact 종류>
 
 ## 범위 밖
 
-- <명시적으로 제외한 인접 작업>
+- OUT-OF-SCOPE-001: <명시적으로 제외한 인접 작업>
 
 ## 가정
 
-- <진행할 수 있을 만큼 근거가 있는 가정>
+- ASM-001: <근거가 있으며 틀릴 경우 영향이 명시된 가정>
 
 ## 미해결 질문
 
-- <미해결 질문 — 답이 없을 때의 영향>
+- Q-001: <질문> — 영향: <답이 없을 때 차단되는 요구사항 또는 분해>
 
 ## 사람에게 필요한 도움
 
@@ -72,27 +60,25 @@ identifiers, API names, links, and protocol markers exactly.
 
 **요청 종류:** <질문 | 결정 | 승인 | 권한 부여 | 병합 | 수동 작업 | 검토>
 
-**대상:** <질문할 항목, 명세, 결정 또는 시스템을 정확히 식별>
+**대상:** <질문할 항목, 명세, 결정 또는 시스템>
 
 ### 해 주실 일
 
-- [ ] <위 대상을 직접 이름 붙인 구체적인 행동 하나>
+- [ ] <위 대상을 직접 이름 붙인 행동 하나>
 
-**답변/결과를 남길 곳:** <이슈 댓글, 연결된 PR 리뷰 또는 지정 시스템>
+**답변/결과를 남길 곳:** <이슈 댓글, PR 리뷰 또는 지정 시스템>
 
-**추천 댓글:** <위의 정확한 명세 또는 계획 대상> — 결과: [승인 | 수정 요청]. 판단 근거: [작성]. 완료 증거: [링크 붙여넣기].
+**추천 댓글:** <정확한 대상> — 결과: [승인 | 수정 요청]. 판단 근거: [작성]. 완료 증거: [링크 붙여넣기].
 
-**완료 조건:** <요청한 판단이나 작업이 끝났다고 볼 수 있는 관찰 가능한 조건>
+**완료 조건:** <관찰 가능한 완료 상태>
 
-**완료 증거:** <이슈 댓글 URL, 결정 링크, 리뷰 링크 또는 기록 ID>
+**완료 증거:** <댓글 URL, 결정 링크, 리뷰 링크 또는 기록 ID>
 
 **완료 후 상태:** <승인 댓글을 남기고 `상태: 사람 검토 필요`를 유지한 채 `$to-tickets` 게시 요청>
 
 **전환 담당:** prepare-issue
 ```
 
-Omit empty scenario categories, but never omit material unknowns. A long list is not a substitute for traceability or observable criteria.
+Omit empty scenario categories and sections that have no semantic content, except material unknowns. Keep each meaning once and cross-reference its ID. A long list is not traceability.
 
-Omit `## 사람에게 필요한 도움` only when the selected persistence and state
-require no human action. A tracker-published fallback planning issue in `상태:
-사람 검토 필요` must fill it, including its copy-ready `추천 댓글`.
+Include `사람에게 필요한 도움` only when the selected persistence and tracker state require it. A fallback tracker planning issue in `상태: 사람 검토 필요` must fill every field, including the copy-ready recommended comment.

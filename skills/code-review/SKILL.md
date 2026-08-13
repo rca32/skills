@@ -123,6 +123,8 @@ tests. Record exactly which source is authoritative. Do not infer requirements
 from the implementation itself, and do not mutate the tracker while reading
 context.
 
+A document declaring `kind: "spec-explainer"`, `normative: false`, or an equivalent non-normative warning is never Spec authority. Read only enough of it to resolve `derived_from`, then inspect the exact authoritative spec and record that identity instead. If the authoritative source is absent, ambiguous, or cannot be fingerprinted as supplied, report Spec `Not evaluated`; do not convert explainer prose into review requirements.
+
 ## 3. Run separate reviews
 
 Treat reviewer cleanliness as a **context boundary**, not merely a clean
