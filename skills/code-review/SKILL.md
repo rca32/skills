@@ -125,6 +125,8 @@ context.
 
 A document declaring `kind: "spec-explainer"`, `normative: false`, or an equivalent non-normative warning is never Spec authority. Read only enough of it to resolve `derived_from`, then inspect the exact authoritative spec and record that identity instead. If the authoritative source is absent, ambiguous, or cannot be fingerprinted as supplied, report Spec `Not evaluated`; do not convert explainer prose into review requirements.
 
+A `local-work` entry point or item may supply the reviewed fixed point, path scope, progress, and verification pointers, but it remains non-normative. Resolve its fingerprint-matched `derived_from` spec and use only that spec for the Spec axis.
+
 ## 3. Run separate reviews
 
 Treat reviewer cleanliness as a **context boundary**, not merely a clean

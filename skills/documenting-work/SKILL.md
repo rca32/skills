@@ -1,6 +1,6 @@
 ---
 name: documenting-work
-description: Resolve the authority, durability, location, name, metadata, index, and lifecycle of development documents and controlled derived representations. Use when Codex or another skill is about to create, save, or publish a spec, non-normative spec explainer, domain model, decision, research note, diagnosis, code-review report, handoff, or evidence artifact, especially when the repository does not state where that document belongs.
+description: Resolve the authority, durability, location, name, metadata, index, and lifecycle of development documents and controlled document sets or derived representations. Use when Codex or another skill is about to create, save, or publish a spec, non-normative spec explainer, decision map, local-work set, domain model, decision, research note, diagnosis, code-review report, handoff, or evidence artifact, especially when the repository does not state where that document belongs.
 ---
 
 # Documenting development work
@@ -13,7 +13,7 @@ Choose one tier before writing:
 
 - **Conversation:** analysis, draft, diagnosis, or review needed only for the current interaction. Return it in the response; create no file.
 - **Tracker:** issue brief, ticket graph, implementation evidence, or issue-backed handoff whose lifecycle is owned by GitHub. Store it in the issue, PR, comment, or native relationship.
-- **Repository:** approved knowledge that must be reviewed and versioned with the code, such as a domain model, spec, decision, durable research result, or explicitly controlled derived explainer.
+- **Repository:** approved knowledge or local coordination state that must be reviewed and versioned with the code, such as a domain model, spec, decision map, local-work set, decision, durable research result, or explicitly controlled derivative.
 - **Artifact store:** generated logs, traces, screenshots, benchmark output, or run evidence. Use the repository's artifact system and retention policy; do not turn raw output into product documentation.
 
 A request to inspect, explain, review, or draft selects `Conversation` unless the user or repository contract requests persistence. A request to save, record, publish, or create a named repository document authorizes that document plus locally required index entries and in-repository reciprocal links. Tracker comments, issue edits, and other external pointers require separate mutation authorization.
@@ -33,7 +33,12 @@ Inspect repository instructions, documentation roots and indexes, issue-tracker 
 
 Name the authority as `conversation`, `tracker`, `repository`, or `artifact`. A pointer representation contains only a title, status, authoritative link/path, and enough context to follow it. Never copy the full authoritative body into a second system “for convenience.”
 
-A spec explainer is the one permitted richer derived representation. It must be separately loadable, declare `kind: "spec-explainer"` and `normative: false`, identify the authoritative spec with `derived_from`, bind to its exact body with `source_fingerprint`, and add no normative meaning. It is never an implementation, ticket, test, or review authority. Other derived-document kinds require a consuming-repository contract or an explicit contract change; do not generalize this exception ad hoc.
+Two bundled controlled projections are permitted:
+
+- A spec explainer is separately loadable, declares `kind: "spec-explainer"` and `normative: false`, identifies the authoritative spec with `derived_from`, binds to its exact body with `source_fingerprint`, and adds no normative meaning. It is never an implementation, ticket, test, or review authority.
+- A local-work set declares `kind: "local-work"` or `local-work-item`, `normative: false`, one `derived_from` repository spec, and the exact `source_fingerprint`. It may control execution order, writable scope, progress, and evidence while behavior remains authoritative only in the spec.
+
+A decision map is not a duplicated projection: its entry point is an index and each decision document is the sole authority for that decision. Other richer document kinds require a consuming-repository contract or an explicit contract change; do not generalize these exceptions ad hoc.
 
 Use stable identity:
 
@@ -48,20 +53,20 @@ Use the bundled resolver only after choosing `Repository` and confirming that th
 
 ```bash
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/documenting-work/scripts/resolve_document_path.py" \
-  --kind <domain|spec|spec-explainer|decision|research|diagnosis|review> \
+  --kind <domain|spec|spec-explainer|decision-map|local-work|decision|research|diagnosis|review> \
   --title "<title>" [--issue <number>] [--date YYYY-MM-DD] [--root <repo>] \
   [--source-document-id "spec:<source-key>:<slug>"]
 ```
 
 The command returns the stable document ID, relative path, and fallback index. For `domain`, it returns the project-wide identity `domain:project` and `docs/domain.md`; omit `--issue`. It does not create files or override an established convention. Read the fallback matrix and metadata contract before writing.
-For `spec-explainer`, `--source-document-id` is required; the resolver derives the explainer identity and path from that spec ID rather than its title.
+Add `decision-map` or `local-work` to `--kind` for those collection entry points. For `spec-explainer` and `local-work`, `--source-document-id` is required; the resolver derives their identity and path from that spec ID rather than their title. For `decision-map`, it returns a stable collection directory with `map.md` as the entry point.
 
 ## 5. Persist safely
 
 1. Confirm persistence and external-write authorization.
 2. For tracker comments, external pointers, or other shared external writes, have `work-github-issue` acquire the appropriate `planning` or `implementation` lease. An authorized repository-document edit uses the local destination fingerprint and dirty-worktree checks without requiring GitHub; when an implementation lease is already active, continue to respect it.
 3. Record the destination's identity, content fingerprint, index entry, and Git status before editing.
-4. Create or update one authoritative document and only its contract-authorized derived representation. Preserve unrelated edits and repository formatting.
+4. Create or update one authoritative document, one contract-defined document set, or its contract-authorized derived representation. Within a set, keep each body authoritative for only its declared role and use the entry point as an index. Preserve unrelated edits and repository formatting.
 5. Add or update the nearest authoritative index. When the fallback contract is active, use `docs/README.md`.
 6. Put pointers—not duplicated bodies—in the source issue, parent spec, superseded document, or report as required.
 7. Read back the document, metadata, links, and index. Recheck any applicable external lease and the working-tree fingerprint around consequential writes.
@@ -70,7 +75,7 @@ An unknown write result is unresolved. Reconcile identity, content, and index st
 
 ## 6. Maintain the lifecycle
 
-Use `draft`, `active`, `superseded`, or `archived` unless the consuming repository defines another vocabulary. Update `updated` whenever meaning changes. When replacing a non-fixed document, mark the old one `superseded`, link both directions, and keep the old decision readable. For a fixed living document such as the fallback `domain:project`, follow its in-place lifecycle exception in the fallback contract. Never update a spec explainer independently: regenerate it from the exact authoritative spec readback, or report it stale when its fingerprint differs. Archive only under repository lifecycle and retention policy. Deleting an existing document additionally requires explicit destructive authorization, even when retention policy permits deletion.
+Use only states defined by the selected document contract. The fallback uses ordinary `draft|active|completed|stale|superseded|archived` states, adds `blocked|ready-for-spec` for a decision-map entry point, `open|resolved|out-of-scope` for its decision children, and `pending|in-progress|completed|blocked` for local-work items. Update `updated` whenever meaning or controlled state changes. When replacing a non-fixed document, mark the old one `superseded`, link both directions, and keep the old decision readable. For a fixed living document such as the fallback `domain:project`, follow its in-place lifecycle exception in the fallback contract. Never update a spec explainer independently: regenerate it from the exact authoritative spec readback, or report it stale when its fingerprint differs. Mark a local-work set stale on source fingerprint drift and reconcile or regenerate it before execution; never silently rebind its items. Update a decision map and its decision documents in place according to their separate index/detail roles; a resolved decision's `map_projection: pending` is a durable incomplete-update signal. Archive only under repository lifecycle and retention policy. Deleting an existing document additionally requires explicit destructive authorization, even when retention policy permits deletion.
 
 ## Completion check
 
@@ -84,4 +89,4 @@ Report:
 - index updated or the repository rule that makes an index unnecessary;
 - readback, collision, authorization, and lease result.
 
-Completion requires exactly one authoritative body, no unresolved identity collision, no derived representation that can be mistaken for authority, and no unrequested document or artifact.
+Completion requires exactly one authoritative body for each meaning or declared set role, no unresolved identity collision, no derived representation that can be mistaken for product authority, and no unrequested document or artifact.

@@ -142,6 +142,63 @@ class ResolveDocumentPathTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("must match", result.stderr)
 
+    def test_decision_map_uses_collection_entrypoint(self) -> None:
+        value = self.resolve(
+            "--kind",
+            "decision-map",
+            "--title",
+            "Checkout redesign",
+            "--date",
+            "2026-08-13",
+        )
+        self.assertEqual(
+            value["relativePath"],
+            "docs/decision-maps/2026-08-13-checkout-redesign/map.md",
+        )
+        self.assertEqual(
+            value["documentId"], "decision-map:2026-08-13:checkout-redesign"
+        )
+
+    def test_local_work_derives_collection_from_source_spec(self) -> None:
+        value = self.resolve(
+            "--kind",
+            "local-work",
+            "--title",
+            "A renamed work set",
+            "--source-document-id",
+            "spec:issue-42:payment-retry-policy",
+        )
+        self.assertEqual(
+            value["relativePath"],
+            "docs/local-work/issue-42-payment-retry-policy/work.md",
+        )
+        self.assertEqual(
+            value["documentId"], "local-work:issue-42:payment-retry-policy"
+        )
+        self.assertEqual(value["derivedFrom"], "spec:issue-42:payment-retry-policy")
+        self.assertEqual(
+            value["sourcePath"],
+            "docs/specs/issue-42-payment-retry-policy.md",
+        )
+
+    def test_local_work_rejects_missing_source_spec(self) -> None:
+        result = subprocess.run(
+            [
+                "python3",
+                str(SCRIPT),
+                "--kind",
+                "local-work",
+                "--title",
+                "Orphan work",
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("requires --source-document-id", result.stderr)
+
     def test_unlinked_report_uses_date_and_kind_directory(self) -> None:
         value = self.resolve(
             "--kind",

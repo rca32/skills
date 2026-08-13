@@ -1,11 +1,13 @@
 ---
 name: to-tickets
-description: Decompose an approved spec or plan into dependency-safe, vertically complete implementation tickets. Use when the user asks to split settled work into GitHub issues or tracer bullets; stop before drafting when decomposition would require a new public behavior, interface, architecture, or dependency decision, publish only when explicitly requested, and expose readiness only after validating the entire dependency graph.
+description: Decompose an approved spec or plan into dependency-safe, vertically complete GitHub implementation tickets. Use when the user asks to split settled work into shared tracker issues or tracer bullets; stop before drafting when decomposition would require a new public behavior, interface, architecture, or dependency decision, publish only when explicitly requested, and expose readiness only after validating the entire dependency graph. Do not use for the low-overhead repository-local execution path; use local-work instead.
 ---
 
 # Spec to tickets
 
 Turn an approved source into small, verifiable tracer bullets. This skill may create tickets, dependency edges, and readiness labels when publication is authorized. `work-github-issue` supplies the tracker contract, revalidates frontier membership and blockers at claim time, and remains the sole owner of leases, implementation evidence, completion, and handoff.
+
+Select this path only when shared tracker visibility, remote handoff, dependency projection, or collision-safe claims justify the GitHub overhead. For one sequential local implementer, route a repository spec to `local-work` and create no ticket draft here.
 
 ## Preconditions
 

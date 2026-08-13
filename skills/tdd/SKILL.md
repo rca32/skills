@@ -15,7 +15,7 @@ Treat every repository change made to satisfy an issue as issue-backed, includin
 
 ## Establish the seam
 
-Before deriving behavior, reject a source that declares `kind: "spec-explainer"`, `normative: false`, or an equivalent non-normative warning. Read only enough metadata to resolve `derived_from`; never use explainer prose as a requirement, expected value, edge case, or test oracle. Continue only from the exact authoritative spec or ticket. If it is absent or ambiguous, return to planning without editing.
+Before deriving behavior, reject a source that declares `kind: "spec-explainer"` or an equivalent human-explanation warning. For a `local-work-item`, use its scope, source IDs, and verification seam only as execution coordinates; resolve `derived_from` and derive every behavior, expected value, edge case, and test oracle from that exact authoritative spec. Any other `normative: false` input is not behavior authority. If the authority is absent, ambiguous, or fingerprint-mismatched, return to planning without editing.
 
 1. Read the request, authoritative ticket or spec, repository instructions, nearby tests, and domain or architecture documents relevant to the change.
 2. Name the public seam through which a caller observes the behavior: a public function, command, HTTP endpoint, event, rendered interaction, or another stable contract.

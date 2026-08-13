@@ -12,7 +12,7 @@ every session uses the same account.
 Read the configured issue-tracker document before the first tracker write; if
 none exists, use [references/tracker-contract.md](references/tracker-contract.md).
 Read [references/lifecycle.md](references/lifecycle.md) only when the issue is not
-already in the configured `ready-for-agent` role, belongs to a Wayfinder map, or must be split,
+already in the configured `ready-for-agent` role, descends from a decision-map effort, or must be split,
 prepared, handed off, resolved into a parent, or the integration target advances
 from the pre-work fixed point before or after review.
 
@@ -153,9 +153,7 @@ requires.
 
 - Route raw incoming reports through `prepare-issue`.
 - Route a settled multi-session plan through `to-spec` and `to-tickets`.
-- Route a huge foggy effort through `wayfinder` when it is installed; otherwise
-  keep the issue non-ready and report the missing shared map, named ticket,
-  frontier, or fog decision required before implementation.
+- Keep a huge foggy effort non-ready; recommend explicit `decision-map`, then resume after `to-spec` and `to-tickets` produce a claimable graph.
 - Apply the configured tracker document's readiness, frontier, dependency, and
   override contract before selecting implementation work.
 

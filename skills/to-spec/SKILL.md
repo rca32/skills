@@ -12,6 +12,7 @@ Produce one precise development authority and one separately loadable human expl
 - Preserve consuming-repository safety, ownership, documentation, and architecture instructions. Within those boundaries, explicit user product decisions govern the requested outcome, followed by accepted domain and architecture records.
 - Separate confirmed decisions from assumptions and unresolved questions. If product decisions conflict with repository safety or accepted architecture, preserve both claims and keep the spec draft or blocked; never choose silently.
 - Do not reopen discovery or interview the user during this workflow. Record a material unknown in the authoritative spec and make decomposition readiness conditional.
+- When the effort is too large or foggy to state its route-defining questions and settled decisions, stop and recommend `decision-map`; consume its resolved decision documents only after that map is `ready-for-spec`.
 - Resolve the output language from repository instructions, then the user's request, and otherwise use Korean. Preserve quoted sources, identifiers, API names, links, and protocol markers exactly.
 - Treat only the spec as normative. The explainer must declare `kind: "spec-explainer"`, `normative: false`, `derived_from`, and `source_fingerprint`; it cannot be an input to `to-tickets`, `tdd`, or the Spec axis of `code-review`.
 - Apply the plain-language invariant directly: preserve meaning and important details while adding no fact, requirement, advice, decision, or interpretation. Do not invoke `bro`, whose contract covers the last message rather than a source document.
@@ -75,3 +76,5 @@ Report the normative authority and identity, spec fingerprint, explainer locatio
 - no explainer statement that adds or changes normative meaning;
 - no development handoff that names the explainer as its source;
 - no unresolved identity, authorization, collision, lease, or write result.
+
+For a repository-authoritative spec, name the next execution path without starting it: `local-work` for sequential low-overhead local implementation, or `to-tickets` when shared GitHub tracking, claims, dependencies, or remote handoff are required.

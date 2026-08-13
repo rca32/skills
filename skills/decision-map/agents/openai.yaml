@@ -1,0 +1,6 @@
+interface:
+  display_name: "Decision Map"
+  short_description: "Clarify large work through sequential decision documents"
+  default_prompt: "Use $decision-map to turn this large unclear effort into a sequential local map of decisions."
+policy:
+  allow_implicit_invocation: false

@@ -25,8 +25,10 @@
 | `first-principles` | 중요한 제품·기술·업무 결정의 문제 정의나 상속된 전제를 원점에서 다시 검토할 때 | 관측 사실·고정 제약·가정·추론·선호를 분리해 최소 방안과 남은 검증을 제안합니다. 명시적으로 호출하며 설계나 구현은 맡지 않습니다. |
 | `domain-modeling` | 설계 중 도메인 용어·불변식·상태·경계의 의미를 적극적으로 다듬을 때 | 예시·반례·edge case로 모델을 검증하고, 합의된 변경과 제안을 구분해 다음 명세와 구현이 같은 의미를 사용하게 합니다. |
 | `codebase-design` | module interface나 seam을 결정하거나 얕은 구조를 합치고 싶을 때 | 여러 설계안을 depth·locality·testability로 비교해 구현 전에 하나를 추천합니다. |
+| `decision-map` | 한 세션에 담기 어려운 큰 작업의 결정 경로가 아직 흐릴 때 | 목적지와 fog를 작은 로컬 결정 문서로 관리하고 하나씩 해결해 명세 가능한 상태를 만듭니다. |
 | `to-spec` | 대화에서 결정한 내용을 문서로 정리하고 싶을 때 | 개발 기준이 되는 작은 명세와, 그 명세에서만 파생된 별도의 쉬운 설명을 만듭니다. |
 | `to-tickets` | 하나의 명세가 커서 여러 작업으로 나눠야 할 때 | 새 설계 결정을 하지 않고 분해 가능한지 먼저 확인한 뒤 작은 이슈와 선행 관계를 만듭니다. 설계가 미정이면 티켓 생성 전에 중단합니다. |
+| `local-work` | 한 에이전트가 GitHub issue 없이 명세를 순차 구현할 때 | spec에 묶인 작은 로컬 item을 만들고 현재 worktree에서 TDD·검증·최종 리뷰까지 진행합니다. |
 | `documenting-work` | 명세·결정·진단·리뷰를 어디에 남겨야 할지 정할 때 | 대화, GitHub, 저장소 문서, 실행 artifact 중 원본 하나를 정하고 표준 위치·이름·인덱스를 적용합니다. |
 | `work-github-issue` | GitHub 이슈를 실제로 시작하거나 지속 goal에서 여러 이슈를 처리할 때 | goal thread는 조정만 맡고 이슈마다 새 worker를 시작합니다. worker는 전용 임대로 충돌을 막으며 검증·리뷰·PR 병합·정리까지 한 이슈만 완료합니다. |
 | `diagnosing-bugs` | 오류, 간헐적 실패, 속도 저하의 원인을 찾을 때 | 재현 방법을 만들고 가능한 원인을 하나씩 반증해 실제 원인을 찾습니다. “진단만” 요청했다면 코드를 고치지 않습니다. |
@@ -43,23 +45,17 @@
   → bro?                  마지막 메시지를 평이한 말로 다시 표현
   → first-principles?      명시 호출 시 문제 framing과 상속된 전제를 재검토
   → prepare-issue           요청이 실제로 준비됐는지 확인
-  → domain-modeling?       도메인 언어·불변식·경계가 흔들릴 때 모델을 검증
-  → codebase-design?       interface·seam이 미정일 때 추천안을 마련
+  → decision-map?          여러 세션이 필요한 fog와 결정을 순차 문서로 해소
+      → domain-modeling?   결정 중 도메인 언어·불변식·경계를 검증
+      → codebase-design?   결정 중 interface·seam 추천안을 마련
   → to-spec                합의 내용을 명세로 정리
-  → to-tickets             큰 명세를 작은 이슈로 분해
-      ↳ 분해 불가          domain-modeling/codebase-design/to-spec으로 결정 후 새 source에서 재시작
-  → work-github-issue      goal coordinator가 이슈별 새 worker를 시작
-      → diagnosing-bugs    버그라면 먼저 원인을 확인
-      → complexity-optimizer 복잡도·성능 hotspot을 분석하거나 최적화
-      → domain-modeling?   구현 중 도메인 의미의 모호함이 드러날 때 모델을 검증
-      → codebase-design?   티켓 범위 안의 module 구조 결정이 필요할 때
-      → tdd                테스트부터 구현
-      → quality-gauntlet?  명시된 비교 품질 기준까지 반복 개선
-      → code-review        후보·축별 새 컨텍스트에서 두 축을 검토
-  → work-github-issue      검증 증거를 남기고 완료 또는 인계
+      ├─ local-work        한 에이전트가 현재 worktree에서 순차 구현
+      │   → tdd → code-review
+      └─ to-tickets        공유할 큰 명세를 작은 GitHub 이슈로 분해
+          → work-github-issue 이슈별 worker가 tdd·검증·review·인계를 수행
 ```
 
-모든 작업에 전부 사용할 필요는 없습니다. `first-principles`는 사용자가 이름을 직접 불러 중요한 결정의 문제 framing이나 상속된 전제를 재검토할 때만 사용하며, 이슈 intake·설계·진단·구현은 해당 전문 스킬에 넘깁니다. `domain-modeling`은 기존 용어를 읽어 쓰는 것만으로는 실행하지 않고, 설계가 도메인 개념·불변식·상태·경계를 실제로 바꾸거나 모호함을 해결해야 할 때 사용합니다. 가상 edge case는 모델을 시험할 뿐 새 요구사항으로 확정하지 않습니다. `codebase-design`은 interface나 seam 선택이 실제로 열려 있을 때만 사용합니다. 계획 단계에서는 `to-spec` 전에 추천안을 만들고, `to-tickets`가 새 설계 결정 없이는 안정적인 경계·검증 seam·의존 관계를 만들 수 없다고 판정하면 티켓을 만들지 않은 채 다시 이 경로로 돌려보냅니다. 이슈 구현 중에는 `work-github-issue`가 점유한 범위 안에서 `tdd` 전에 사용합니다. 승인된 동작·공개 interface·architecture·티켓 경계·의존성을 보존하는 내부 module-shape 선택은 구현자에게 기본 위임됩니다. 이 경계를 넘는 변경만 사용자 또는 저장소 권위의 수락이 필요합니다. 작은 로컬 변경은 `tdd`와 `code-review`만으로 충분할 수 있습니다. `quality-gauntlet`은 사용자가 직접 호출했고 실제 산출물·검사 방법·비교 품질 기준이 있을 때만 그 사이에 넣습니다. 성능 증상의 원인을 모르면 `diagnosing-bugs`부터 사용하고, 코드베이스 전반의 hotspot을 찾거나 이미 확인된 병목을 개선할 때는 `complexity-optimizer`를 사용합니다. GitHub 이슈를 여러 에이전트가 다룬다면 반드시 `work-github-issue`를 바깥 작업 흐름으로 사용합니다.
+모든 작업에 전부 사용할 필요는 없습니다. 결정 경로가 흐린 큰 일만 `decision-map`을 사용하고, 이미 합의가 충분하면 바로 `to-spec`으로 갑니다. 한 에이전트가 순차 처리하고 원격 추적이 필요 없다면 `local-work`, 여러 작업자·세션의 공유 가시성과 충돌 방지가 필요하면 `to-tickets → work-github-issue`를 선택합니다. `first-principles`는 사용자가 이름을 직접 불러 중요한 결정의 문제 framing이나 상속된 전제를 재검토할 때만 사용합니다. `domain-modeling`은 도메인 개념·불변식·상태·경계를 실제로 바꾸거나 모호함을 해결할 때, `codebase-design`은 interface나 seam 선택이 실제로 열려 있을 때 사용합니다. 작은 로컬 변경은 `tdd`와 `code-review`만으로 충분할 수 있습니다. `quality-gauntlet`은 사용자가 직접 호출했고 실제 산출물·검사 방법·비교 품질 기준이 있을 때만 사용합니다.
 
 각 스킬의 동작과 안전 경계를 더 쉽게 풀어 쓴 설명은 [한국어 스킬 안내서](docs/README.md)에서 볼 수 있습니다.
 
@@ -81,13 +77,15 @@ docs/README.md                          문서 인덱스
 docs/domain.md                          프로젝트 도메인 모델과 용어
 docs/specs/                             제품·개발 명세
 docs/spec-explainers/                   명세에서 파생된 비규범적 쉬운 설명
+docs/decision-maps/                      큰 작업의 순차 결정 지도와 결정 문서
+docs/local-work/                         spec에 묶인 로컬 실행 item과 진행 상태
 docs/decisions/                         아키텍처·제품 결정
 docs/research/                          장기 보관할 조사 결과
 docs/reports/diagnostics/               요청받은 진단 보고서
 docs/reports/reviews/                   요청받은 코드 리뷰 보고서
 ```
 
-이슈와 연결된 파일은 `issue-42-payment-retry.md`, 연결된 이슈가 없으면 `2026-07-13-payment-retry.md`처럼 이름을 만듭니다. 같은 지식을 GitHub와 Markdown 양쪽에 복사하지 않고, 원본이 아닌 쪽에는 링크만 남깁니다. 단, `to-spec`의 쉬운 설명은 원본 명세 ID와 정확한 본문 fingerprint에 묶인 명시적 파생물로 허용됩니다. 구현·티켓·테스트·리뷰는 `docs/spec-explainers/`를 요구사항 원본으로 읽지 않습니다. 프로젝트의 `AGENTS.md`, 문서 인덱스, 기존 ADR 규칙이 있다면 항상 그 규칙이 fallback보다 우선합니다.
+이슈와 연결된 파일은 `issue-42-payment-retry.md`, 연결된 이슈가 없으면 `2026-07-13-payment-retry.md`처럼 이름을 만듭니다. 같은 지식을 GitHub와 Markdown 양쪽에 복사하지 않고, 원본이 아닌 쪽에는 링크만 남깁니다. `spec-explainer`와 `local-work`는 원본 spec ID와 정확한 fingerprint에 묶인 명시적 비규범 projection입니다. `decision-map`은 map을 인덱스로만 쓰고 각 결정 상세를 하나의 child 문서에 둡니다. 프로젝트의 `AGENTS.md`, 문서 인덱스, 기존 ADR 규칙이 있다면 항상 fallback보다 우선합니다.
 
 ## 같은 계정을 쓰는 여러 에이전트가 왜 충돌하지 않나요?
 
@@ -101,7 +99,7 @@ GitHub의 담당자 표시만으로는 부족합니다. 여러 세션이 같은 
 
 Codex에게 다음처럼 요청하면 됩니다.
 
-> `rca32/skills` 저장소에서 `bro`, `work-github-issue`, `prepare-issue`, `first-principles`, `domain-modeling`, `codebase-design`, `to-spec`, `to-tickets`, `documenting-work`, `diagnosing-bugs`, `complexity-optimizer`, `tdd`, `quality-gauntlet`, `code-review`, `writing-great-skills` 스킬을 설치해 줘.
+> `rca32/skills` 저장소에서 `bro`, `prepare-issue`, `first-principles`, `domain-modeling`, `codebase-design`, `decision-map`, `to-spec`, `local-work`, `to-tickets`, `work-github-issue`, `documenting-work`, `diagnosing-bugs`, `complexity-optimizer`, `tdd`, `quality-gauntlet`, `code-review`, `writing-great-skills` 스킬을 설치해 줘.
 
 또는 이미 설치된 `skill-installer`로 `skills/<스킬 이름>` 경로를 선택해 설치할 수 있습니다. 설치가 끝난 뒤 새 세션을 시작하면 스킬 목록이 갱신됩니다.
 
@@ -166,7 +164,9 @@ $bro 방금 답변을 전문 용어 없이 더 쉽게 다시 말해 줘.
 $first-principles 마이크로서비스 전환이 정말 필요한지 관측 사실과 고정 제약부터 다시 검토해 줘.
 $domain-modeling 주문·결제·환불 용어와 상태 경계를 edge case로 검증해 줘.
 $codebase-design 이 결제 흐름의 module interface와 seam 대안을 비교하고 하나를 추천해 줘.
+$decision-map 결제 시스템 재설계처럼 아직 결정할 것이 많은 큰 작업을 로컬 결정 지도로 시작해 줘.
 $to-spec 지금까지 합의한 결제 재시도 정책을 명세로 정리해 줘.
+$local-work docs/specs/payment-retry.md를 로컬 item으로 나누고 순서대로 구현해 줘.
 $to-tickets 승인된 이슈 #50을 한국어로 이해하기 쉬운 작은 이슈로 나누고 게시해 줘.
 $documenting-work 이 설계 문서의 원본 위치와 표준 파일명을 정해 줘.
 $work-github-issue 현재 시작할 수 있는 이슈 하나를 안전하게 맡아서 완료해 줘.
@@ -178,7 +178,7 @@ $code-review 커밋 전 현재 작업 전체를 규칙과 명세 기준으로 �
 $writing-great-skills 이 스킬의 호출 조건과 완료 기준을 더 예측 가능하게 고쳐 줘.
 ```
 
-`bro`, `prepare-issue`, `first-principles`, `to-spec`, `to-tickets`는 의도하지 않은 workflow 선택이나 이슈 변경을 피하기 위해, `quality-gauntlet`은 고비용 다중 에이전트 반복을 뜻하기 때문에 이름을 직접 불러 사용하는 방식입니다. 또한 “검토해 줘”, “초안을 만들어 줘”는 외부 게시 권한을 뜻하지 않습니다. 이슈 생성·라벨 변경·게시까지 원한다면 요청에 분명히 포함해야 합니다.
+`bro`, `prepare-issue`, `first-principles`, `decision-map`, `to-spec`, `local-work`, `to-tickets`는 의도하지 않은 문서·코드·이슈 변경을 피하기 위해, `quality-gauntlet`은 고비용 다중 에이전트 반복을 뜻하기 때문에 이름을 직접 불러 사용합니다. 또한 “검토해 줘”, “초안을 만들어 줘”는 파일 수정이나 외부 게시 권한을 뜻하지 않습니다.
 
 ## 저장소를 관리할 때
 

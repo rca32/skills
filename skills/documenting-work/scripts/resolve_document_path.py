@@ -14,6 +14,8 @@ import unicodedata
 KIND_DIRECTORIES = {
     "spec": pathlib.PurePosixPath("docs/specs"),
     "spec-explainer": pathlib.PurePosixPath("docs/spec-explainers"),
+    "decision-map": pathlib.PurePosixPath("docs/decision-maps"),
+    "local-work": pathlib.PurePosixPath("docs/local-work"),
     "decision": pathlib.PurePosixPath("docs/decisions"),
     "research": pathlib.PurePosixPath("docs/research"),
     "diagnosis": pathlib.PurePosixPath("docs/reports/diagnostics"),
@@ -30,6 +32,12 @@ FIXED_DOCUMENTS = {
 
 MAX_FILENAME_BYTES = 240
 MAX_SLUG_CHARACTERS = 80
+
+
+COLLECTION_ENTRYPOINTS = {
+    "decision-map": "map.md",
+    "local-work": "work.md",
+}
 
 
 def positive_issue(value: str) -> int:
@@ -70,6 +78,48 @@ def fit_slug_to_filename(slug: str, source_key: str) -> str:
     return fitted
 
 
+def parse_spec_document_id(
+    argument_parser: argparse.ArgumentParser,
+    document_id: str | None,
+    issue: int | None,
+) -> tuple[str, str]:
+    if not document_id:
+        argument_parser.error(
+            "this document kind requires --source-document-id for its authoritative spec"
+        )
+    parts = document_id.split(":")
+    if len(parts) != 3 or parts[0] != "spec":
+        argument_parser.error(
+            "--source-document-id must use spec:<issue-or-date-key>:<slug>"
+        )
+    _, source_key, slug = parts
+    issue_match = re.fullmatch(r"issue-([1-9][0-9]*)", source_key)
+    if issue_match:
+        source_issue = int(issue_match.group(1))
+        if issue is not None and issue != source_issue:
+            argument_parser.error(
+                "--issue must match the issue key in --source-document-id"
+            )
+    else:
+        try:
+            iso_date(source_key)
+        except argparse.ArgumentTypeError as error:
+            argument_parser.error(str(error))
+        if issue is not None:
+            argument_parser.error(
+                "--issue conflicts with the date key in --source-document-id"
+            )
+    try:
+        fitted_slug = fit_slug_to_filename(slugify(slug), source_key)
+    except ValueError as error:
+        argument_parser.error(str(error))
+    if slug != fitted_slug:
+        argument_parser.error(
+            "the source spec slug must already be normalized and portable"
+        )
+    return source_key, slug
+
+
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument(
@@ -81,7 +131,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--issue", type=positive_issue)
     result.add_argument(
         "--source-document-id",
-        help="required authoritative spec document_id for spec-explainer",
+        help="authoritative spec document_id required by derived document kinds",
     )
     result.add_argument(
         "--date",
@@ -97,47 +147,24 @@ def main() -> None:
     args = argument_parser.parse_args()
     fixed = FIXED_DOCUMENTS.get(args.kind)
     source_document_id = None
-    if args.kind == "spec-explainer":
+    if args.kind in {"spec-explainer", "local-work"}:
         source_document_id = args.source_document_id
-        if not source_document_id:
-            argument_parser.error(
-                "spec-explainer requires --source-document-id for its authoritative spec"
-            )
-        parts = source_document_id.split(":")
-        if len(parts) != 3 or parts[0] != "spec":
-            argument_parser.error(
-                "--source-document-id must use spec:<issue-or-date-key>:<slug>"
-            )
-        _, source_key, slug = parts
-        issue_match = re.fullmatch(r"issue-([1-9][0-9]*)", source_key)
-        if issue_match:
-            source_issue = int(issue_match.group(1))
-            if args.issue is not None and args.issue != source_issue:
-                argument_parser.error(
-                    "--issue must match the issue key in --source-document-id"
-                )
+        source_key, slug = parse_spec_document_id(
+            argument_parser, source_document_id, args.issue
+        )
+        if args.kind == "spec-explainer":
+            relative = KIND_DIRECTORIES[args.kind] / f"{source_key}-{slug}.md"
         else:
-            try:
-                iso_date(source_key)
-            except argparse.ArgumentTypeError as error:
-                argument_parser.error(str(error))
-            if args.issue is not None:
-                argument_parser.error(
-                    "--issue conflicts with the date key in --source-document-id"
-                )
-        try:
-            fitted_slug = fit_slug_to_filename(slugify(slug), source_key)
-        except ValueError as error:
-            argument_parser.error(str(error))
-        if slug != fitted_slug:
-            argument_parser.error(
-                "the source spec slug must already be normalized and portable"
+            relative = (
+                KIND_DIRECTORIES[args.kind]
+                / f"{source_key}-{slug}"
+                / COLLECTION_ENTRYPOINTS[args.kind]
             )
-        filename = f"{source_key}-{slug}.md"
-        relative = KIND_DIRECTORIES[args.kind] / filename
-        document_id = f"spec-explainer:{source_key}:{slug}"
+        document_id = f"{args.kind}:{source_key}:{slug}"
     elif args.source_document_id:
-        argument_parser.error("--source-document-id is only valid for spec-explainer")
+        argument_parser.error(
+            "--source-document-id is only valid for spec-explainer or local-work"
+        )
     elif fixed:
         if args.issue:
             argument_parser.error(
@@ -152,8 +179,14 @@ def main() -> None:
             slug = fit_slug_to_filename(slugify(args.title), source_key)
         except ValueError as error:
             argument_parser.error(str(error))
-        filename = f"{source_key}-{slug}.md"
-        relative = KIND_DIRECTORIES[args.kind] / filename
+        if args.kind in COLLECTION_ENTRYPOINTS:
+            relative = (
+                KIND_DIRECTORIES[args.kind]
+                / f"{source_key}-{slug}"
+                / COLLECTION_ENTRYPOINTS[args.kind]
+            )
+        else:
+            relative = KIND_DIRECTORIES[args.kind] / f"{source_key}-{slug}.md"
         document_id = f"{args.kind}:{source_key}:{slug}"
     root = pathlib.Path(args.root).expanduser().resolve()
     payload = {

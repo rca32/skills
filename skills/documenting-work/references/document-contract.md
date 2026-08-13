@@ -2,6 +2,14 @@
 
 Use this contract only when the consuming repository has no applicable documentation convention. Repository instructions and established indexes override it.
 
+## Contents
+
+- [Authority matrix](#authority-matrix)
+- [Fallback naming](#fallback-naming)
+- [Fallback metadata](#fallback-metadata)
+- [Fallback index](#fallback-index)
+- [Update and supersession](#update-and-supersession)
+
 ## Authority matrix
 
 | Kind | Default persistence | Repository fallback when durability is requested |
@@ -9,11 +17,13 @@ Use this contract only when the consuming repository has no applicable documenta
 | Project domain model | Repository when settled domain knowledge must guide later work | `docs/domain.md` |
 | Product or engineering spec | Tracker when the project manages PRDs as issues; otherwise repository | `docs/specs/<name>.md` |
 | Plain-language spec explainer | Conversation by default; repository only as a fingerprint-bound derivative of a named authoritative spec | `docs/spec-explainers/<name>.md` |
+| Sequential decision map | Repository when explicitly charted or continued | `docs/decision-maps/<name>/map.md` plus `decisions/` |
+| Local implementation work set | Repository only when explicitly selected as the low-overhead execution path for a repository spec | `docs/local-work/<spec-name>/work.md` plus `items/` |
 | Architecture or product decision | Repository | `docs/decisions/<name>.md` |
 | Durable research synthesis | Repository | `docs/research/<name>.md` |
 | Bug diagnosis | Conversation; issue comment when issue-backed | `docs/reports/diagnostics/<name>.md` only when explicitly requested |
 | Code review | Conversation; PR review when PR-backed | `docs/reports/reviews/<name>.md` only when explicitly requested |
-| Agent brief and implementation tickets | Tracker | No duplicate local body |
+| Issue-backed agent brief and implementation tickets | Tracker | No duplicate local body; use the separate local-work contract only when explicitly selected |
 | Completion evidence and issue handoff | Tracker | No duplicate local body |
 | Logs, traces, screenshots, benchmarks | Artifact store | Follow repository artifact and retention rules |
 | Non-issue session handoff | Conversation or configured session store | Do not commit by default |
@@ -26,6 +36,8 @@ Use the resolver's deterministic names:
 
 - project domain model: fixed `docs/domain.md` with `document_id: "domain:project"`; update it in place and do not create issue- or date-named copies;
 - spec explainer: require the authoritative `spec:<source-key>:<slug>` ID and derive the explainer's key, slug, path, and `document_id: "spec-explainer:<source-key>:<slug>"` from it; never derive them independently from the explainer title;
+- decision map: use `docs/decision-maps/<source-key>-<slug>/map.md` with `document_id: "decision-map:<source-key>:<slug>"`; give children `decision-question:<source-key>:<slug>:DNNN` IDs and stable filenames inside `decisions/`;
+- local work: require the authoritative `spec:<source-key>:<slug>` ID and derive `docs/local-work/<source-key>-<slug>/work.md` plus `document_id: "local-work:<source-key>:<slug>"`; give items `local-work-item:<source-key>:<slug>:WNNN` IDs and stable filenames inside `items/`;
 - issue-linked: `issue-<number>-<slug>.md`;
 - not issue-linked: `YYYY-MM-DD-<slug>.md` using the creation date in UTC;
 - lowercase Unicode slug, normalized with NFKC, punctuation collapsed to `-`, maximum 80 characters, with the complete filename shortened at a UTF-8 boundary to at most 240 bytes;
@@ -39,6 +51,8 @@ docs/
   domain.md
   specs/
   spec-explainers/
+  decision-maps/
+  local-work/
   decisions/
   research/
   reports/
@@ -92,6 +106,22 @@ normative: false
 
 `authority` identifies where the explainer itself is versioned; `normative: false` prevents it from becoming development authority. Require `derived_from` to resolve exactly one spec and require `source_fingerprint` to match that spec's exact current body before claiming the explainer is current. Never infer requirements from the explainer, edit it independently, or preserve it as current after the spec changes.
 
+For a decision map, use ordinary repository metadata on `map.md` with `kind: "decision-map"`. Each `decision-question` child names the map ID, its stable `DNNN` identity, status, question kind, decision authority, and `map_projection`. The entry point indexes children but does not duplicate their resolution bodies. A resolved child with `map_projection: pending` means the map/index projection must be reconciled before another decision begins.
+
+For a local-work set, use ordinary metadata plus:
+
+```yaml
+kind: "local-work"
+authority: "repository"
+normative: false
+derived_from: "spec:issue-42:payment-retry-policy"
+source: "docs/specs/issue-42-payment-retry-policy.md"
+source_fingerprint: "to-spec-body-v1:<sha256>"
+fixed_point: "<HEAD OID>"
+```
+
+Every `local-work-item` repeats `normative: false`, `derived_from`, and `source_fingerprint`, and names its local-work set. The set controls sequencing and progress; the spec remains the only product-behavior authority.
+
 ## Fallback index
 
 Use `docs/README.md` as the document map when no other index exists. Create or update one section per kind with:
@@ -108,12 +138,17 @@ Use one `Domain model` entry for `domain:project`. Update `docs/domain.md` in pl
 
 Index spec explainers in a separate `Spec explainers` section. Each entry links first to the explainer and names its authoritative spec; do not list an explainer under `Specs` or make it look decomposition-ready.
 
+Index decision maps and local-work sets in separate sections. Link only their entry points from `docs/README.md`; child decisions and work items are discovered through their entry point, not listed globally.
+
 ## Update and supersession
 
 - **Fixed domain-model update:** keep `domain:project` and `docs/domain.md` when glossary entries, invariants, relationships, states, boundaries, or decisions change, including an incompatible change to one of those entries. Preserve the prior meaning and rationale in the document's decision history when required and rely on repository history; do not create a second authoritative domain-model body.
 - **Fixed domain-model replacement:** supersede the fallback singleton only when the consuming repository adopts another authoritative domain-document convention or splits authority by bounded context. At that point the fallback no longer selects identities; follow the new convention and leave the required reciprocal pointer from `docs/domain.md` rather than inventing fallback context IDs.
 - **Spec-explainer update:** retain the explainer identity while its source spec identity remains the same, but regenerate the complete explainer and replace `source_fingerprint` from the exact source readback. If the source changes and regeneration is not authorized or does not complete, report the explainer stale; never treat its old prose as current.
 - **Spec-explainer supersession:** when the normative spec is superseded, supersede its explainer and generate a new explainer identity only from the replacement spec. Keep reciprocal pointers without copying either body.
+- **Decision-map update:** retain the map identity while its destination remains the same. Update decision children in place, preserve resolved decisions, and create new `DNNN` identities only for newly precise questions. Mark the map `ready-for-spec` when material fog and route-defining open decisions are empty.
+- **Local-work update:** retain the set identity while its source spec identity and fingerprint remain unchanged. Update item progress in place. If the source fingerprint changes, mark the set `stale`; reconcile or regenerate from the new spec before code execution, without silently rewriting completed evidence.
+- **Local-work completion:** retain the completed set and its concise evidence unless repository retention says otherwise. Completion never authorizes deletion, commit, or publication.
 - **Update:** for other documents, edit the existing path and `updated` date when knowledge and identity remain the same.
 - **Supersede:** for other documents, when a new authority or incompatible decision replaces the old meaning, create a new ID, mark the old document `superseded`, and add reciprocal links.
 - **Archive:** still authoritative history but no longer active; retain the path unless repository policy says otherwise.
