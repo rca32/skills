@@ -1,0 +1,4 @@
+interface:
+  display_name: "Domain Modeling"
+  short_description: "Sharpen domain language through edge cases"
+  default_prompt: "Use $domain-modeling to challenge and refine this project's domain model."

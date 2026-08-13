@@ -19,6 +19,14 @@ KIND_DIRECTORIES = {
     "review": pathlib.PurePosixPath("docs/reports/reviews"),
 }
 
+FIXED_DOCUMENTS = {
+    "domain": {
+        "document_id": "domain:project",
+        "relative_path": pathlib.PurePosixPath("docs/domain.md"),
+        "source_key": "project",
+    },
+}
+
 MAX_FILENAME_BYTES = 240
 MAX_SLUG_CHARACTERS = 80
 
@@ -63,7 +71,11 @@ def fit_slug_to_filename(slug: str, source_key: str) -> str:
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
-    result.add_argument("--kind", choices=sorted(KIND_DIRECTORIES), required=True)
+    result.add_argument(
+        "--kind",
+        choices=sorted(KIND_DIRECTORIES | FIXED_DOCUMENTS),
+        required=True,
+    )
     result.add_argument("--title", required=True)
     result.add_argument("--issue", type=positive_issue)
     result.add_argument(
@@ -78,18 +90,29 @@ def parser() -> argparse.ArgumentParser:
 def main() -> None:
     argument_parser = parser()
     args = argument_parser.parse_args()
-    source_key = f"issue-{args.issue}" if args.issue else args.date
-    try:
-        slug = fit_slug_to_filename(slugify(args.title), source_key)
-    except ValueError as error:
-        argument_parser.error(str(error))
-    filename = f"{source_key}-{slug}.md"
-    relative = KIND_DIRECTORIES[args.kind] / filename
+    fixed = FIXED_DOCUMENTS.get(args.kind)
+    if fixed:
+        if args.issue:
+            argument_parser.error(
+                f"{args.kind} uses a project-wide stable identity; omit --issue"
+            )
+        source_key = fixed["source_key"]
+        document_id = fixed["document_id"]
+        relative = fixed["relative_path"]
+    else:
+        source_key = f"issue-{args.issue}" if args.issue else args.date
+        try:
+            slug = fit_slug_to_filename(slugify(args.title), source_key)
+        except ValueError as error:
+            argument_parser.error(str(error))
+        filename = f"{source_key}-{slug}.md"
+        relative = KIND_DIRECTORIES[args.kind] / filename
+        document_id = f"{args.kind}:{source_key}:{slug}"
     root = pathlib.Path(args.root).expanduser().resolve()
     payload = {
         "absolutePath": str(root / pathlib.Path(*relative.parts)),
         "authority": "repository",
-        "documentId": f"{args.kind}:{source_key}:{slug}",
+        "documentId": document_id,
         "indexPath": "docs/README.md",
         "kind": args.kind,
         "relativePath": relative.as_posix(),

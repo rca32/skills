@@ -38,6 +38,9 @@ remain delegated to the implementation worker and do not block decomposition.
 If the answer is yes, continue. If no, do not emit provisional ticket bodies,
 create tracker items, or acquire a planning lease. Classify the missing decision:
 
+- route conflicting domain terms, identity, lifecycle, invariants, relationships,
+  states, or boundaries that materially affect behavior or ticket boundaries
+  through `domain-modeling`, then `to-spec` for resolution and persistence;
 - route an unsettled module interface or architectural seam that establishes or
   changes an approval-gated contract through `codebase-design`, then `to-spec`
   for resolution and persistence;
@@ -50,6 +53,10 @@ create tracker items, or acquire a planning lease. Classify the missing decision
   already fixes the required behavior and seams;
 - route a conflict between the approved source and current repository reality
   to `to-spec` for revalidation.
+
+Reading and applying accepted domain vocabulary is not an active-modeling
+trigger. Use `domain-modeling` only when the decomposition would otherwise have
+to change or choose the model.
 
 Return `status=decomposition-blocked`, the authoritative source pointer and
 current fingerprint, affected source requirements, missing decision, boundary

@@ -43,6 +43,40 @@ class ResolveDocumentPathTest(unittest.TestCase):
         self.assertEqual(value["indexPath"], "docs/README.md")
         self.assertEqual(value["authority"], "repository")
 
+    def test_domain_model_has_project_wide_stable_path_and_id(self) -> None:
+        value = self.resolve(
+            "--kind",
+            "domain",
+            "--title",
+            "Checkout domain model",
+            "--date",
+            "2026-07-13",
+        )
+        self.assertEqual(value["relativePath"], "docs/domain.md")
+        self.assertEqual(value["documentId"], "domain:project")
+        self.assertEqual(value["sourceKey"], "project")
+        self.assertEqual(value["indexPath"], "docs/README.md")
+
+    def test_domain_model_rejects_issue_specific_identity(self) -> None:
+        result = subprocess.run(
+            [
+                "python3",
+                str(SCRIPT),
+                "--kind",
+                "domain",
+                "--title",
+                "Checkout domain model",
+                "--issue",
+                "42",
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("project-wide stable identity", result.stderr)
+
     def test_unlinked_report_uses_date_and_kind_directory(self) -> None:
         value = self.resolve(
             "--kind",

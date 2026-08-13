@@ -1,6 +1,6 @@
 ---
 name: documenting-work
-description: Resolve the authority, durability, location, name, metadata, index, and lifecycle of development documents. Use when Codex or another skill is about to create, save, or publish a spec, decision, research note, diagnosis, code-review report, handoff, or evidence artifact, especially when the repository does not state where that document belongs.
+description: Resolve the authority, durability, location, name, metadata, index, and lifecycle of development documents. Use when Codex or another skill is about to create, save, or publish a spec, domain model, decision, research note, diagnosis, code-review report, handoff, or evidence artifact, especially when the repository does not state where that document belongs.
 ---
 
 # Documenting development work
@@ -13,7 +13,7 @@ Choose one tier before writing:
 
 - **Conversation:** analysis, draft, diagnosis, or review needed only for the current interaction. Return it in the response; create no file.
 - **Tracker:** issue brief, ticket graph, implementation evidence, or issue-backed handoff whose lifecycle is owned by GitHub. Store it in the issue, PR, comment, or native relationship.
-- **Repository:** approved knowledge that must be reviewed and versioned with the code, such as a spec, decision, or durable research result.
+- **Repository:** approved knowledge that must be reviewed and versioned with the code, such as a domain model, spec, decision, or durable research result.
 - **Artifact store:** generated logs, traces, screenshots, benchmark output, or run evidence. Use the repository's artifact system and retention policy; do not turn raw output into product documentation.
 
 A request to inspect, explain, review, or draft selects `Conversation` unless the user or repository contract requests persistence. A request to save, record, publish, or create a named repository document authorizes that document plus locally required index entries and in-repository reciprocal links. Tracker comments, issue edits, and other external pointers require separate mutation authorization.
@@ -46,11 +46,11 @@ Use the bundled resolver only after choosing `Repository` and confirming that th
 
 ```bash
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/documenting-work/scripts/resolve_document_path.py" \
-  --kind <spec|decision|research|diagnosis|review> \
+  --kind <domain|spec|decision|research|diagnosis|review> \
   --title "<title>" [--issue <number>] [--date YYYY-MM-DD] [--root <repo>]
 ```
 
-The command returns the stable document ID, relative path, and fallback index. It does not create files or override an established convention. Read the fallback matrix and metadata contract before writing.
+The command returns the stable document ID, relative path, and fallback index. For `domain`, it returns the project-wide identity `domain:project` and `docs/domain.md`; omit `--issue`. It does not create files or override an established convention. Read the fallback matrix and metadata contract before writing.
 
 ## 5. Persist safely
 
@@ -66,7 +66,7 @@ An unknown write result is unresolved. Reconcile identity, content, and index st
 
 ## 6. Maintain the lifecycle
 
-Use `draft`, `active`, `superseded`, or `archived` unless the consuming repository defines another vocabulary. Update `updated` whenever meaning changes. When replacing a document, mark the old one `superseded`, link both directions, and keep the old decision readable. Archive only under repository lifecycle and retention policy. Deleting an existing document additionally requires explicit destructive authorization, even when retention policy permits deletion.
+Use `draft`, `active`, `superseded`, or `archived` unless the consuming repository defines another vocabulary. Update `updated` whenever meaning changes. When replacing a non-fixed document, mark the old one `superseded`, link both directions, and keep the old decision readable. For a fixed living document such as the fallback `domain:project`, follow its in-place lifecycle exception in the fallback contract. Archive only under repository lifecycle and retention policy. Deleting an existing document additionally requires explicit destructive authorization, even when retention policy permits deletion.
 
 ## Completion check
 

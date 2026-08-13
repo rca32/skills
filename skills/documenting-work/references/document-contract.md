@@ -6,6 +6,7 @@ Use this contract only when the consuming repository has no applicable documenta
 
 | Kind | Default persistence | Repository fallback when durability is requested |
 | --- | --- | --- |
+| Project domain model | Repository when settled domain knowledge must guide later work | `docs/domain.md` |
 | Product or engineering spec | Tracker when the project manages PRDs as issues; otherwise repository | `docs/specs/<name>.md` |
 | Architecture or product decision | Repository | `docs/decisions/<name>.md` |
 | Durable research synthesis | Repository | `docs/research/<name>.md` |
@@ -22,6 +23,7 @@ When a tracker-backed spec also needs a repository pointer, the file contains me
 
 Use the resolver's deterministic names:
 
+- project domain model: fixed `docs/domain.md` with `document_id: "domain:project"`; update it in place and do not create issue- or date-named copies;
 - issue-linked: `issue-<number>-<slug>.md`;
 - not issue-linked: `YYYY-MM-DD-<slug>.md` using the creation date in UTC;
 - lowercase Unicode slug, normalized with NFKC, punctuation collapsed to `-`, maximum 80 characters, with the complete filename shortened at a UTF-8 boundary to at most 240 bytes;
@@ -32,6 +34,7 @@ The fallback directories are:
 ```text
 docs/
   README.md
+  domain.md
   specs/
   decisions/
   research/
@@ -41,6 +44,8 @@ docs/
 ```
 
 Create only the directories needed by the selected document. Do not pre-create the whole tree.
+
+Treat `docs/domain.md` as the stable project-wide glossary and model entry point, not as permission to invent or settle domain content. A modeling workflow supplies established terms, invariants, relationships, states, boundaries, and decisions; this contract only places and maintains the document. If a consuming repository splits the model by bounded context, follow its map and identities instead of forcing the fallback singleton.
 
 ## Fallback metadata
 
@@ -83,10 +88,14 @@ Use `docs/README.md` as the document map when no other index exists. Create or u
 
 Keep one row per `document_id`. Update status and title in place. Do not delete superseded entries; label them and link to the replacement. Sort active documents by title unless the repository already uses chronological ordering.
 
+Use one `Domain model` entry for `domain:project`. Update `docs/domain.md` in place as its meaning evolves; use repository history and explicit internal decision status rather than replacing the project identity with dated documents.
+
 ## Update and supersession
 
-- **Update:** same knowledge and identity; edit the existing path and `updated` date.
-- **Supersede:** a new authority or incompatible decision replaces the old meaning; create a new ID, mark the old document `superseded`, and add reciprocal links.
+- **Fixed domain-model update:** keep `domain:project` and `docs/domain.md` when glossary entries, invariants, relationships, states, boundaries, or decisions change, including an incompatible change to one of those entries. Preserve the prior meaning and rationale in the document's decision history when required and rely on repository history; do not create a second authoritative domain-model body.
+- **Fixed domain-model replacement:** supersede the fallback singleton only when the consuming repository adopts another authoritative domain-document convention or splits authority by bounded context. At that point the fallback no longer selects identities; follow the new convention and leave the required reciprocal pointer from `docs/domain.md` rather than inventing fallback context IDs.
+- **Update:** for other documents, edit the existing path and `updated` date when knowledge and identity remain the same.
+- **Supersede:** for other documents, when a new authority or incompatible decision replaces the old meaning, create a new ID, mark the old document `superseded`, and add reciprocal links.
 - **Archive:** still authoritative history but no longer active; retain the path unless repository policy says otherwise.
 - **Delete:** only duplicates, accidental generated output, or material covered by an explicit retention decision, and only with explicit destructive authorization.
 
