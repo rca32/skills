@@ -11,6 +11,7 @@
 | 마지막 답변을 쉽게 다시 표현 | `bro` | [마지막 메시지를 쉽게 다시 말하기](skills/bro.md) |
 | 새 이슈를 분류하고 작업 가능한 상태인지 확인 | `prepare-issue` | [개발 이슈 준비하기](skills/prepare-issue.md) |
 | 중요한 결정의 문제 정의와 상속된 전제를 재검토 | `first-principles` | [근본 사실에서 결정을 다시 세우기](skills/first-principles.md) |
+| 새 서비스의 경쟁 우위나 기존 대상의 moat 분석 | `find-competitive-edge` | [방어 가능한 경쟁 전략 조합 찾기](skills/find-competitive-edge.md) |
 | 도메인 용어·불변식·상태·경계를 능동적으로 다듬기 | `domain-modeling` | [edge case로 도메인 모델 다듬기](skills/domain-modeling.md) |
 | module interface나 seam을 설계 | `codebase-design` | [깊은 module interface 설계하기](skills/codebase-design.md) |
 | 한 번에 명세로 만들기 어려운 큰 일의 결정을 순차 정리 | `decision-map` | [큰 일의 결정 경로 밝히기](skills/decision-map.md) |
@@ -37,6 +38,7 @@
 ```
 
 - `first-principles`는 사용자가 이름을 직접 불렀을 때만 중요한 결정의 문제 framing, 관측 사실, 고정 제약과 상속된 가정을 다시 정리합니다. 이슈 intake, 설계, 진단과 구현은 해당 전문 스킬에 넘깁니다.
+- `find-competitive-edge`는 사람들이 선택하고 머무르는 인과 메커니즘과 경쟁자의 모방 비용을 분석합니다. 새 서비스에는 검증할 전략 가설을 제시하며 존재하지 않는 moat를 사실처럼 말하지 않습니다.
 - `prepare-issue`는 요청이 실제로 작업할 준비가 됐는지 확인합니다.
 - `domain-modeling`은 설계가 도메인 용어, 불변식, 관계, 상태나 경계를 실제로 바꾸거나 모호함을 해소해야 할 때 예시와 반례로 모델을 검증합니다. 기존 `domain.md`의 어휘를 읽는 것만으로는 실행하지 않습니다.
 - `codebase-design`은 interface나 seam 선택이 열려 있을 때 구현 전에 설계안을 비교하고 하나를 추천합니다. 승인 범위를 넘는 공개 계약 변경은 사용자나 저장소 권위가 수락한 뒤에만 구현하고, 티켓이 범위 안의 설계 재량을 명시적으로 위임했다면 그 안에서는 바로 이어갑니다.

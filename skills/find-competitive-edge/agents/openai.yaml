@@ -1,0 +1,4 @@
+interface:
+  display_name: "Find Competitive Edge"
+  short_description: "Find defensible strategy combinations"
+  default_prompt: "Use $find-competitive-edge to analyze this service and propose a defensible strategy combination."

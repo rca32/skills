@@ -36,6 +36,7 @@ Companion skills have deliberately narrower authority:
 | Skill | Owns | Must not own |
 | --- | --- | --- |
 | `prepare-issue` | Intake, claim verification, category/state recommendation, authorized labels/comments, durable readiness brief | Implementation lease, code changes, completion evidence |
+| `find-competitive-edge` | Read-only causal analysis of flocking, survival, competitive strategy vectors, their combinations, and validation evidence | Requirements authority, market-size research as an end in itself, durable persistence, harmful tactics, tracker or lease mutation, implementation |
 | `domain-modeling` | Active domain-language, example, invariant, relationship, state, and boundary analysis with explicit resolution status | Requirements invention, module-interface design, document placement, tracker or lease mutation, implementation |
 | `codebase-design` | Read-only module-interface and architectural-seam exploration, comparison, and recommendation | Code edits, spec or ticket persistence, tracker or lease mutation, implementation, completed-change review |
 | `decision-map` | Sequential repository map of a large effort's destination, precise decision questions, resolved decision records, fog, and scope boundary | Requirements invention, spec writing, implementation decomposition, code edits, tracker or lease mutation |
@@ -73,7 +74,7 @@ GitHub issue workflows require Git, Python 3, an authenticated GitHub CLI, a can
 
 ## Invocation policy
 
-- Keep `domain-modeling`, `codebase-design`, `tdd`, `diagnosing-bugs`, `complexity-optimizer`, `code-review`, `documenting-work`, and `work-github-issue` eligible for implicit discovery when their trigger descriptions are specific enough to avoid overlap.
+- Keep `find-competitive-edge`, `domain-modeling`, `codebase-design`, `tdd`, `diagnosing-bugs`, `complexity-optimizer`, `code-review`, `documenting-work`, and `work-github-issue` eligible for implicit discovery when their trigger descriptions are specific enough to avoid overlap.
 - Keep `prepare-issue`, `decision-map`, `to-spec`, `to-tickets`, `local-work`, and `quality-gauntlet` explicit by setting `policy.allow_implicit_invocation: false` in `agents/openai.yaml`; the planning workflows can mutate durable state when explicitly asked, `local-work` can coordinate code edits, and `quality-gauntlet` can start high-cost multi-agent work.
 - A request to inspect, review, draft, or explain is read-only. It does not authorize issue creation, label changes, comments, closure, commit, push, or PR publication.
 - A request to publish tickets authorizes the validated publication workflow, not implementation or parent closure.
