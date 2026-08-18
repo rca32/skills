@@ -9,6 +9,7 @@
 - 막연한 요청을 바로 코딩하지 않고 먼저 확인하고 정리합니다.
 - 중요한 결정의 상속된 전제와 관행을 사실·제약·가정으로 분리해 다시 검토합니다.
 - 새 서비스가 사람들이 선택하고 머무를 이유와 방어 가능한 경쟁 우위 조합을 찾습니다.
+- 보편적 최선과 구분된 개인 아키텍처 취향을 구체적인 시스템 제약에 맞춰 적용합니다.
 - 큰 기능을 한 번에 만들지 않고 검증 가능한 작은 작업으로 나눕니다.
 - 버그의 원인을 추측으로 고치지 않고 재현과 증거로 찾습니다.
 - 큰 코드베이스에서 복잡도와 성능 hotspot을 찾고 동작을 보존하며 최적화합니다.
@@ -25,6 +26,7 @@
 | `prepare-issue` | 새 이슈가 모호하거나 정말 작업할 준비가 됐는지 모르겠을 때 | 버그인지 기능 요청인지 분류하고, 실제 문제인지 확인한 뒤 작업 설명을 완성합니다. |
 | `first-principles` | 중요한 제품·기술·업무 결정의 문제 정의나 상속된 전제를 원점에서 다시 검토할 때 | 관측 사실·고정 제약·가정·추론·선호를 분리해 최소 방안과 남은 검증을 제안합니다. 명시적으로 호출하며 설계나 구현은 맡지 않습니다. |
 | `find-competitive-edge` | 새 서비스의 경쟁 전략을 기획하거나 기존 제품·조직·네트워크의 강점과 moat를 분석할 때 | 경쟁 자원과 선택 행동을 밝히고, 74개 전략 벡터에서 소수의 핵심·보조·방어 조합과 검증 실험을 도출합니다. |
+| `apply-architecture-playbook` | 새 시스템이나 기존 아키텍처에 나의 설계 취향을 명시적으로 적용하고 싶을 때 | 취향 사전에서 맞는 기본형과 overlay를 골라 제약·증거·예외·이탈 조건이 분리된 preference brief를 만듭니다. |
 | `domain-modeling` | 설계 중 도메인 용어·불변식·상태·경계의 의미를 적극적으로 다듬을 때 | 예시·반례·edge case로 모델을 검증하고, 합의된 변경과 제안을 구분해 다음 명세와 구현이 같은 의미를 사용하게 합니다. |
 | `codebase-design` | module interface나 seam을 결정하거나 얕은 구조를 합치고 싶을 때 | 여러 설계안을 depth·locality·testability로 비교해 구현 전에 하나를 추천합니다. |
 | `decision-map` | 한 세션에 담기 어려운 큰 작업의 결정 경로가 아직 흐릴 때 | 목적지와 fog를 작은 로컬 결정 문서로 관리하고 하나씩 해결해 명세 가능한 상태를 만듭니다. |
@@ -50,6 +52,7 @@
   → prepare-issue           요청이 실제로 준비됐는지 확인
   → decision-map?          여러 세션이 필요한 fog와 결정을 순차 문서로 해소
       → domain-modeling?   결정 중 도메인 언어·불변식·경계를 검증
+      → apply-architecture-playbook? 명시 호출 시 개인 stack·topology 취향 적용
       → codebase-design?   결정 중 interface·seam 추천안을 마련
   → to-spec                합의 내용을 명세로 정리
       ├─ local-work        한 에이전트가 현재 worktree에서 순차 구현
@@ -58,7 +61,7 @@
           → work-github-issue 이슈별 worker가 tdd·검증·review·인계를 수행
 ```
 
-모든 작업에 전부 사용할 필요는 없습니다. 경쟁 구도와 moat를 먼저 세워야 하는 새 서비스라면 `find-competitive-edge`로 전략 가설과 검증 방법을 만들고, 합의된 요구사항은 이후 계획 workflow로 넘깁니다. 결정 경로가 흐린 큰 일만 `decision-map`을 사용하고, 이미 합의가 충분하면 바로 `to-spec`으로 갑니다. 한 에이전트가 순차 처리하고 원격 추적이 필요 없다면 `local-work`, 여러 작업자·세션의 공유 가시성과 충돌 방지가 필요하면 `to-tickets → work-github-issue`를 선택합니다. `first-principles`는 사용자가 이름을 직접 불러 중요한 결정의 문제 framing이나 상속된 전제를 재검토할 때만 사용합니다. `domain-modeling`은 도메인 개념·불변식·상태·경계를 실제로 바꾸거나 모호함을 해결할 때, `codebase-design`은 interface나 seam 선택이 실제로 열려 있을 때 사용합니다. 작은 로컬 변경은 `tdd`와 `code-review`만으로 충분할 수 있습니다. `quality-gauntlet`은 사용자가 직접 호출했고 실제 산출물·검사 방법·비교 품질 기준이 있을 때만 사용합니다.
+모든 작업에 전부 사용할 필요는 없습니다. 경쟁 구도와 moat를 먼저 세워야 하는 새 서비스라면 `find-competitive-edge`로 전략 가설과 검증 방법을 만들고, 합의된 요구사항은 이후 계획 workflow로 넘깁니다. 개인적인 stack·topology 기본값을 반영하고 싶다면 `apply-architecture-playbook`을 명시적으로 호출하되, 실제 module interface와 seam은 `codebase-design`이 결정합니다. 결정 경로가 흐린 큰 일만 `decision-map`을 사용하고, 이미 합의가 충분하면 바로 `to-spec`으로 갑니다. 한 에이전트가 순차 처리하고 원격 추적이 필요 없다면 `local-work`, 여러 작업자·세션의 공유 가시성과 충돌 방지가 필요하면 `to-tickets → work-github-issue`를 선택합니다. `first-principles`는 사용자가 이름을 직접 불러 중요한 결정의 문제 framing이나 상속된 전제를 재검토할 때만 사용합니다. `domain-modeling`은 도메인 개념·불변식·상태·경계를 실제로 바꾸거나 모호함을 해결할 때, `codebase-design`은 interface나 seam 선택이 실제로 열려 있을 때 사용합니다. 작은 로컬 변경은 `tdd`와 `code-review`만으로 충분할 수 있습니다. `quality-gauntlet`은 사용자가 직접 호출했고 실제 산출물·검사 방법·비교 품질 기준이 있을 때만 사용합니다.
 
 각 스킬의 동작과 안전 경계를 더 쉽게 풀어 쓴 설명은 [한국어 스킬 안내서](docs/README.md)에서 볼 수 있습니다.
 
@@ -102,7 +105,7 @@ GitHub의 담당자 표시만으로는 부족합니다. 여러 세션이 같은 
 
 Codex에게 다음처럼 요청하면 됩니다.
 
-> `rca32/skills` 저장소에서 `bro`, `prepare-issue`, `first-principles`, `find-competitive-edge`, `domain-modeling`, `codebase-design`, `decision-map`, `to-spec`, `local-work`, `to-tickets`, `work-github-issue`, `documenting-work`, `diagnosing-bugs`, `complexity-optimizer`, `tdd`, `quality-gauntlet`, `code-review`, `writing-great-skills` 스킬을 설치해 줘.
+> `rca32/skills` 저장소에서 `bro`, `prepare-issue`, `first-principles`, `find-competitive-edge`, `apply-architecture-playbook`, `domain-modeling`, `codebase-design`, `decision-map`, `to-spec`, `local-work`, `to-tickets`, `work-github-issue`, `documenting-work`, `diagnosing-bugs`, `complexity-optimizer`, `tdd`, `quality-gauntlet`, `code-review`, `writing-great-skills` 스킬을 설치해 줘.
 
 또는 이미 설치된 `skill-installer`로 `skills/<스킬 이름>` 경로를 선택해 설치할 수 있습니다. 설치가 끝난 뒤 새 세션을 시작하면 스킬 목록이 갱신됩니다.
 
@@ -166,6 +169,7 @@ $prepare-issue 이슈 #42가 에이전트가 작업할 만큼 구체적인지 �
 $bro 방금 답변을 전문 용어 없이 더 쉽게 다시 말해 줘.
 $first-principles 마이크로서비스 전환이 정말 필요한지 관측 사실과 고정 제약부터 다시 검토해 줘.
 $find-competitive-edge 새로운 동네 운동 모임 서비스가 사람들이 가입하고 계속 참여할 경쟁 우위 조합을 분석해 줘.
+$apply-architecture-playbook 이 문서 처리 서비스에 내 아키텍처 취향 사전을 적용해 기본 구조와 예외 조건을 정리해 줘.
 $domain-modeling 주문·결제·환불 용어와 상태 경계를 edge case로 검증해 줘.
 $codebase-design 이 결제 흐름의 module interface와 seam 대안을 비교하고 하나를 추천해 줘.
 $decision-map 결제 시스템 재설계처럼 아직 결정할 것이 많은 큰 작업을 로컬 결정 지도로 시작해 줘.
@@ -182,7 +186,7 @@ $code-review 커밋 전 현재 작업 전체를 규칙과 명세 기준으로 �
 $writing-great-skills 이 스킬의 호출 조건과 완료 기준을 더 예측 가능하게 고쳐 줘.
 ```
 
-`bro`, `prepare-issue`, `first-principles`, `decision-map`, `to-spec`, `local-work`, `to-tickets`는 의도하지 않은 문서·코드·이슈 변경을 피하기 위해, `quality-gauntlet`은 고비용 다중 에이전트 반복을 뜻하기 때문에 이름을 직접 불러 사용합니다. 또한 “검토해 줘”, “초안을 만들어 줘”는 파일 수정이나 외부 게시 권한을 뜻하지 않습니다.
+`bro`, `prepare-issue`, `first-principles`, `apply-architecture-playbook`, `decision-map`, `to-spec`, `local-work`, `to-tickets`는 의도하지 않은 취향 적용이나 문서·코드·이슈 변경을 피하기 위해, `quality-gauntlet`은 고비용 다중 에이전트 반복을 뜻하기 때문에 이름을 직접 불러 사용합니다. 또한 “검토해 줘”, “초안을 만들어 줘”는 파일 수정이나 외부 게시 권한을 뜻하지 않습니다.
 
 ## 저장소를 관리할 때
 

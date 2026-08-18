@@ -1,0 +1,6 @@
+interface:
+  display_name: "Architecture Playbook"
+  short_description: "Apply a personal architecture preference dictionary"
+  default_prompt: "Use $apply-architecture-playbook to apply my preferred architecture patterns to this system."
+policy:
+  allow_implicit_invocation: false
